@@ -42,15 +42,42 @@ import {
 
 import { inksideAPI, StatusResponse, Signal as APISignal, BrainStateResponse, PerformanceResponse } from './api/inkside';
 
+// ============================================================
+// LOADING SCREEN COMPONENT
+// ============================================================
+
+const LoadingScreen: React.FC = () => (
+  <div className="flex h-screen w-screen bg-[#0B0F14] items-center justify-center">
+    <div className="text-center">
+      <div className="text-4xl mb-4">🧠</div>
+      <div className="text-white text-xl">Loading Inkside Digital...</div>
+      <div className="text-gray-500 text-sm mt-2">Menghubungkan ke backend...</div>
+    </div>
+  </div>
+);
+
+// ============================================================
+// MAIN APP
+// ============================================================
+
 export default function App() {
   const [currentPage, setCurrentPage] = useState<NavigationPage>('Dashboard');
+  
+  // ============================================================
+  // STATE FOR BACKEND REAL DATA
+  // ============================================================
   
   const [apiStatus, setApiStatus] = useState<StatusResponse | null>(null);
   const [realSignals, setRealSignals] = useState<APISignal[]>([]);
   const [brainState, setBrainState] = useState<BrainStateResponse | null>(null);
   const [performance, setPerformance] = useState<PerformanceResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // ============================================================
+  // STATE FOR UI CONTROLS
+  // ============================================================
   
   const [engineRunning, setEngineRunning] = useState(true);
   const [learningActive, setLearningActive] = useState(true);
@@ -65,7 +92,6 @@ export default function App() {
   const [components, setComponents] = useState<ComponentHealthStatus[]>(INITIAL_COMPONENTS);
   const [positions, setPositions] = useState<TradingPosition[]>(INITIAL_POSITIONS);
   const [logs, setLogs] = useState<SystemLogEntry[]>(INITIAL_LOGS);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [telegramConfigured, setTelegramConfigured] = useState(true);
 
   // ============================================================
@@ -108,12 +134,15 @@ export default function App() {
   };
 
   // ============================================================
-  // FETCH REAL DATA
+  // FETCH REAL DATA (TANPA LOADING BERKEDIP)
   // ============================================================
   
-  const fetchRealData = async () => {
+  const fetchRealData = async (showRefresh: boolean = false) => {
     try {
-      setLoading(true);
+      if (showRefresh) {
+        setIsRefreshing(true);
+      }
+      
       setError(null);
       
       const [statusData, signalsData, brainData, perfData] = await Promise.all([
@@ -141,16 +170,36 @@ export default function App() {
       console.error('Failed to fetch real data:', err);
       setError('Gagal mengambil data dari backend. Pastikan backend berjalan di port 5001.');
     } finally {
-      setLoading(false);
+      if (showRefresh) {
+        setIsRefreshing(false);
+      }
     }
   };
 
+  // ============================================================
+  // INITIAL LOAD & AUTO UPDATE (TANPA BERKEDIP)
+  // ============================================================
+  
   useEffect(() => {
-    fetchRealData();
-    const interval = setInterval(fetchRealData, 10000);
+    const init = async () => {
+      setIsInitialLoading(true);
+      await fetchRealData(false);
+      setIsInitialLoading(false);
+    };
+    init();
+    
+    // Update setiap 15 detik TANPA loading indicator
+    const interval = setInterval(() => {
+      fetchRealData(false);
+    }, 15000);
+    
     return () => clearInterval(interval);
   }, []);
 
+  // ============================================================
+  // LIVE SIMULATION (untuk data dummy)
+  // ============================================================
+  
   useEffect(() => {
     if (!engineRunning) return;
 
@@ -175,6 +224,10 @@ export default function App() {
     return () => clearInterval(interval);
   }, [engineRunning]);
 
+  // ============================================================
+  // HANDLERS
+  // ============================================================
+  
   const handleToggleEngine = () => {
     setEngineRunning((prev) => {
       const next = !prev;
@@ -195,20 +248,17 @@ export default function App() {
   };
 
   const handleRefreshData = () => {
-    setIsRefreshing(true);
-    fetchRealData().then(() => {
-      setIsRefreshing(false);
-      setLogs((prevLogs) => [
-        {
-          id: Date.now(),
-          timestamp: Date.now(),
-          level: 'INFO',
-          message: 'All subsystems refreshed with real data from backend API.',
-          source: 'System',
-        },
-        ...prevLogs,
-      ]);
-    });
+    fetchRealData(true);
+    setLogs((prevLogs) => [
+      {
+        id: Date.now(),
+        timestamp: Date.now(),
+        level: 'INFO',
+        message: 'All subsystems refreshed with real data from backend API.',
+        source: 'System',
+      },
+      ...prevLogs,
+    ]);
   };
 
   const handleAddKnowledge = (item: Partial<KnowledgeItem>) => {
@@ -251,16 +301,12 @@ export default function App() {
     ]);
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-screen w-screen bg-[#0B0F14] items-center justify-center">
-        <div className="text-center">
-          <div className="text-4xl mb-4">🧠</div>
-          <div className="text-white text-xl">Loading Inkside Digital...</div>
-          <div className="text-gray-500 text-sm mt-2">Menghubungkan ke backend...</div>
-        </div>
-      </div>
-    );
+  // ============================================================
+  // RENDER - Loading
+  // ============================================================
+  
+  if (isInitialLoading) {
+    return <LoadingScreen />;
   }
 
   if (error) {
@@ -270,7 +316,7 @@ export default function App() {
           <div className="text-4xl mb-4">❌</div>
           <div className="text-red-400 text-xl">{error}</div>
           <button
-            onClick={fetchRealData}
+            onClick={() => fetchRealData(true)}
             className="mt-4 px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition"
           >
             Retry
@@ -280,8 +326,13 @@ export default function App() {
     );
   }
 
+  // ============================================================
+  // RENDER - Main App
+  // ============================================================
+  
   return (
     <div className="flex h-screen w-screen bg-[#0B0F14] text-[#E8EDF2] overflow-hidden font-sans">
+      {/* Left Sidebar */}
       <Sidebar
         currentPage={currentPage}
         onPageChange={setCurrentPage}
@@ -290,6 +341,7 @@ export default function App() {
         cycleCount={cycleCount}
       />
 
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <TopBar
           currentPage={currentPage}
@@ -300,6 +352,7 @@ export default function App() {
           isRefreshing={isRefreshing}
         />
 
+        {/* Scrollable View Container */}
         <main className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-[#26313D] scrollbar-track-transparent">
           
           {currentPage === 'Dashboard' && (

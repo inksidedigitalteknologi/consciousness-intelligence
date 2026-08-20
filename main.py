@@ -3,7 +3,8 @@
 # ============================================================
 # main.py
 # INKSIDEDIGITAL TRADING BOT v5.0
-# COGNITIVE MIRROR ENGINE - BINANCE INTEGRATION
+# COGNITIVE MIRROR ENGINE - FULL HEADLESS (API MODE)
+# WITH TELEGRAM SEND & CONFIG SUPPORT
 # ============================================================
 
 import os
@@ -91,14 +92,22 @@ MODE = os.environ.get('INKSIDE_MODE', 'PAPER')
 API_PORT = int(os.environ.get('API_PORT', 5001))
 API_HOST = os.environ.get('API_HOST', '0.0.0.0')
 
-# Binance Config
-BINANCE_API_KEY = os.environ.get('BINANCE_API_KEY', '')
-BINANCE_SECRET = os.environ.get('BINANCE_SECRET', '')
-BINANCE_SANDBOX = os.environ.get('BINANCE_SANDBOX', 'true').lower() == 'true'
+# ============================================================
+# TELEGRAM CONFIG
+# ============================================================
+
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '')
+TELEGRAM_CONFIGURED = bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
+
+if TELEGRAM_CONFIGURED:
+    logger.info(f"✅ Telegram configured: {TELEGRAM_BOT_TOKEN[:10]}...")
+else:
+    logger.warning("⚠️ Telegram not configured")
 
 logger.info(f"🚀 Starting {APP_NAME} v{APP_VERSION}")
 logger.info(f"   Mode: {MODE}")
-logger.info(f"   Binance Sandbox: {BINANCE_SANDBOX}")
+logger.info(f"   Debug: {DEBUG_MODE}")
 
 # ============================================================
 # GLOBAL EXCEPTION HANDLER
@@ -141,184 +150,15 @@ TradingBot = safe_import('core.bot', 'TradingBot')
 Analyzer = safe_import('core.analyzer', 'Analyzer')
 Scanner = safe_import('core.scanner', 'CognitiveMarketScanner')
 SignalEngine = safe_import('core.signal_engine', 'SignalEngine')
+exchange = safe_import('core.market_data', 'exchange')
+KrakenMarketData = safe_import('core.market_data', 'KrakenMarketData')
 
-# ============================================================
-# BINANCE EXCHANGE INTEGRATION
-# ============================================================
+EXCHANGE_AVAILABLE = exchange is not None
 
-try:
-    import ccxt
-    CCXT_AVAILABLE = True
-    logger.info("✅ CCXT loaded")
-except ImportError as e:
-    CCXT_AVAILABLE = False
-    logger.warning(f"⚠️ CCXT not available: {e}")
-    logger.warning("   Install: pip install ccxt")
-
-class BinanceExchange:
-    """Binance exchange wrapper using CCXT."""
-    
-    def __init__(self, api_key: str = '', secret: str = '', sandbox: bool = True):
-        self.api_key = api_key
-        self.secret = secret
-        self.sandbox = sandbox
-        self.exchange = None
-        self._initialized = False
-        self._pairs = ["BTC/USD", "ETH/USD", "SOL/USD", "ADA/USD", "XRP/USD"]
-        
-        if not CCXT_AVAILABLE:
-            logger.warning("⚠️ CCXT not available, Binance disabled")
-            return
-        
-        try:
-            self.exchange = ccxt.binance({
-                'apiKey': api_key,
-                'secret': secret,
-                'enableRateLimit': True,
-                'options': {
-                    'defaultType': 'spot',
-                }
-            })
-            
-            if sandbox:
-                self.exchange.set_sandbox_mode(True)
-                logger.info("🔧 Binance Sandbox mode enabled")
-            
-            self._initialized = True
-            logger.info("✅ Binance exchange initialized successfully")
-            
-            # Test connection
-            try:
-                self.exchange.fetch_ticker('BTCUSDT')
-                logger.info("✅ Binance connection test passed")
-            except Exception as e:
-                logger.warning(f"⚠️ Binance connection test failed: {e}")
-                
-        except Exception as e:
-            logger.error(f"❌ Binance init error: {e}")
-            self.exchange = None
-            self._initialized = False
-    
-    def is_ready(self) -> bool:
-        return self._initialized and self.exchange is not None
-    
-    def get_ticker(self, symbol: str) -> Optional[Dict]:
-        """Get ticker data from Binance."""
-        if not self.is_ready():
-            return None
-        
-        try:
-            symbol_clean = symbol.replace('/', '')
-            ticker = self.exchange.fetch_ticker(symbol_clean)
-            
-            return {
-                'symbol': ticker['symbol'],
-                'price': ticker.get('last', 0),
-                'change': ticker.get('percentage', 0),
-                'high': ticker.get('high', 0),
-                'low': ticker.get('low', 0),
-                'volume': ticker.get('baseVolume', 0),
-                'timestamp': ticker.get('timestamp', int(time.time() * 1000))
-            }
-        except Exception as e:
-            logger.debug(f"Binance ticker error for {symbol}: {e}")
-            return None
-    
-    def get_ohlcv(self, symbol: str, timeframe: str = '1h', limit: int = 100) -> List:
-        """Get OHLCV data from Binance."""
-        if not self.is_ready():
-            return []
-        
-        try:
-            symbol_clean = symbol.replace('/', '')
-            ohlcv = self.exchange.fetch_ohlcv(symbol_clean, timeframe, limit=limit)
-            return ohlcv
-        except Exception as e:
-            logger.debug(f"Binance OHLCV error for {symbol}: {e}")
-            return []
-    
-    def get_balance(self) -> Dict:
-        """Get account balance from Binance."""
-        if not self.is_ready():
-            return {}
-        
-        try:
-            return self.exchange.fetch_balance()
-        except Exception as e:
-            logger.debug(f"Binance balance error: {e}")
-            return {}
-    
-    def create_order(self, symbol: str, side: str, order_type: str, amount: float, price: float = None) -> Dict:
-        """Create order on Binance."""
-        if not self.is_ready():
-            return {}
-        
-        try:
-            symbol_clean = symbol.replace('/', '')
-            return self.exchange.create_order(symbol_clean, order_type, side, amount, price)
-        except Exception as e:
-            logger.error(f"Binance order error: {e}")
-            return {}
-    
-    def get_pairs(self) -> List[str]:
-        return self._pairs
-    
-    def generate_signal(self, pair: str) -> Dict:
-        """Generate trading signal based on Binance data."""
-        ticker = self.get_ticker(pair)
-        
-        if not ticker:
-            return {
-                "pair": pair,
-                "signal": "HOLD",
-                "confidence": 0,
-                "price": 0,
-                "strength": "NEUTRAL",
-                "timestamp": datetime.now().isoformat()
-            }
-        
-        price = ticker.get('price', 0)
-        change = ticker.get('change', 0)
-        
-        if change > 2.0:
-            signal = "BUY"
-            confidence = min(95, 70 + abs(change) * 3)
-            strength = "STRONG" if abs(change) > 4 else "MODERATE"
-        elif change < -2.0:
-            signal = "SELL"
-            confidence = min(95, 70 + abs(change) * 3)
-            strength = "STRONG" if abs(change) > 4 else "MODERATE"
-        elif abs(change) < 0.5:
-            signal = "HOLD"
-            confidence = 50
-            strength = "NEUTRAL"
-        else:
-            signal = "MONITOR"
-            confidence = 60 + abs(change) * 5
-            strength = "WEAK"
-        
-        return {
-            "pair": pair,
-            "signal": signal,
-            "confidence": int(confidence),
-            "price": round(price, 2),
-            "strength": strength,
-            "timestamp": datetime.now().isoformat()
-        }
-
-# Initialize Binance
-binance_exchange = BinanceExchange(
-    api_key=BINANCE_API_KEY,
-    secret=BINANCE_SECRET,
-    sandbox=BINANCE_SANDBOX
-)
-
-if binance_exchange.is_ready():
-    EXCHANGE_AVAILABLE = True
-    logger.info("✅ Binance Exchange is READY")
+if EXCHANGE_AVAILABLE:
+    logger.info("✅ Exchange loaded")
 else:
-    EXCHANGE_AVAILABLE = False
-    logger.warning("⚠️ Binance Exchange is NOT available")
+    logger.warning("⚠️ Exchange not available")
 
 # ============================================================
 # FALLBACK CLASSES
@@ -361,6 +201,16 @@ class MockBrain:
     def learn(self, data=None):
         self._cycles += 1
         return {"status": "success", "cycles": self._cycles}
+    
+    def get_goals(self):
+        return self._goals
+    
+    def get_metrics(self):
+        return {
+            "total_cycles": self._cycles,
+            "success_rate": 95.0,
+            "memory_usage": 45.2
+        }
 
 class MockTradingBot:
     def __init__(self, brain_instance=None, exchange_instance=None):
@@ -368,6 +218,8 @@ class MockTradingBot:
         self.exchange = exchange_instance
         self.running = True
         self._cycles = 0
+        self._signals = []
+        self._market_data = {}
         
     def get_status(self):
         self._cycles += 1
@@ -399,14 +251,6 @@ class MockTradingBot:
         }
     
     def get_signals(self):
-        if binance_exchange.is_ready():
-            signals = []
-            for pair in binance_exchange.get_pairs():
-                signal = binance_exchange.generate_signal(pair)
-                signals.append(signal)
-            return signals
-        
-        # Fallback mock
         pairs = ["BTC/USD", "ETH/USD", "SOL/USD", "ADA/USD", "XRP/USD"]
         signals = []
         for pair in pairs:
@@ -414,19 +258,15 @@ class MockTradingBot:
                 "pair": pair,
                 "signal": random.choice(["BUY", "SELL", "HOLD", "MONITOR"]),
                 "confidence": random.randint(40, 95),
-                "price": round(random.uniform(1000, 65000), 2),
+                "price": random.uniform(1000, 65000),
                 "strength": random.choice(["WEAK", "NEUTRAL", "STRONG"]),
                 "timestamp": datetime.now().isoformat()
             })
         return signals
     
     def get_market_data(self, pair=None):
-        if binance_exchange.is_ready() and pair:
-            ticker = binance_exchange.get_ticker(pair)
-            if ticker:
-                return ticker
-        
-        # Fallback mock
+        if pair:
+            pair = pair.replace('/', '')
         base = random.uniform(1000, 65000)
         return {
             "price": round(base, 2),
@@ -457,6 +297,43 @@ class MockTradingBot:
     def start_engine(self):
         self.running = True
         return True
+    
+    def get_logs(self, limit=50):
+        logs = []
+        for i in range(min(limit, 10)):
+            logs.append({
+                "id": i,
+                "timestamp": datetime.now().isoformat(),
+                "level": random.choice(["INFO", "SUCCESS", "WARNING"]),
+                "message": f"Log entry {i}: System running normally",
+                "source": "System"
+            })
+        return logs
+    
+    def get_positions(self):
+        return []
+    
+    def get_diagnostics(self):
+        return {
+            "system": {
+                "cpu_usage": random.uniform(10, 30),
+                "memory_usage": random.uniform(40, 70),
+                "disk_usage": random.uniform(30, 50),
+                "uptime": int(time.time() - _startup_time)
+            },
+            "application": {
+                "status": "online",
+                "version": APP_VERSION,
+                "mode": MODE,
+                "uptime": int(time.time() - _startup_time)
+            },
+            "modules": {
+                "brain": "ACTIVE",
+                "scanner": "ACTIVE",
+                "learning": "ACTIVE",
+                "exchange": "CONNECTED" if EXCHANGE_AVAILABLE else "DISCONNECTED"
+            }
+        }
 
 if Brain is None:
     logger.warning("⚠️ Brain not available, using MockBrain")
@@ -470,6 +347,40 @@ if TradingBot is None:
 logger.info("✅ Core modules loaded")
 
 # ============================================================
+# TELEGRAM SEND FUNCTION
+# ============================================================
+
+def send_telegram_message(message: str) -> bool:
+    """Send message to Telegram."""
+    try:
+        token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+        chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
+        
+        if not token or not chat_id:
+            logger.warning("Telegram not configured")
+            return False
+        
+        import requests
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        payload = {
+            "chat_id": chat_id,
+            "text": message,
+            "parse_mode": "HTML"
+        }
+        response = requests.post(url, json=payload, timeout=10)
+        
+        if response.status_code == 200:
+            logger.info(f"✅ Telegram message sent: {message[:50]}...")
+            return True
+        else:
+            logger.error(f"Telegram error: {response.status_code} - {response.text}")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Telegram send error: {e}")
+        return False
+
+# ============================================================
 # API SERVER
 # ============================================================
 
@@ -480,7 +391,7 @@ def start_api_server(bot_instance):
         from flask_socketio import SocketIO, emit
         
         app = Flask(__name__)
-        CORS(app, origins="*")
+        CORS(app)
         socketio = SocketIO(app, cors_allowed_origins="*")
         
         # ========================================================
@@ -496,38 +407,37 @@ def start_api_server(bot_instance):
                     "bot": status,
                     "version": APP_VERSION,
                     "mode": MODE,
-                    "exchange": "binance",
                     "timestamp": datetime.now().isoformat()
                 })
             except Exception as e:
-                return jsonify({"error": str(e)}), 500
+                return jsonify({"status": "error", "message": str(e)}), 500
         
         @app.route('/api/health', methods=['GET'])
         def api_health():
-            return jsonify({
-                "status": "healthy",
-                "uptime": int(time.time() - _startup_time),
-                "exchange": "binance",
-                "sandbox": BINANCE_SANDBOX,
-                "timestamp": datetime.now().isoformat()
-            })
+            try:
+                status = bot_instance.get_status() if bot_instance else {}
+                return jsonify({
+                    "status": "healthy",
+                    "bot": status,
+                    "uptime": int(time.time() - _startup_time),
+                    "timestamp": datetime.now().isoformat()
+                })
+            except Exception as e:
+                return jsonify({"status": "error", "message": str(e)}), 500
         
         @app.route('/api/signals', methods=['GET'])
         def api_signals():
             try:
-                signals = bot_instance.get_signals() if bot_instance else []
+                if bot_instance and hasattr(bot_instance, 'get_signals'):
+                    signals = bot_instance.get_signals()
+                else:
+                    signals = []
                 return jsonify({
                     "signals": signals,
-                    "source": "binance",
                     "timestamp": datetime.now().isoformat()
                 })
             except Exception as e:
-                logger.error(f"API signals error: {e}")
-                return jsonify({
-                    "signals": [],
-                    "error": str(e),
-                    "timestamp": datetime.now().isoformat()
-                }), 200
+                return jsonify({"error": str(e)}), 500
         
         @app.route('/api/market', methods=['GET'])
         def api_market():
@@ -537,12 +447,11 @@ def start_api_server(bot_instance):
                 if bot_instance and hasattr(bot_instance, 'get_market_data'):
                     data = bot_instance.get_market_data(pair)
                 else:
-                    data = {"price": random.uniform(1000, 65000), "trend": "NEUTRAL"}
+                    data = generate_mock_market_data()
                 
                 return jsonify({
                     "pair": pair,
                     "data": data,
-                    "source": "binance" if binance_exchange.is_ready() else "mock",
                     "timestamp": datetime.now().isoformat()
                 })
             except Exception as e:
@@ -551,11 +460,13 @@ def start_api_server(bot_instance):
         @app.route('/api/analyze/<pair>', methods=['GET'])
         def api_analyze(pair):
             try:
-                result = bot_instance.analyze_pair(pair) if bot_instance else {"pair": pair}
+                if bot_instance and hasattr(bot_instance, 'analyze_pair'):
+                    result = bot_instance.analyze_pair(pair)
+                else:
+                    result = {"pair": pair, "signal": "UNKNOWN"}
                 return jsonify({
                     "pair": pair,
                     "analysis": result,
-                    "source": "binance",
                     "timestamp": datetime.now().isoformat()
                 })
             except Exception as e:
@@ -566,6 +477,8 @@ def start_api_server(bot_instance):
             try:
                 if brain and hasattr(brain, 'get_state'):
                     state = brain.get_state()
+                elif brain and hasattr(brain, 'status'):
+                    state = brain.status()
                 else:
                     state = {"state": "unknown"}
                 return jsonify({
@@ -585,7 +498,7 @@ def start_api_server(bot_instance):
                         'awareness': 0.85,
                         'emotion': 'CALM',
                         'curiosity': 0.72,
-                        'insights': ['System running in headless mode']
+                        'insights': ['System running normally']
                     }
                 return jsonify({
                     "reflection": reflection,
@@ -609,7 +522,6 @@ def start_api_server(bot_instance):
                         "win_rate": perf.get('win_rate', 0.0),
                         "total_pnl": perf.get('total_pnl', 0.0)
                     },
-                    "exchange": "binance",
                     "timestamp": datetime.now().isoformat()
                 })
             except Exception as e:
@@ -617,89 +529,252 @@ def start_api_server(bot_instance):
         
         @app.route('/api/positions', methods=['GET'])
         def api_positions():
-            return jsonify({
-                "positions": [],
-                "timestamp": datetime.now().isoformat()
-            })
+            try:
+                if bot_instance and hasattr(bot_instance, 'get_positions'):
+                    positions = bot_instance.get_positions()
+                else:
+                    positions = []
+                return jsonify({
+                    "positions": positions,
+                    "timestamp": datetime.now().isoformat()
+                })
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
         
         @app.route('/api/logs', methods=['GET'])
         def api_logs():
-            return jsonify({
-                "logs": [],
-                "timestamp": datetime.now().isoformat()
-            })
+            try:
+                limit = int(request.args.get('limit', 50))
+                if bot_instance and hasattr(bot_instance, 'get_logs'):
+                    logs = bot_instance.get_logs(limit)
+                else:
+                    logs = []
+                return jsonify({
+                    "logs": logs,
+                    "count": len(logs),
+                    "timestamp": datetime.now().isoformat()
+                })
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
         
         @app.route('/api/diagnostics', methods=['GET'])
         def api_diagnostics():
-            return jsonify({
-                "diagnostics": {
-                    "system": {
-                        "cpu_usage": 0,
-                        "memory_usage": 0,
-                        "disk_usage": 0,
-                        "uptime": int(time.time() - _startup_time)
-                    },
-                    "application": {
-                        "status": "online",
-                        "version": APP_VERSION,
-                        "mode": MODE,
-                        "exchange": "binance",
-                        "sandbox": BINANCE_SANDBOX
+            try:
+                if bot_instance and hasattr(bot_instance, 'get_diagnostics'):
+                    diag = bot_instance.get_diagnostics()
+                else:
+                    diag = {
+                        "system": {
+                            "cpu_usage": random.uniform(10, 30),
+                            "memory_usage": random.uniform(40, 70),
+                            "disk_usage": random.uniform(30, 50),
+                            "uptime": int(time.time() - _startup_time)
+                        },
+                        "application": {
+                            "status": "online",
+                            "version": APP_VERSION,
+                            "mode": MODE,
+                            "uptime": int(time.time() - _startup_time)
+                        }
                     }
-                },
-                "timestamp": datetime.now().isoformat()
-            })
+                return jsonify({
+                    "diagnostics": diag,
+                    "timestamp": datetime.now().isoformat()
+                })
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+        
+        # ========================================================
+        # TELEGRAM API - LENGKAP
+        # ========================================================
         
         @app.route('/api/telegram/status', methods=['GET'])
         def api_telegram_status():
-            return jsonify({
-                "configured": False,
-                "bot_name": "Not Configured",
-                "status": "offline",
-                "timestamp": datetime.now().isoformat()
-            })
+            try:
+                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
+                
+                is_configured = bool(token and chat_id)
+                bot_name = "InksideBot" if is_configured else "Not Configured"
+                
+                return jsonify({
+                    "configured": is_configured,
+                    "bot_name": bot_name,
+                    "status": "online" if is_configured else "offline",
+                    "last_message": None,
+                    "timestamp": datetime.now().isoformat()
+                })
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
         
-        @app.route('/api/exchange/status', methods=['GET'])
-        def api_exchange_status():
-            return jsonify({
-                "exchange": "binance",
-                "available": EXCHANGE_AVAILABLE,
-                "sandbox": BINANCE_SANDBOX,
-                "api_key_configured": bool(BINANCE_API_KEY),
-                "timestamp": datetime.now().isoformat()
-            })
+        @app.route('/api/telegram/send', methods=['POST'])
+        def api_telegram_send():
+            try:
+                data = request.json
+                message = data.get('message', '')
+                
+                if not message:
+                    return jsonify({"status": "error", "message": "Message is required"}), 400
+                
+                success = send_telegram_message(message)
+                
+                return jsonify({
+                    "status": "success" if success else "error",
+                    "message": message,
+                    "sent": success,
+                    "timestamp": datetime.now().isoformat()
+                })
+                
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+        
+        @app.route('/api/telegram/test', methods=['POST'])
+        def api_telegram_test():
+            try:
+                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
+                
+                if not token or not chat_id:
+                    return jsonify({
+                        "status": "error",
+                        "message": "Telegram not configured"
+                    }), 400
+                
+                message = f"🧠 Inkside Digital Test Message\n\n✅ Telegram connection successful!\n\nTimestamp: {datetime.now().isoformat()}"
+                success = send_telegram_message(message)
+                
+                return jsonify({
+                    "status": "success" if success else "error",
+                    "message": "Test message sent!" if success else "Failed to send",
+                    "sent": success,
+                    "timestamp": datetime.now().isoformat()
+                })
+                
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+        
+        # ========================================================
+        # TELEGRAM CONFIG SAVE & LOAD (BARU!)
+        # ========================================================
+        
+        @app.route('/api/telegram/config', methods=['GET'])
+        def api_telegram_get_config():
+            try:
+                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
+                
+                return jsonify({
+                    "bot_token": token,
+                    "chat_id": chat_id,
+                    "configured": bool(token and chat_id)
+                })
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+        
+        @app.route('/api/telegram/config', methods=['POST'])
+        def api_telegram_save_config():
+            try:
+                data = request.json
+                token = data.get('bot_token', '')
+                chat_id = data.get('chat_id', '')
+                
+                if not token or not chat_id:
+                    return jsonify({"status": "error", "message": "Token and Chat ID required"}), 400
+                
+                # Update environment
+                os.environ['TELEGRAM_BOT_TOKEN'] = token
+                os.environ['TELEGRAM_CHAT_ID'] = chat_id
+                
+                # Update global config
+                global TELEGRAM_CONFIGURED
+                TELEGRAM_CONFIGURED = True
+                
+                # Also save to .env file for persistence
+                env_path = CURRENT_DIR / '.env'
+                if env_path.exists():
+                    with open(env_path, 'r') as f:
+                        lines = f.readlines()
+                    
+                    token_updated = False
+                    chat_updated = False
+                    
+                    for i, line in enumerate(lines):
+                        if line.startswith('TELEGRAM_BOT_TOKEN='):
+                            lines[i] = f'TELEGRAM_BOT_TOKEN={token}\n'
+                            token_updated = True
+                        elif line.startswith('TELEGRAM_CHAT_ID='):
+                            lines[i] = f'TELEGRAM_CHAT_ID={chat_id}\n'
+                            chat_updated = True
+                    
+                    if not token_updated:
+                        lines.append(f'TELEGRAM_BOT_TOKEN={token}\n')
+                    if not chat_updated:
+                        lines.append(f'TELEGRAM_CHAT_ID={chat_id}\n')
+                    
+                    with open(env_path, 'w') as f:
+                        f.writelines(lines)
+                
+                return jsonify({
+                    "status": "success",
+                    "message": "Configuration saved! Restart backend to apply.",
+                    "bot_token": token[:10] + "..." if len(token) > 10 else token,
+                    "chat_id": chat_id
+                })
+                
+            except Exception as e:
+                return jsonify({"status": "error", "message": str(e)}), 500
+        
+        # ========================================================
+        # ENGINE API
+        # ========================================================
         
         @app.route('/api/engine/start', methods=['POST'])
         def api_engine_start():
-            if bot_instance and hasattr(bot_instance, 'start_engine'):
-                bot_instance.start_engine()
-            return jsonify({
-                "status": "started",
-                "timestamp": datetime.now().isoformat()
-            })
+            try:
+                if bot_instance and hasattr(bot_instance, 'start_engine'):
+                    result = bot_instance.start_engine()
+                else:
+                    result = True
+                return jsonify({
+                    "status": "started",
+                    "success": result,
+                    "timestamp": datetime.now().isoformat()
+                })
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
         
         @app.route('/api/engine/stop', methods=['POST'])
         def api_engine_stop():
-            if bot_instance and hasattr(bot_instance, 'stop'):
-                bot_instance.stop()
-            return jsonify({
-                "status": "stopped",
-                "timestamp": datetime.now().isoformat()
-            })
+            try:
+                if bot_instance and hasattr(bot_instance, 'stop'):
+                    result = bot_instance.stop()
+                else:
+                    result = True
+                return jsonify({
+                    "status": "stopped",
+                    "success": result,
+                    "timestamp": datetime.now().isoformat()
+                })
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
         
         @app.route('/api/learning/status', methods=['GET'])
         def api_learning_status():
-            return jsonify({
-                "learning": {
-                    "active": True,
-                    "cycles": 0,
-                    "status": "ready"
-                },
-                "timestamp": datetime.now().isoformat()
-            })
+            try:
+                status = bot_instance.get_status() if bot_instance else {}
+                return jsonify({
+                    "learning": {
+                        "active": status.get('learning_engine', False),
+                        "cycles": status.get('cycles', 0),
+                        "status": "running" if status.get('learning_engine', False) else "stopped"
+                    },
+                    "timestamp": datetime.now().isoformat()
+                })
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
         
         # ========================================================
-        # WEBSOCKET
+        # WEBSOCKET EVENTS
         # ========================================================
         
         @socketio.on('connect')
@@ -717,6 +792,26 @@ def start_api_server(bot_instance):
             logger.info(f"Client disconnected: {request.sid}")
         
         # ========================================================
+        # MOCK DATA GENERATORS
+        # ========================================================
+        
+        def generate_mock_market_data():
+            pairs = ["BTC/USD", "ETH/USD", "SOL/USD", "ADA/USD", "XRP/USD"]
+            data = {}
+            for pair in pairs:
+                base = random.uniform(1000, 65000)
+                data[pair] = {
+                    "price": round(base, 2),
+                    "change": round(random.uniform(-5, 5), 2),
+                    "volume": round(random.uniform(100, 2000), 2),
+                    "high": round(base * (1 + random.uniform(0, 0.02)), 2),
+                    "low": round(base * (1 - random.uniform(0, 0.02)), 2),
+                    "trend": random.choice(["BULLISH", "BEARISH", "NEUTRAL"]),
+                    "timestamp": datetime.now().isoformat()
+                }
+            return data
+        
+        # ========================================================
         # START SERVER
         # ========================================================
         
@@ -729,7 +824,6 @@ def start_api_server(bot_instance):
         server_thread.start()
         
         logger.info(f"✅ API Server running on http://{API_HOST}:{API_PORT}")
-        logger.info(f"   Exchange: BINANCE")
         logger.info(f"   - GET  /api/status")
         logger.info(f"   - GET  /api/health")
         logger.info(f"   - GET  /api/signals")
@@ -742,9 +836,13 @@ def start_api_server(bot_instance):
         logger.info(f"   - GET  /api/logs")
         logger.info(f"   - GET  /api/diagnostics")
         logger.info(f"   - GET  /api/telegram/status")
-        logger.info(f"   - GET  /api/exchange/status")
+        logger.info(f"   - GET  /api/telegram/config")
+        logger.info(f"   - POST /api/telegram/send")
+        logger.info(f"   - POST /api/telegram/test")
+        logger.info(f"   - POST /api/telegram/config")
         logger.info(f"   - POST /api/engine/start")
         logger.info(f"   - POST /api/engine/stop")
+        logger.info(f"   - GET  /api/learning/status")
         logger.info(f"   - WS   / (WebSocket)")
         
         return True
@@ -768,10 +866,8 @@ def main_headless():
     logger.info(f"  🧠 {APP_NAME} - COGNITIVE MIRROR ENGINE")
     logger.info(f"  Version: {APP_VERSION}")
     logger.info(f"  Mode: {MODE.upper()}")
-    logger.info(f"  Exchange: BINANCE")
     logger.info("=" * 60)
     
-    # Initialize Brain
     logger.info("Initializing Cognitive Brain...")
     try:
         if Brain and Brain != MockBrain:
@@ -781,32 +877,31 @@ def main_headless():
             brain_instance = MockBrain()
             logger.info("✅ Brain initialized (MOCK)")
     except Exception as e:
+        logger.error(f"❌ Brain init error: {e}")
         brain_instance = MockBrain()
         logger.info("✅ Brain initialized (MOCK - fallback)")
     
-    # Initialize Trading Bot
     logger.info("Initializing Trading Bot...")
     try:
         if TradingBot and TradingBot != MockTradingBot:
             bot_instance = TradingBot(
                 brain_instance=brain_instance,
-                exchange_instance=binance_exchange
+                exchange_instance=exchange
             )
             logger.info("✅ Trading Bot initialized (REAL)")
         else:
             bot_instance = MockTradingBot(
                 brain_instance=brain_instance,
-                exchange_instance=binance_exchange
+                exchange_instance=exchange
             )
             logger.info("✅ Trading Bot initialized (MOCK)")
     except Exception as e:
+        logger.error(f"❌ Bot init error: {e}")
         bot_instance = MockTradingBot(brain_instance=brain_instance)
         logger.info("✅ Trading Bot initialized (MOCK - fallback)")
     
-    # Start API Server
     api_started = start_api_server(bot_instance)
     
-    # Start Scanner
     if Scanner and Scanner != safe_import('core.scanner', 'CognitiveMarketScanner'):
         try:
             scanner_instance = Scanner()
@@ -824,9 +919,9 @@ def main_headless():
     logger.info(f"  Mode        : {MODE}")
     logger.info(f"  Brain       : {type(brain_instance).__name__}")
     logger.info(f"  Bot         : {type(bot_instance).__name__}")
-    logger.info(f"  Exchange    : BINANCE {'(SANDBOX)' if BINANCE_SANDBOX else '(LIVE)'}")
-    logger.info(f"  Status      : {'AVAILABLE' if EXCHANGE_AVAILABLE else 'UNAVAILABLE'}")
+    logger.info(f"  Exchange    : {'AVAILABLE' if EXCHANGE_AVAILABLE else 'UNAVAILABLE'}")
     logger.info(f"  API Server  : {'ON' if api_started else 'OFF'}")
+    logger.info(f"  Telegram    : {'CONFIGURED' if TELEGRAM_CONFIGURED else 'NOT CONFIGURED'}")
     logger.info("=" * 60)
     logger.info("📡 Press Ctrl+C to stop")
     logger.info("=" * 60)
@@ -844,8 +939,8 @@ def main_headless():
                     else:
                         state = 'RUNNING'
                     logger.info(f"🟢 Status: {state} | Cycles: {cycle_count} | Uptime: {cycle_count}s")
-                except:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Status log error: {e}")
     except KeyboardInterrupt:
         logger.info("\n⚠️ Bot stopped by user")
         _graceful_shutdown = True
@@ -855,8 +950,8 @@ def main_headless():
         if bot_instance and hasattr(bot_instance, 'stop'):
             bot_instance.stop()
             logger.info("✅ Bot stopped")
-    except:
-        pass
+    except Exception as e:
+        logger.warning(f"Bot stop error: {e}")
     
     logger.info(f"✅ {APP_NAME} stopped.")
     return 0

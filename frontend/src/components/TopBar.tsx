@@ -37,6 +37,30 @@ export const TopBar: React.FC<TopBarProps> = ({
     return () => clearInterval(interval);
   }, []);
 
+  const getPageTitle = (page: NavigationPage): string => {
+    const titles: Record<NavigationPage, string> = {
+      'Dashboard': 'Dashboard Overview',
+      'Watchlist': 'Market Watchlist',
+      'Brain': 'Cognitive Brain Core',
+      'Reflection': 'Cognitive Mirror Reflection',
+      'Market': 'Live Market Tickers',
+      'Signals': 'Signals Radar',
+      'Learning': 'Learning Engine',
+      'Memory': 'Memory Database',
+      'Pattern': 'Pattern Detector',
+      'Prediction': 'Predictions',
+      'Decision': 'Decision Engine',
+      'Knowledge': 'Knowledge Base',
+      'Health': 'System Health',
+      'Trading': 'Trading Execution',
+      'Telegram': 'Telegram Bridge',
+      'PyRemote': 'PyRemote Mobile',
+      'Diagnostics': 'Diagnostics Test',
+      'Settings': 'Configuration'
+    };
+    return titles[page] || page;
+  };
+
   return (
     <header
       id="app-topbar"
@@ -57,24 +81,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         <div className="flex items-center gap-2 min-w-0">
           <h1 className="text-sm sm:text-base md:text-lg font-bold text-white tracking-wide truncate">
-            {currentPage === 'Dashboard' && 'Dashboard Overview'}
-            {currentPage === 'Watchlist' && 'Market Watchlist'}
-            {currentPage === 'Brain' && 'Cognitive Brain Core'}
-            {currentPage === 'Reflection' && 'Cognitive Mirror Reflection'}
-            {currentPage === 'Market' && 'Live Market Tickers'}
-            {currentPage === 'Signals' && 'Signals Radar'}
-            {currentPage === 'Learning' && 'Learning Engine'}
-            {currentPage === 'Memory' && 'Memory Database'}
-            {currentPage === 'Pattern' && 'Pattern Detector'}
-            {currentPage === 'Prediction' && 'Predictions'}
-            {currentPage === 'Decision' && 'Decision Engine'}
-            {currentPage === 'Knowledge' && 'Knowledge Base'}
-            {currentPage === 'Health' && 'System Health'}
-            {currentPage === 'Trading' && 'Trading Execution'}
-            {currentPage === 'Telegram' && 'Telegram Bridge'}
-            {currentPage === 'PyRemote' && 'PyRemote Mobile'}
-            {currentPage === 'Diagnostics' && 'Diagnostics Test'}
-            {currentPage === 'Settings' && 'Configuration'}
+            {getPageTitle(currentPage)}
           </h1>
           <span className="hidden sm:inline-block text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 font-semibold shrink-0">
             LIVE
@@ -160,3 +167,5 @@ export const TopBar: React.FC<TopBarProps> = ({
     </header>
   );
 };
+
+export default TopBar;
