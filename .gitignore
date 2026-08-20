@@ -216,3 +216,26 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Database (data, jangan di-commit!)
+database/
+*.db
+*.sqlite
+*.sqlite3
+
+# Frontend build & dependencies (jangan di-commit)
+frontend/dist/
+frontend/node_modules/
+frontend/.env
+frontend/.env.local
+
+# Logs
+logs/
+*.log
+log.sh
+log_color.py
+
+# Cache
+__pycache__/
+*.pyc
+.cache/
