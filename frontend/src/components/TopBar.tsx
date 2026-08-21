@@ -54,7 +54,6 @@ export const TopBar: React.FC<TopBarProps> = ({
       'Health': 'System Health',
       'Trading': 'Trading Execution',
       'Telegram': 'Telegram Bridge',
-      'PyRemote': 'PyRemote Mobile',
       'Diagnostics': 'Diagnostics Test',
       'Settings': 'Configuration'
     };

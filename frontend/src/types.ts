@@ -1,23 +1,19 @@
-export type NavigationPage =
-  | 'Dashboard'
-  | 'Watchlist'
-  | 'Brain'
-  | 'Consciousness'
-  | 'Market'
-  | 'Signals'
-  | 'Learning'
-  | 'Memory'
-  | 'Pattern'
-  | 'Prediction'
-  | 'Decision'
-  | 'Reflection'
-  | 'Health'
-  | 'Knowledge'
-  | 'Telegram'
-  | 'Trading'
-  | 'PyRemote'
-  | 'Diagnostics'
-  | 'Settings';
+// ============================================================
+// CANDLE DATA - TAMBAHKAN INI
+// ============================================================
+
+export interface CandleData {
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  timestamp: number;
+}
+
+// ============================================================
+// TICKER & MARKET DATA
+// ============================================================
 
 export interface TickerInfo {
   pair: string;
@@ -27,29 +23,47 @@ export interface TickerInfo {
   high24h: number;
   low24h: number;
   volume24h: number;
-  trend: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  history: number[];
   rsi: number;
   macd: number;
   atr: number;
-  history: number[];
+  trend: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  bid: number;
+  ask: number;
+  depth: number;
+  candles: CandleData[]; // TAMBAHKAN INI
 }
+
+// ============================================================
+// WATCHLIST
+// ============================================================
+
+export interface WatchlistEntry {
+  pair: string;
+  pinned: boolean;
+  notes: string;
+  alertHigh?: number;
+  alertLow?: number;
+}
+
+// ============================================================
+// TRADING SIGNALS
+// ============================================================
 
 export interface TradingSignal {
   id: string;
   pair: string;
-  signal: 'BUY' | 'STRONG_BUY' | 'SELL' | 'STRONG_SELL' | 'HOLD' | 'MONITOR';
+  signal: 'BUY' | 'SELL' | 'HOLD';
   confidence: number;
-  quality: 'EXCELLENT' | 'GOOD' | 'FAIR' | 'WEAK' | 'NEUTRAL';
   price: number;
+  strength: 'STRONG' | 'WEAK' | 'NEUTRAL';
+  timestamp: string;
   entry: number;
   stopLoss: number;
   tp1: number;
   tp2: number;
-  tp3: number;
+  quality: 'EXCELLENT' | 'GOOD' | 'NEUTRAL';
   riskReward: number;
-  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'EXTREME';
-  trend: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
-  timeframe: string;
   mtfAlignment: {
     '5m': string;
     '15m': string;
@@ -58,69 +72,113 @@ export interface TradingSignal {
     '1d': string;
   };
   reasons: string[];
-  warnings: string[];
-  timestamp: string;
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  trend: string;
+  timeframe: string;
 }
+
+// ============================================================
+// COGNITIVE INSIGHTS
+// ============================================================
 
 export interface CognitiveInsight {
   id: string;
+  type: 'PATTERN' | 'SENTIMENT' | 'PREDICTION' | 'ANOMALY';
   title: string;
-  content: string;
-  category: 'brain' | 'consciousness' | 'market' | 'learning' | 'exchange' | 'system' | 'general';
+  description: string;
   confidence: number;
-  importance: number;
   timestamp: string;
+  pair?: string;
+  data?: any;
 }
+
+// ============================================================
+// KNOWLEDGE
+// ============================================================
 
 export interface KnowledgeItem {
   id: string;
   content: string;
   category: string;
-  type: string;
+  type: 'fact' | 'rule' | 'pattern' | 'strategy';
   confidence: number;
   importance: number;
   tags: string[];
-  status: 'active' | 'archived' | 'expired';
+  status: 'active' | 'archived' | 'learning';
   createdAt: string;
+  updatedAt?: string;
 }
 
-export interface SystemLogEntry {
-  id: number;
-  timestamp: number;
-  level: 'INFO' | 'WARNING' | 'ERROR' | 'SUCCESS' | 'STDOUT';
-  message: string;
-  source: string;
-}
+// ============================================================
+// COMPONENT HEALTH
+// ============================================================
 
 export interface ComponentHealthStatus {
   name: string;
-  status: 'ONLINE' | 'DEGRADED' | 'OFFLINE' | 'INITIALIZING';
-  score: number;
-  checks: number;
-  errors: number;
-  latencyMs: number;
+  status: 'healthy' | 'warning' | 'error' | 'unknown';
   lastCheck: string;
+  metrics: {
+    cpu?: number;
+    memory?: number;
+    latency?: number;
+    uptime?: number;
+  };
+  message?: string;
 }
+
+// ============================================================
+// TRADING POSITIONS
+// ============================================================
 
 export interface TradingPosition {
   id: string;
   pair: string;
-  side: 'BUY' | 'SELL';
+  type: 'LONG' | 'SHORT';
   entryPrice: number;
   currentPrice: number;
-  amount: number;
-  pnlUsd: number;
+  size: number;
+  leverage: number;
+  pnl: number;
   pnlPercent: number;
-  stopLoss: number;
-  takeProfit: number;
-  openTime: string;
+  status: 'OPEN' | 'CLOSED' | 'STOPPED' | 'TAKE_PROFIT';
+  entryTime: string;
+  exitTime?: string;
+  stopLoss?: number;
+  takeProfit?: number;
 }
 
-export interface WatchlistEntry {
-  pair: string;
-  addedAt: string;
-  alertHigh?: number;
-  alertLow?: number;
-  notes?: string;
-  pinned?: boolean;
+// ============================================================
+// SYSTEM LOGS
+// ============================================================
+
+export interface SystemLogEntry {
+  id: number;
+  timestamp: number;
+  level: 'INFO' | 'WARNING' | 'ERROR' | 'SUCCESS' | 'DEBUG';
+  message: string;
+  source: string;
+  details?: any;
 }
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+
+export type NavigationPage = 
+  | 'Dashboard'
+  | 'Brain'
+  | 'Reflection'
+  | 'Market'
+  | 'Watchlist'
+  | 'Signals'
+  | 'Learning'
+  | 'Memory'
+  | 'Pattern'
+  | 'Prediction'
+  | 'Decision'
+  | 'Knowledge'
+  | 'Health'
+  | 'Trading'
+  | 'Telegram'
+  | 'Diagnostics'
+  | 'Settings';

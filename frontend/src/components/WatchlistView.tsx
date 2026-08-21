@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Star,
   Plus,
@@ -19,18 +19,37 @@ import {
   Pin,
   Sparkles,
   LayoutGrid,
-  List as ListIcon
+  List as ListIcon,
+  RefreshCw
 } from 'lucide-react';
 import { TickerInfo, WatchlistEntry, TradingSignal } from '../types';
+
+// ============================================================
+// WATCHLIST STORAGE
+// ============================================================
+
+const WATCHLIST_KEY = 'inkside_watchlist_data';
+
+const loadWatchlistData = (): WatchlistEntry[] => {
+  try {
+    const data = localStorage.getItem(WATCHLIST_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveWatchlistData = (data: WatchlistEntry[]) => {
+  try {
+    localStorage.setItem(WATCHLIST_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.error('Failed to save watchlist:', e);
+  }
+};
 
 interface WatchlistViewProps {
   tickers: TickerInfo[];
   signals: TradingSignal[];
-  watchlist: WatchlistEntry[];
-  onToggleWatchlist: (pair: string) => void;
-  onUpdateAlerts: (pair: string, alertHigh?: number, alertLow?: number) => void;
-  onUpdateNotes: (pair: string, notes: string) => void;
-  onTogglePin: (pair: string) => void;
   onNavigateToTrading: (pair: string) => void;
   onNavigateToSignals: (pair: string) => void;
 }
@@ -38,11 +57,6 @@ interface WatchlistViewProps {
 export const WatchlistView: React.FC<WatchlistViewProps> = ({
   tickers,
   signals,
-  watchlist,
-  onToggleWatchlist,
-  onUpdateAlerts,
-  onUpdateNotes,
-  onTogglePin,
   onNavigateToTrading,
   onNavigateToSignals,
 }) => {
@@ -55,28 +69,58 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
   const [editingAlertPair, setEditingAlertPair] = useState<string | null>(null);
   const [alertHighDraft, setAlertHighDraft] = useState<string>('');
   const [alertLowDraft, setAlertLowDraft] = useState<string>('');
+  const [watchlist, setWatchlist] = useState<WatchlistEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load watchlist dari localStorage
+  useEffect(() => {
+    try {
+      const data = loadWatchlistData();
+      console.log('📦 Loading watchlist:', data);
+      if (data && data.length > 0) {
+        setWatchlist(data);
+        console.log('✅ Watchlist loaded:', data.length, 'items');
+      } else {
+        console.log('⚠️ Watchlist is empty');
+      }
+    } catch (error) {
+      console.error('❌ Failed to load watchlist:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // Map watchlist entries with live ticker data
   const watchlistedTickers = watchlist.map((entry) => {
-    const ticker = tickers.find((t) => t.pair === entry.pair) || {
-      pair: entry.pair,
-      name: entry.pair.split('/')[0],
-      price: 0,
-      change24h: 0,
-      high24h: 0,
-      low24h: 0,
-      volume24h: 0,
-      trend: 'NEUTRAL' as const,
-      rsi: 50,
-      macd: 0,
-      atr: 0,
-      history: [0, 0, 0, 0, 0, 0, 0, 0],
-    };
-    const signal = signals.find((s) => s.pair === entry.pair);
+    const ticker = tickers.find((t) => t.pair === entry.pair);
+    if (!ticker) {
+      return {
+        entry,
+        ticker: {
+          pair: entry.pair,
+          name: entry.pair.split('/')[0],
+          price: 0,
+          change24h: 0,
+          high24h: 0,
+          low24h: 0,
+          volume24h: 0,
+          trend: 'NEUTRAL' as const,
+          rsi: 50,
+          macd: 0,
+          atr: 0,
+          history: [0, 0, 0, 0, 0, 0, 0, 0],
+          bid: 0,
+          ask: 0,
+          depth: 0,
+          candles: [],
+        } as TickerInfo,
+        signal: signals.find((s) => s.pair === entry.pair),
+      };
+    }
     return {
       entry,
       ticker,
-      signal,
+      signal: signals.find((s) => s.pair === entry.pair),
     };
   });
 
@@ -109,9 +153,21 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
     (t) => !watchlist.some((w) => w.pair === t.pair)
   );
 
+  const handleToggleWatchlist = (pair: string) => {
+    const exists = watchlist.some(item => item.pair === pair);
+    let newList;
+    if (exists) {
+      newList = watchlist.filter(item => item.pair !== pair);
+    } else {
+      newList = [...watchlist, { pair, pinned: false, notes: '' }];
+    }
+    setWatchlist(newList);
+    saveWatchlistData(newList);
+  };
+
   const handleAddSelectedPair = () => {
     if (selectedPairToAdd) {
-      onToggleWatchlist(selectedPairToAdd);
+      handleToggleWatchlist(selectedPairToAdd);
       setSelectedPairToAdd('');
     }
   };
@@ -122,7 +178,11 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
   };
 
   const handleSaveNotes = (pair: string) => {
-    onUpdateNotes(pair, noteDraft);
+    const newList = watchlist.map(item =>
+      item.pair === pair ? { ...item, notes: noteDraft } : item
+    );
+    setWatchlist(newList);
+    saveWatchlistData(newList);
     setEditingNotesPair(null);
   };
 
@@ -135,16 +195,38 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
   const handleSaveAlerts = (pair: string) => {
     const high = alertHighDraft ? parseFloat(alertHighDraft) : undefined;
     const low = alertLowDraft ? parseFloat(alertLowDraft) : undefined;
-    onUpdateAlerts(pair, high, low);
+    const newList = watchlist.map(item =>
+      item.pair === pair ? { ...item, alertHigh: high, alertLow: low } : item
+    );
+    setWatchlist(newList);
+    saveWatchlistData(newList);
     setEditingAlertPair(null);
   };
 
+  const handleTogglePin = (pair: string) => {
+    const newList = watchlist.map(item =>
+      item.pair === pair ? { ...item, pinned: !item.pinned } : item
+    );
+    setWatchlist(newList);
+    saveWatchlistData(newList);
+  };
+
   const handleAddBundle = (pairs: string[]) => {
-    pairs.forEach((p) => {
-      if (!watchlist.some((w) => w.pair === p)) {
-        onToggleWatchlist(p);
-      }
-    });
+    const existingPairs = watchlist.map(w => w.pair);
+    const newPairs = pairs.filter(p => !existingPairs.includes(p));
+    if (newPairs.length > 0) {
+      const newItems = newPairs.map(p => ({ pair: p, pinned: false, notes: '' }));
+      const newList = [...watchlist, ...newItems];
+      setWatchlist(newList);
+      saveWatchlistData(newList);
+    }
+  };
+
+  const handleRefresh = () => {
+    setLoading(true);
+    const data = loadWatchlistData();
+    setWatchlist(data);
+    setLoading(false);
   };
 
   // Stats calculation
@@ -152,6 +234,17 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
   const topGainer = [...watchlistedTickers].sort((a, b) => b.ticker.change24h - a.ticker.change24h)[0];
   const bullishCount = watchlistedTickers.filter((w) => w.ticker.trend === 'BULLISH').length;
   const totalAlerts = watchlistedTickers.filter((w) => w.entry.alertHigh || w.entry.alertLow).length;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="text-4xl animate-pulse mb-4">⏳</div>
+          <div className="text-gray-400">Loading watchlist...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div id="watchlist-view" className="space-y-6 pb-12">
@@ -200,6 +293,13 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
             >
               <Plus className="w-4 h-4" />
               <span>Add</span>
+            </button>
+            <button
+              onClick={handleRefresh}
+              className="p-2 rounded-xl bg-[#0B0F14] hover:bg-[#1A2530] text-[#8D9AAA] hover:text-white border border-[#26313D] transition-all cursor-pointer"
+              title="Refresh watchlist"
+            >
+              <RefreshCw className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -380,7 +480,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
                     <div className="flex items-center gap-1">
                       {/* Pin Button */}
                       <button
-                        onClick={() => onTogglePin(ticker.pair)}
+                        onClick={() => handleTogglePin(ticker.pair)}
                         title={entry.pinned ? 'Unpin' : 'Pin to top'}
                         className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                           entry.pinned ? 'text-amber-400 bg-amber-500/10' : 'text-[#5F6B78] hover:text-white'
@@ -391,7 +491,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
 
                       {/* Remove Button */}
                       <button
-                        onClick={() => onToggleWatchlist(ticker.pair)}
+                        onClick={() => handleToggleWatchlist(ticker.pair)}
                         title="Remove from Watchlist"
                         className="p-1.5 rounded-lg text-[#5F6B78] hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                       >
@@ -569,7 +669,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
                     <tr key={ticker.pair} className="hover:bg-[#1A2530]/60 transition-colors">
                       <td className="py-3 pl-2 font-bold text-white font-sans flex items-center gap-2">
                         <button
-                          onClick={() => onTogglePin(ticker.pair)}
+                          onClick={() => handleTogglePin(ticker.pair)}
                           className={`p-1 rounded cursor-pointer ${
                             entry.pinned ? 'text-amber-400' : 'text-[#5F6B78] hover:text-white'
                           }`}
@@ -635,7 +735,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
                             <span>Trade</span>
                           </button>
                           <button
-                            onClick={() => onToggleWatchlist(ticker.pair)}
+                            onClick={() => handleToggleWatchlist(ticker.pair)}
                             title="Remove"
                             className="p-1.5 rounded-md bg-[#0B0F14] hover:bg-rose-500/20 text-[#5F6B78] hover:text-rose-400 border border-[#26313D] cursor-pointer"
                           >

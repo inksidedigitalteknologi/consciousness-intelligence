@@ -395,11 +395,6 @@ def start_api_server(bot_instance):
         socketio = SocketIO(app, cors_allowed_origins="*")
         
         # ========================================================
-        # WATCHLIST STORE (IN-MEMORY)
-        # ========================================================
-        _watchlist_store = {}  # { "user_id": ["BTC/USD", "ETH/USD"] }
-        
-        # ========================================================
         # API ROUTES
         # ========================================================
         
@@ -590,60 +585,7 @@ def start_api_server(bot_instance):
                 return jsonify({"error": str(e)}), 500
         
         # ========================================================
-        # WATCHLIST API
-        # ========================================================
-        
-        @app.route('/api/watchlist', methods=['GET'])
-        def api_get_watchlist():
-            try:
-                user_id = request.args.get('user_id', 'default')
-                watchlist = _watchlist_store.get(user_id, [])
-                return jsonify({
-                    "watchlist": watchlist,
-                    "timestamp": datetime.now().isoformat()
-                })
-            except Exception as e:
-                return jsonify({"error": str(e)}), 500
-        
-        @app.route('/api/watchlist', methods=['POST'])
-        def api_add_watchlist():
-            try:
-                data = request.json
-                user_id = data.get('user_id', 'default')
-                pair = data.get('pair', '')
-                
-                if not pair:
-                    return jsonify({"error": "Pair required"}), 400
-                
-                if user_id not in _watchlist_store:
-                    _watchlist_store[user_id] = []
-                
-                if pair not in _watchlist_store[user_id]:
-                    _watchlist_store[user_id].append(pair)
-                
-                return jsonify({
-                    "watchlist": _watchlist_store[user_id],
-                    "timestamp": datetime.now().isoformat()
-                })
-            except Exception as e:
-                return jsonify({"error": str(e)}), 500
-        
-        @app.route('/api/watchlist/<pair>', methods=['DELETE'])
-        def api_remove_watchlist(pair):
-            try:
-                user_id = request.args.get('user_id', 'default')
-                if user_id in _watchlist_store and pair in _watchlist_store[user_id]:
-                    _watchlist_store[user_id].remove(pair)
-                
-                return jsonify({
-                    "watchlist": _watchlist_store.get(user_id, []),
-                    "timestamp": datetime.now().isoformat()
-                })
-            except Exception as e:
-                return jsonify({"error": str(e)}), 500
-        
-        # ========================================================
-        # TELEGRAM API
+        # TELEGRAM API - LENGKAP
         # ========================================================
         
         @app.route('/api/telegram/status', methods=['GET'])
@@ -710,6 +652,10 @@ def start_api_server(bot_instance):
                 
             except Exception as e:
                 return jsonify({"error": str(e)}), 500
+        
+        # ========================================================
+        # TELEGRAM CONFIG SAVE & LOAD (BARU!)
+        # ========================================================
         
         @app.route('/api/telegram/config', methods=['GET'])
         def api_telegram_get_config():
@@ -889,9 +835,6 @@ def start_api_server(bot_instance):
         logger.info(f"   - GET  /api/positions")
         logger.info(f"   - GET  /api/logs")
         logger.info(f"   - GET  /api/diagnostics")
-        logger.info(f"   - GET  /api/watchlist")
-        logger.info(f"   - POST /api/watchlist")
-        logger.info(f"   - DELETE /api/watchlist/<pair>")
         logger.info(f"   - GET  /api/telegram/status")
         logger.info(f"   - GET  /api/telegram/config")
         logger.info(f"   - POST /api/telegram/send")
@@ -1012,6 +955,64 @@ def main_headless():
     
     logger.info(f"✅ {APP_NAME} stopped.")
     return 0
+# ========================================================
+# WATCHLIST API (Backend)
+# ========================================================
+
+_watchlist_store = {}  # { "user_id": ["BTC/USD", "ETH/USD"] }
+
+@app.route('/api/watchlist', methods=['GET'])
+def api_get_watchlist():
+    try:
+        # Untuk sementara pakai IP atau hardcode
+        user_id = request.args.get('user_id', 'default')
+        watchlist = _watchlist_store.get(user_id, [])
+        return jsonify({
+            "watchlist": watchlist,
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/watchlist', methods=['POST'])
+def api_add_watchlist():
+    try:
+        data = request.json
+        user_id = data.get('user_id', 'default')
+        pair = data.get('pair', '')
+        
+        if not pair:
+            return jsonify({"error": "Pair required"}), 400
+        
+        if user_id not in _watchlist_store:
+            _watchlist_store[user_id] = []
+        
+        if pair not in _watchlist_store[user_id]:
+            _watchlist_store[user_id].append(pair)
+        
+        return jsonify({
+            "watchlist": _watchlist_store[user_id],
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/watchlist/<pair>', methods=['DELETE'])
+def api_remove_watchlist(pair):
+    try:
+        user_id = request.args.get('user_id', 'default')
+        if user_id in _watchlist_store and pair in _watchlist_store[user_id]:
+            _watchlist_store[user_id].remove(pair)
+        
+        return jsonify({
+            "watchlist": _watchlist_store.get(user_id, []),
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
 
 # ============================================================
 # ENTRY POINT
@@ -1028,3 +1029,4 @@ if __name__ == "__main__":
         logger.error(f"Fatal error: {e}")
         traceback.print_exc()
         sys.exit(1)
+

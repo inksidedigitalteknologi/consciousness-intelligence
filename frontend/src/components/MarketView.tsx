@@ -1,6 +1,39 @@
-import React, { useState } from 'react';
-import { TrendingUp, ArrowUpRight, ArrowDownRight, Search, BarChart3, SlidersHorizontal, Activity, Star } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  TrendingUp,
+  Search,
+  Star,
+} from 'lucide-react';
 import { TickerInfo } from '../types';
+
+const WATCHLIST_KEY = 'inkside_watchlist_data';
+
+const loadWatchlist = (): string[] => {
+  try {
+    const data = localStorage.getItem(WATCHLIST_KEY);
+    if (data) {
+      const parsed = JSON.parse(data);
+      return parsed.map((item: any) => item.pair);
+    }
+    return [];
+  } catch {
+    return [];
+  }
+};
+
+const saveWatchlist = (watchlist: string[]) => {
+  try {
+    const existing = localStorage.getItem(WATCHLIST_KEY);
+    const parsed = existing ? JSON.parse(existing) : [];
+    const updated = watchlist.map(pair => {
+      const found = parsed.find((item: any) => item.pair === pair);
+      return found || { pair, pinned: false, notes: '', alertHigh: undefined, alertLow: undefined };
+    });
+    localStorage.setItem(WATCHLIST_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.error('Failed to save watchlist:', e);
+  }
+};
 
 interface MarketViewProps {
   tickers: TickerInfo[];
@@ -16,24 +49,69 @@ export const MarketView: React.FC<MarketViewProps> = ({
   onSelectPair,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTicker, setSelectedTicker] = useState<TickerInfo>(tickers[0]);
+  const [selectedTicker, setSelectedTicker] = useState<TickerInfo | null>(
+    tickers.length > 0 ? tickers[0] : null
+  );
   const [activeTab, setActiveTab] = useState<'1h' | '4h' | '1d'>('1h');
   const [onlyWatchlist, setOnlyWatchlist] = useState(false);
+  const [localWatchlist, setLocalWatchlist] = useState<string[]>(loadWatchlist);
+
+  useEffect(() => {
+    if (watchlist.length > 0) {
+      setLocalWatchlist(watchlist);
+    }
+  }, [watchlist]);
+
+  const toggleWatchlist = (pair: string) => {
+    setLocalWatchlist(prev => {
+      const exists = prev.includes(pair);
+      const newList = exists ? prev.filter(p => p !== pair) : [...prev, pair];
+      saveWatchlist(newList);
+      if (onToggleWatchlist) {
+        onToggleWatchlist(pair);
+      }
+      return newList;
+    });
+  };
+
+  const isInWatchlist = (pair: string) => localWatchlist.includes(pair);
 
   const filteredTickers = tickers.filter((t) => {
     const matchSearch =
       t.pair.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.name.toLowerCase().includes(searchTerm.toLowerCase());
     if (!matchSearch) return false;
-    if (onlyWatchlist) return watchlist.includes(t.pair);
+    if (onlyWatchlist) return localWatchlist.includes(t.pair);
     return true;
   });
 
-  const isSelectedWatchlisted = watchlist.includes(selectedTicker?.pair || '');
+  const handleSelectPair = (ticker: TickerInfo) => {
+    setSelectedTicker(ticker);
+    if (onSelectPair) {
+      onSelectPair(ticker.pair);
+    }
+    setTimeout(() => {
+      document.getElementById('market-spotlight')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }, 100);
+  };
+
+  if (!selectedTicker && tickers.length === 0) {
+    return (
+      <div className="p-6 text-center text-gray-400">
+        <p>No market data available</p>
+      </div>
+    );
+  }
+
+  const currentTicker = selectedTicker || tickers[0];
 
   return (
     <div id="market-view" className="space-y-4 sm:space-y-6 pb-12">
-      {/* Top Header */}
+
+      {/* HEADER */}
       <div className="p-4 sm:p-5 rounded-2xl bg-[#131A22] border border-[#26313D] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg">
         <div>
           <h2 className="text-base sm:text-lg font-bold text-white tracking-wide flex items-center gap-2">
@@ -45,9 +123,7 @@ export const MarketView: React.FC<MarketViewProps> = ({
           </p>
         </div>
 
-        {/* Search & Watchlist Filter */}
         <div className="flex items-center gap-2 w-full md:w-auto">
-          {/* Watchlist toggle filter pill */}
           <button
             onClick={() => setOnlyWatchlist(!onlyWatchlist)}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
@@ -57,14 +133,12 @@ export const MarketView: React.FC<MarketViewProps> = ({
             }`}
           >
             <Star className={`w-3.5 h-3.5 ${onlyWatchlist ? 'fill-black' : ''}`} />
-            <span>Watchlist ({watchlist.length})</span>
+            <span>Watchlist ({localWatchlist.length})</span>
           </button>
 
-          {/* Search Field */}
           <div className="relative flex-1 md:w-60">
             <Search className="w-4 h-4 text-[#5F6B78] absolute left-3 top-2.5" />
             <input
-              id="market-search-input"
               type="text"
               placeholder="Search pair..."
               value={searchTerm}
@@ -75,88 +149,85 @@ export const MarketView: React.FC<MarketViewProps> = ({
         </div>
       </div>
 
-      {/* Selected Pair Chart & Indicator Spotlight */}
-      {selectedTicker && (
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#131A22] border border-[#26313D] space-y-4 shadow-xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#26313D]/70">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#1A2530] border border-[#26313D] flex items-center justify-center font-bold text-white text-sm shrink-0">
-                {selectedTicker.pair.split('/')[0]}
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-lg sm:text-xl font-black text-white font-mono">{selectedTicker.pair}</span>
-                  <span
-                    className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${
-                      selectedTicker.change24h >= 0
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                    }`}
-                  >
-                    {selectedTicker.change24h >= 0 ? '+' : ''}
-                    {selectedTicker.change24h.toFixed(2)}%
-                  </span>
-
-                  {/* Watchlist toggle in spotlight */}
-                  {onToggleWatchlist && (
-                    <button
-                      onClick={() => onToggleWatchlist(selectedTicker.pair)}
-                      title={isSelectedWatchlisted ? 'Remove from Watchlist' : 'Add to Watchlist'}
-                      className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
-                        isSelectedWatchlisted
-                          ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
-                          : 'bg-[#0B0F14] text-[#8D9AAA] hover:text-white border-[#26313D]'
-                      }`}
-                    >
-                      <Star className={`w-3.5 h-3.5 ${isSelectedWatchlisted ? 'fill-amber-400' : ''}`} />
-                    </button>
-                  )}
-                </div>
-                <span className="text-xs text-[#8D9AAA]">{selectedTicker.name} · Kraken Live Stream</span>
-              </div>
+      {/* SPOTLIGHT */}
+      <div id="market-spotlight" className="p-4 sm:p-5 rounded-2xl bg-[#131A22] border border-[#26313D] space-y-4 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#26313D]/70">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#1A2530] border border-[#26313D] flex items-center justify-center font-bold text-white text-sm shrink-0">
+              {currentTicker?.pair?.split('/')[0] || '??'}
             </div>
-
-            {/* Timeframe selector */}
-            <div className="flex items-center gap-1.5 bg-[#0B0F14] p-1 rounded-xl border border-[#26313D] self-start sm:self-auto">
-              {(['1h', '4h', '1d'] as const).map((tf) => (
-                <button
-                  key={tf}
-                  onClick={() => setActiveTab(tf)}
-                  className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
-                    activeTab === tf ? 'bg-blue-600 text-white' : 'text-[#8D9AAA] hover:text-white'
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-lg sm:text-xl font-black text-white font-mono">
+                  {currentTicker?.pair || 'Unknown'}
+                </span>
+                <span
+                  className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${
+                    (currentTicker?.change24h ?? 0) >= 0
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                   }`}
                 >
-                  {tf.toUpperCase()}
+                  {(currentTicker?.change24h ?? 0) >= 0 ? '+' : ''}
+                  {currentTicker?.change24h?.toFixed(2) ?? '0.00'}%
+                </span>
+
+                <button
+                  onClick={() => currentTicker && toggleWatchlist(currentTicker.pair)}
+                  title={currentTicker && isInWatchlist(currentTicker.pair) ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                  className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                    currentTicker && isInWatchlist(currentTicker.pair)
+                      ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                      : 'bg-[#0B0F14] text-[#8D9AAA] hover:text-white border-[#26313D]'
+                  }`}
+                >
+                  <Star className={`w-3.5 h-3.5 ${currentTicker && isInWatchlist(currentTicker.pair) ? 'fill-amber-400' : ''}`} />
                 </button>
-              ))}
+              </div>
+              <span className="text-xs text-[#8D9AAA]">
+                {currentTicker?.name || 'Unknown'} · Kraken Live Stream
+              </span>
             </div>
           </div>
 
-          {/* Simulated Candlestick / Area Chart */}
-          <div className="h-48 sm:h-56 w-full bg-[#0B0F14] rounded-xl border border-[#26313D]/80 p-3 sm:p-4 flex flex-col justify-between relative overflow-hidden">
-            {/* Background Grid Lines */}
-            <div className="absolute inset-0 grid grid-rows-4 grid-cols-6 pointer-events-none opacity-10">
-              {Array.from({ length: 24 }).map((_, i) => (
-                <div key={i} className="border-b border-r border-white/20" />
-              ))}
-            </div>
+          <div className="flex items-center gap-1.5 bg-[#0B0F14] p-1 rounded-xl border border-[#26313D] self-start sm:self-auto">
+            {(['1h', '4h', '1d'] as const).map((tf) => (
+              <button
+                key={tf}
+                onClick={() => setActiveTab(tf)}
+                className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
+                  activeTab === tf ? 'bg-blue-600 text-white' : 'text-[#8D9AAA] hover:text-white'
+                }`}
+              >
+                {tf.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
 
-            <div className="flex items-center justify-between text-xs text-[#8D9AAA] font-mono z-10">
-              <span>High: ${selectedTicker.high24h.toLocaleString()}</span>
-              <span>Low: ${selectedTicker.low24h.toLocaleString()}</span>
-            </div>
+        {/* Chart */}
+        <div className="h-48 sm:h-56 w-full bg-[#0B0F14] rounded-xl border border-[#26313D]/80 p-3 sm:p-4 flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute inset-0 grid grid-rows-4 grid-cols-6 pointer-events-none opacity-10">
+            {Array.from({ length: 24 }).map((_, i) => (
+              <div key={i} className="border-b border-r border-white/20" />
+            ))}
+          </div>
 
-            {/* Simulated Line / Bar SVG Visualization */}
-            <div className="h-28 sm:h-32 w-full flex items-end gap-2 sm:gap-3 px-1 sm:px-2 z-10">
-              {selectedTicker.history.map((val, idx) => {
-                const min = Math.min(...selectedTicker.history) * 0.998;
-                const max = Math.max(...selectedTicker.history) * 1.002;
+          <div className="flex items-center justify-between text-xs text-[#8D9AAA] font-mono z-10">
+            <span>High: ${currentTicker?.high24h?.toLocaleString() ?? '0'}</span>
+            <span>Low: ${currentTicker?.low24h?.toLocaleString() ?? '0'}</span>
+          </div>
+
+          <div className="h-28 sm:h-32 w-full flex items-end gap-2 sm:gap-3 px-1 sm:px-2 z-10">
+            {currentTicker?.history && currentTicker.history.length > 0 ? (
+              currentTicker.history.map((val, idx) => {
+                const min = Math.min(...currentTicker.history) * 0.998;
+                const max = Math.max(...currentTicker.history) * 1.002;
                 const heightPct = Math.max(15, Math.min(95, ((val - min) / (max - min)) * 100));
-                const isGreen = idx > 0 && val >= selectedTicker.history[idx - 1];
+                const isGreen = idx > 0 && val >= currentTicker.history[idx - 1];
 
                 return (
                   <div key={idx} className="flex-1 flex flex-col items-center gap-1 group relative">
-                    {/* Tooltip */}
                     <div className="absolute -top-8 bg-[#1A2530] border border-[#26313D] text-white text-[10px] font-mono px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
                       ${val.toLocaleString()}
                     </div>
@@ -166,49 +237,71 @@ export const MarketView: React.FC<MarketViewProps> = ({
                       }`}
                       style={{ height: `${heightPct}%` }}
                     />
-                    <span className="text-[8px] sm:text-[9px] text-[#5F6B78] font-mono">T-{selectedTicker.history.length - idx}</span>
+                    <span className="text-[8px] sm:text-[9px] text-[#5F6B78] font-mono">
+                      T-{currentTicker.history.length - idx}
+                    </span>
                   </div>
                 );
-              })}
-            </div>
-
-            <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-[#5F6B78] font-mono z-10 pt-2 border-t border-[#26313D]/40">
-              <span>Current Price: <strong className="text-white">${selectedTicker.price.toLocaleString()}</strong></span>
-              <span className="hidden sm:inline">24h Volume: <strong className="text-white">${(selectedTicker.volume24h * selectedTicker.price / 1000000).toFixed(2)}M</strong></span>
-            </div>
+              })
+            ) : (
+              <div className="w-full text-center text-[#5F6B78] text-sm">No chart data</div>
+            )}
           </div>
 
-          {/* Indicators Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 pt-1">
-            <div className="p-3 rounded-xl bg-[#1A2530] border border-[#26313D]">
-              <span className="text-[10px] text-[#8D9AAA] font-semibold uppercase">RSI (14)</span>
-              <div className="text-sm sm:text-base font-bold text-white font-mono mt-0.5">{selectedTicker.rsi.toFixed(1)}</div>
-              <span className="text-[10px] text-emerald-400 font-bold">
-                {selectedTicker.rsi > 70 ? 'Overbought' : selectedTicker.rsi < 30 ? 'Oversold' : 'Momentum Bullish'}
-              </span>
-            </div>
-            <div className="p-3 rounded-xl bg-[#1A2530] border border-[#26313D]">
-              <span className="text-[10px] text-[#8D9AAA] font-semibold uppercase">MACD Histogram</span>
-              <div className="text-sm sm:text-base font-bold text-white font-mono mt-0.5">+{selectedTicker.macd.toFixed(2)}</div>
-              <span className="text-[10px] text-emerald-400 font-bold">Positive Expansion</span>
-            </div>
-            <div className="p-3 rounded-xl bg-[#1A2530] border border-[#26313D]">
-              <span className="text-[10px] text-[#8D9AAA] font-semibold uppercase">ATR Volatility (14)</span>
-              <div className="text-sm sm:text-base font-bold text-white font-mono mt-0.5">
-                ${selectedTicker.atr >= 1 ? selectedTicker.atr.toFixed(2) : selectedTicker.atr.toFixed(4)}
-              </div>
-              <span className="text-[10px] text-blue-400 font-bold">SL Buffer ±1.5x</span>
-            </div>
-            <div className="p-3 rounded-xl bg-[#1A2530] border border-[#26313D]">
-              <span className="text-[10px] text-[#8D9AAA] font-semibold uppercase">Overall Trend</span>
-              <div className="text-sm sm:text-base font-bold text-emerald-400 font-mono mt-0.5">{selectedTicker.trend}</div>
-              <span className="text-[10px] text-[#8D9AAA] font-bold">5/5 MTF Aligned</span>
-            </div>
+          <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-[#5F6B78] font-mono z-10 pt-2 border-t border-[#26313D]/40">
+            <span>Current Price: <strong className="text-white">${currentTicker?.price?.toLocaleString() ?? '0'}</strong></span>
+            <span className="hidden sm:inline">
+              24h Volume: <strong className="text-white">${((currentTicker?.volume24h ?? 0) * (currentTicker?.price ?? 0) / 1000000).toFixed(2)}M</strong>
+            </span>
           </div>
         </div>
-      )}
 
-      {/* Full Pairs Table Grid */}
+        {/* Indicators - DENGAN SAFE CHECKING */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 pt-1">
+          <div className="p-3 rounded-xl bg-[#1A2530] border border-[#26313D]">
+            <span className="text-[10px] text-[#8D9AAA] font-semibold uppercase">RSI (14)</span>
+            <div className="text-sm sm:text-base font-bold text-white font-mono mt-0.5">
+              {currentTicker?.rsi?.toFixed(1) ?? '--'}
+            </div>
+            <span className="text-[10px] text-emerald-400 font-bold">
+              {(currentTicker?.rsi ?? 0) > 70 ? 'Overbought' : (currentTicker?.rsi ?? 0) < 30 ? 'Oversold' : 'Momentum Bullish'}
+            </span>
+          </div>
+          
+          <div className="p-3 rounded-xl bg-[#1A2530] border border-[#26313D]">
+            <span className="text-[10px] text-[#8D9AAA] font-semibold uppercase">MACD Histogram</span>
+            <div className="text-sm sm:text-base font-bold text-white font-mono mt-0.5">
+              +{currentTicker?.macd?.toFixed(2) ?? '0.00'}
+            </div>
+            <span className="text-[10px] text-emerald-400 font-bold">Positive Expansion</span>
+          </div>
+          
+          <div className="p-3 rounded-xl bg-[#1A2530] border border-[#26313D]">
+            <span className="text-[10px] text-[#8D9AAA] font-semibold uppercase">ATR Volatility (14)</span>
+            <div className="text-sm sm:text-base font-bold text-white font-mono mt-0.5">
+              ${(currentTicker?.atr ?? 0) >= 1 
+                ? currentTicker?.atr?.toFixed(2) ?? '0.00' 
+                : currentTicker?.atr?.toFixed(4) ?? '0.0000'}
+            </div>
+            <span className="text-[10px] text-blue-400 font-bold">SL Buffer ±1.5x</span>
+          </div>
+          
+          {/* INDICATOR KE-4 - DENGAN SAFE CHECKING */}
+          <div className="p-3 rounded-xl bg-[#1A2530] border border-[#26313D]">
+            <span className="text-[10px] text-[#8D9AAA] font-semibold uppercase">Bid/Ask Spread</span>
+            <div className="text-sm sm:text-base font-bold text-white font-mono mt-0.5">
+              ${currentTicker?.bid && currentTicker?.ask 
+                ? (currentTicker.ask - currentTicker.bid).toFixed(2) 
+                : '--'}
+            </div>
+            <span className="text-[10px] text-blue-400 font-bold">
+              Depth: {currentTicker?.depth?.toFixed(0) ?? '--'}%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* TICKER LIST */}
       <div className="p-4 sm:p-5 rounded-2xl bg-[#131A22] border border-[#26313D] shadow-lg">
         <div className="flex items-center justify-between pb-3 border-b border-[#26313D]/70 mb-3">
           <h3 className="text-xs sm:text-sm font-bold text-white tracking-wider uppercase">
@@ -234,32 +327,30 @@ export const MarketView: React.FC<MarketViewProps> = ({
             </thead>
             <tbody className="divide-y divide-[#26313D]/40">
               {filteredTickers.map((t) => {
-                const isPositive = t.change24h >= 0;
+                const isPositive = (t.change24h ?? 0) >= 0;
                 const isSelected = selectedTicker?.pair === t.pair;
-                const inWatchlist = watchlist.includes(t.pair);
+                const inWatchlist = localWatchlist.includes(t.pair);
 
                 return (
                   <tr
                     key={t.pair}
-                    onClick={() => setSelectedTicker(t)}
+                    onClick={() => handleSelectPair(t)}
                     className={`hover:bg-[#1A2530] transition-colors cursor-pointer ${
                       isSelected ? 'bg-[#1A2530]/80' : ''
                     }`}
                   >
                     <td className="py-3 pl-2 font-bold text-white font-sans flex items-center gap-2">
-                      {onToggleWatchlist && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onToggleWatchlist(t.pair);
-                          }}
-                          className={`p-1 rounded cursor-pointer ${
-                            inWatchlist ? 'text-amber-400' : 'text-[#5F6B78] hover:text-white'
-                          }`}
-                        >
-                          <Star className={`w-3.5 h-3.5 ${inWatchlist ? 'fill-amber-400' : ''}`} />
-                        </button>
-                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleWatchlist(t.pair);
+                        }}
+                        className={`p-1 rounded cursor-pointer ${
+                          inWatchlist ? 'text-amber-400' : 'text-[#5F6B78] hover:text-white'
+                        }`}
+                      >
+                        <Star className={`w-3.5 h-3.5 ${inWatchlist ? 'fill-amber-400' : ''}`} />
+                      </button>
                       <span className="w-6 h-6 rounded-md bg-[#0B0F14] border border-[#26313D] flex items-center justify-center text-[10px] font-bold">
                         {t.pair.split('/')[0]}
                       </span>
@@ -277,23 +368,23 @@ export const MarketView: React.FC<MarketViewProps> = ({
                         }`}
                       >
                         {isPositive ? '+' : ''}
-                        {t.change24h.toFixed(2)}%
+                        {t.change24h?.toFixed(2) ?? '0.00'}%
                       </span>
                     </td>
                     <td className="py-3 text-right text-[#8D9AAA] hidden sm:table-cell">
-                      ${t.high24h.toLocaleString()}
+                      ${t.high24h?.toLocaleString() ?? '0'}
                     </td>
                     <td className="py-3 text-right text-[#8D9AAA] hidden sm:table-cell">
-                      ${t.low24h.toLocaleString()}
+                      ${t.low24h?.toLocaleString() ?? '0'}
                     </td>
                     <td className="py-3 text-right text-[#8D9AAA] hidden md:table-cell">
-                      ${(t.volume24h * t.price / 1000000).toFixed(1)}M
+                      ${((t.volume24h ?? 0) * (t.price ?? 0) / 1000000).toFixed(1)}M
                     </td>
                     <td className="py-3 text-right pr-2">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedTicker(t);
+                          handleSelectPair(t);
                         }}
                         className="px-2.5 py-1 rounded-md bg-[#0B0F14] hover:bg-blue-600 hover:text-white border border-[#26313D] text-[#8D9AAA] text-[10px] font-bold font-sans transition-colors cursor-pointer"
                       >
@@ -306,6 +397,12 @@ export const MarketView: React.FC<MarketViewProps> = ({
             </tbody>
           </table>
         </div>
+
+        {filteredTickers.length === 0 && (
+          <div className="text-center py-8 text-[#8D9AAA] text-sm">
+            {onlyWatchlist ? 'No pairs in your watchlist.' : 'No pairs found matching your search.'}
+          </div>
+        )}
       </div>
     </div>
   );

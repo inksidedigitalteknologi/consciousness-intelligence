@@ -366,7 +366,6 @@ export const INITIAL_COMPONENTS: ComponentHealthStatus[] = [
   { name: 'Trading Bot Core (v4.4.1)', status: 'ONLINE', score: 98, checks: 1200, errors: 0, latencyMs: 10, lastCheck: 'Active' },
   { name: 'Kraken Exchange Bridge', status: 'ONLINE', score: 92, checks: 450, errors: 0, latencyMs: 120, lastCheck: 'Active' },
   { name: 'Autonomous RSS Learner', status: 'ONLINE', score: 90, checks: 180, errors: 0, latencyMs: 210, lastCheck: 'Active' },
-  { name: 'PyRemote Mobile Bridge', status: 'ONLINE', score: 100, checks: 320, errors: 0, latencyMs: 5, lastCheck: 'Active' },
   { name: 'System Diagnostics Watchdog', status: 'ONLINE', score: 100, checks: 1420, errors: 0, latencyMs: 3, lastCheck: 'Active' },
 ];
 
@@ -404,6 +403,5 @@ export const INITIAL_LOGS: SystemLogEntry[] = [
   { id: 2, timestamp: Date.now() - 50000, level: 'SUCCESS', message: 'Cognitive Brain v4.2.3 connected to Memory DB (2,450 records loaded).', source: 'Brain' },
   { id: 3, timestamp: Date.now() - 40000, level: 'INFO', message: 'Kraken Exchange public market feed initialized across 20 pairs.', source: 'MarketData' },
   { id: 4, timestamp: Date.now() - 30000, level: 'SUCCESS', message: 'Autonomous Learning Engine started. RSS feeder scheduled for 18 active feeds.', source: 'Autonomous' },
-  { id: 5, timestamp: Date.now() - 20000, level: 'INFO', message: 'PyRemote Mobile Bridge server active on port 5000.', source: 'PyRemote' },
   { id: 6, timestamp: Date.now() - 10000, level: 'SUCCESS', message: 'Generated STRONG_BUY signal on BTC/USD with 88% confidence (MTF 5/5).', source: 'SignalEngine' },
 ];

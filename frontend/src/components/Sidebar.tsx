@@ -85,7 +85,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       items: [
         { id: 'Trading' as NavigationPage, label: 'Trading Engine', icon: Zap },
         { id: 'Telegram' as NavigationPage, label: 'Telegram Alerts', icon: Send },
-        { id: 'PyRemote' as NavigationPage, label: 'PyRemote Mobile', icon: Smartphone },
         { id: 'Settings' as NavigationPage, label: 'Bot Settings', icon: Sliders },
       ],
     },

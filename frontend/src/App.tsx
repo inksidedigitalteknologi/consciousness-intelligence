@@ -5,13 +5,13 @@ import { DashboardView } from './components/DashboardView';
 import { BrainView } from './components/BrainView';
 import { ReflectionView } from './components/ReflectionView';
 import { MarketView } from './components/MarketView';
+import { WatchlistView } from './components/WatchlistView';
 import { SignalsView } from './components/SignalsView';
 import { LearningView } from './components/LearningView';
 import { KnowledgeView } from './components/KnowledgeView';
 import { HealthView } from './components/HealthView';
 import { TradingControlView } from './components/TradingControlView';
 import { TelegramView } from './components/TelegramView';
-import { PyRemoteView } from './components/PyRemoteView';
 import { DiagnosticsView } from './components/DiagnosticsView';
 import { SettingsView } from './components/SettingsView';
 import { MemoryView } from './components/MemoryView';
@@ -387,6 +387,22 @@ export default function App() {
 
           {currentPage === 'Market' && <MarketView tickers={tickers} />}
 
+          {/* ⬇️ WATCHLIST VIEW - TAMBAHKAN INI ⬇️ */}
+          {currentPage === 'Watchlist' && (
+            <WatchlistView
+              tickers={tickers}
+              signals={realSignals.length > 0 ? realSignals as any : signals}
+              onNavigateToTrading={(pair: string) => {
+                setCurrentPage('Trading');
+                localStorage.setItem('inkside_selected_pair', pair);
+              }}
+              onNavigateToSignals={(pair: string) => {
+                setCurrentPage('Signals');
+                localStorage.setItem('inkside_selected_pair', pair);
+              }}
+            />
+          )}
+
           {currentPage === 'Signals' && (
             <SignalsView signals={realSignals.length > 0 ? realSignals as any : signals} />
           )}
@@ -422,10 +438,6 @@ export default function App() {
               isConfigured={telegramConfigured}
               onSaveConfig={() => setTelegramConfigured(true)}
             />
-          )}
-
-          {currentPage === 'PyRemote' && (
-            <PyRemoteView logs={logs} onClearLogs={() => setLogs([])} />
           )}
 
           {currentPage === 'Diagnostics' && <DiagnosticsView />}
