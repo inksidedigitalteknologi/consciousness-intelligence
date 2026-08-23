@@ -5,6 +5,8 @@
 # INKSIDEDIGITAL TRADING BOT v5.0
 # COGNITIVE MIRROR ENGINE - FULL HEADLESS (API MODE)
 # WITH TELEGRAM SEND & CONFIG SUPPORT
+# WITH SYSTEM METRICS & SECURE SETTINGS
+# TANPA DATA DUMMY - 100% REAL DATA
 # ============================================================
 
 import os
@@ -12,7 +14,6 @@ import sys
 import time
 import json
 import signal
-import random
 import logging
 import threading
 import traceback
@@ -161,188 +162,16 @@ else:
     logger.warning("⚠️ Exchange not available")
 
 # ============================================================
-# FALLBACK CLASSES
+# FALLBACK - TANPA DUMMY (ERROR LANGSUNG)
 # ============================================================
 
-class MockBrain:
-    def __init__(self):
-        self._state = "ACTIVE"
-        self._cycles = 0
-        self._goals = [
-            {"name": "learn_continuously", "priority": 1, "progress": 0.0, "status": "active"},
-            {"name": "improve_decision_making", "priority": 2, "progress": 0.0, "status": "active"},
-            {"name": "develop_intuition", "priority": 3, "progress": 0.0, "status": "active"},
-            {"name": "build_knowledge_base", "priority": 4, "progress": 0.0, "status": "active"},
-        ]
-        
-    def get_state(self):
-        self._cycles += 1
-        return {
-            "state": self._state,
-            "cycles": self._cycles,
-            "goals": self._goals,
-            "modules_available": 11,
-            "total_modules": 19,
-            "health": 100.0
-        }
-    
-    def status(self):
-        return self.get_state()
-    
-    def reflection(self):
-        return {
-            'awareness': 0.85,
-            'emotion': 'CALM',
-            'curiosity': 0.72,
-            'insights': ['System running in headless mode'],
-            'timestamp': datetime.now().isoformat()
-        }
-    
-    def learn(self, data=None):
-        self._cycles += 1
-        return {"status": "success", "cycles": self._cycles}
-    
-    def get_goals(self):
-        return self._goals
-    
-    def get_metrics(self):
-        return {
-            "total_cycles": self._cycles,
-            "success_rate": 95.0,
-            "memory_usage": 45.2
-        }
-
-class MockTradingBot:
-    def __init__(self, brain_instance=None, exchange_instance=None):
-        self.brain = brain_instance
-        self.exchange = exchange_instance
-        self.running = True
-        self._cycles = 0
-        self._signals = []
-        self._market_data = {}
-        
-    def get_status(self):
-        self._cycles += 1
-        return {
-            "state": "RUNNING" if self.running else "IDLE",
-            "mode": MODE,
-            "cycles": self._cycles,
-            "uptime": int(time.time() - _startup_time),
-            "version": APP_VERSION,
-            "consciousness": True,
-            "learning_engine": True,
-            "scanner": True,
-            "exchange": EXCHANGE_AVAILABLE,
-            "risk_level": "MODERATE",
-            "portfolio": {
-                "cash": 10000.0,
-                "total_value": 10000.0,
-                "pnl": 0.0,
-                "pnl_percentage": 0.0
-            },
-            "performance": {
-                "total_trades": 0,
-                "winning_trades": 0,
-                "losing_trades": 0,
-                "win_rate": 0.0,
-                "total_pnl": 0.0,
-                "total_pnl_percentage": 0.0
-            }
-        }
-    
-    def get_signals(self):
-        pairs = ["BTC/USD", "ETH/USD", "SOL/USD", "ADA/USD", "XRP/USD"]
-        signals = []
-        for pair in pairs:
-            signals.append({
-                "pair": pair,
-                "signal": random.choice(["BUY", "SELL", "HOLD", "MONITOR"]),
-                "confidence": random.randint(40, 95),
-                "price": random.uniform(1000, 65000),
-                "strength": random.choice(["WEAK", "NEUTRAL", "STRONG"]),
-                "timestamp": datetime.now().isoformat()
-            })
-        return signals
-    
-    def get_market_data(self, pair=None):
-        if pair:
-            pair = pair.replace('/', '')
-        base = random.uniform(1000, 65000)
-        return {
-            "price": round(base, 2),
-            "change": round(random.uniform(-5, 5), 2),
-            "volume": round(random.uniform(100, 2000), 2),
-            "high": round(base * (1 + random.uniform(0, 0.02)), 2),
-            "low": round(base * (1 - random.uniform(0, 0.02)), 2),
-            "trend": random.choice(["BULLISH", "BEARISH", "NEUTRAL"]),
-            "timestamp": datetime.now().isoformat()
-        }
-    
-    def analyze_pair(self, pair):
-        return {
-            "pair": pair,
-            "signal": random.choice(["BUY", "SELL", "HOLD"]),
-            "confidence": random.randint(40, 95),
-            "indicators": {
-                "rsi": random.randint(20, 80),
-                "macd": round(random.uniform(-1, 1), 4),
-            },
-            "timestamp": datetime.now().isoformat()
-        }
-    
-    def stop(self):
-        self.running = False
-        return True
-    
-    def start_engine(self):
-        self.running = True
-        return True
-    
-    def get_logs(self, limit=50):
-        logs = []
-        for i in range(min(limit, 10)):
-            logs.append({
-                "id": i,
-                "timestamp": datetime.now().isoformat(),
-                "level": random.choice(["INFO", "SUCCESS", "WARNING"]),
-                "message": f"Log entry {i}: System running normally",
-                "source": "System"
-            })
-        return logs
-    
-    def get_positions(self):
-        return []
-    
-    def get_diagnostics(self):
-        return {
-            "system": {
-                "cpu_usage": random.uniform(10, 30),
-                "memory_usage": random.uniform(40, 70),
-                "disk_usage": random.uniform(30, 50),
-                "uptime": int(time.time() - _startup_time)
-            },
-            "application": {
-                "status": "online",
-                "version": APP_VERSION,
-                "mode": MODE,
-                "uptime": int(time.time() - _startup_time)
-            },
-            "modules": {
-                "brain": "ACTIVE",
-                "scanner": "ACTIVE",
-                "learning": "ACTIVE",
-                "exchange": "CONNECTED" if EXCHANGE_AVAILABLE else "DISCONNECTED"
-            }
-        }
-
 if Brain is None:
-    logger.warning("⚠️ Brain not available, using MockBrain")
-    Brain = MockBrain
-    brain = MockBrain()
+    logger.critical("❌ Brain module not available! System cannot run without Cognitive Brain.")
+    sys.exit(1)
 
 if TradingBot is None:
-    logger.warning("⚠️ TradingBot not available, using MockTradingBot")
-    TradingBot = MockTradingBot
+    logger.critical("❌ TradingBot module not available! System cannot run without Trading Bot.")
+    sys.exit(1)
 
 logger.info("✅ Core modules loaded")
 
@@ -451,14 +280,17 @@ def start_api_server(bot_instance):
                 
                 if bot_instance and hasattr(bot_instance, 'get_market_data'):
                     data = bot_instance.get_market_data(pair)
+                    return jsonify({
+                        "pair": pair,
+                        "data": data,
+                        "timestamp": datetime.now().isoformat()
+                    })
                 else:
-                    data = generate_mock_market_data()
-                
-                return jsonify({
-                    "pair": pair,
-                    "data": data,
-                    "timestamp": datetime.now().isoformat()
-                })
+                    return jsonify({
+                        "error": "Market data not available",
+                        "message": "Trading bot not initialized or missing get_market_data method"
+                    }), 503
+                    
             except Exception as e:
                 return jsonify({"error": str(e)}), 500
         
@@ -570,9 +402,9 @@ def start_api_server(bot_instance):
                 else:
                     diag = {
                         "system": {
-                            "cpu_usage": random.uniform(10, 30),
-                            "memory_usage": random.uniform(40, 70),
-                            "disk_usage": random.uniform(30, 50),
+                            "cpu_usage": 0,
+                            "memory_usage": 0,
+                            "disk_usage": 0,
                             "uptime": int(time.time() - _startup_time)
                         },
                         "application": {
@@ -588,6 +420,163 @@ def start_api_server(bot_instance):
                 })
             except Exception as e:
                 return jsonify({"error": str(e)}), 500
+        
+        # ========================================================
+        # SYSTEM METRICS API
+        # ========================================================
+        
+        @app.route('/api/system/metrics', methods=['GET'])
+        def api_system_metrics():
+            try:
+                import psutil
+                return jsonify({
+                    "cpu": psutil.cpu_percent(interval=0.5),
+                    "ram": psutil.virtual_memory().used / (1024**3),
+                    "uptime": int(time.time() - _startup_time),
+                    "memory_count": 0,
+                    "knowledge_count": 0,
+                    "pnl": 0,
+                    "win_rate": 0,
+                    "total_trades": 0,
+                    "prediction_accuracy": 0,
+                    "open_positions": 0,
+                    "risk_level": "--",
+                    "health_score": 0,
+                })
+            except ImportError:
+                return jsonify({
+                    "cpu": 0,
+                    "ram": 0,
+                    "uptime": int(time.time() - _startup_time),
+                    "memory_count": 0,
+                    "knowledge_count": 0,
+                    "pnl": 0,
+                    "win_rate": 0,
+                    "total_trades": 0,
+                    "prediction_accuracy": 0,
+                    "open_positions": 0,
+                    "risk_level": "--",
+                    "health_score": 0,
+                })
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+        
+        # ========================================================
+        # SETTINGS API (AMAN - TANPA API KEY)
+        # ========================================================
+        
+        @app.route('/api/settings/status', methods=['GET'])
+        def api_settings_status():
+            try:
+                return jsonify({
+                    "kraken_configured": bool(os.environ.get('KRAKEN_API_KEY')),
+                    "telegram_configured": bool(os.environ.get('TELEGRAM_BOT_TOKEN')),
+                    "trading_mode": os.environ.get('TRADING_MODE', 'PAPER'),
+                    "risk_level": os.environ.get('RISK_LEVEL', 'MODERATE'),
+                })
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+        
+        @app.route('/api/settings', methods=['POST'])
+        def api_save_settings():
+            try:
+                data = request.json
+                
+                if 'trading_mode' in data:
+                    os.environ['TRADING_MODE'] = data['trading_mode']
+                if 'risk_level' in data:
+                    os.environ['RISK_LEVEL'] = data['risk_level']
+                
+                env_path = CURRENT_DIR / '.env'
+                if env_path.exists():
+                    with open(env_path, 'r') as f:
+                        lines = f.readlines()
+                    
+                    updated_keys = set()
+                    for i, line in enumerate(lines):
+                        if line.startswith('TRADING_MODE=') and 'trading_mode' in data:
+                            lines[i] = f'TRADING_MODE={data["trading_mode"]}\n'
+                            updated_keys.add('TRADING_MODE')
+                        elif line.startswith('RISK_LEVEL=') and 'risk_level' in data:
+                            lines[i] = f'RISK_LEVEL={data["risk_level"]}\n'
+                            updated_keys.add('RISK_LEVEL')
+                    
+                    if 'trading_mode' in data and 'TRADING_MODE' not in updated_keys:
+                        lines.append(f'TRADING_MODE={data["trading_mode"]}\n')
+                    if 'risk_level' in data and 'RISK_LEVEL' not in updated_keys:
+                        lines.append(f'RISK_LEVEL={data["risk_level"]}\n')
+                    
+                    with open(env_path, 'w') as f:
+                        f.writelines(lines)
+                
+                return jsonify({
+                    "status": "success",
+                    "message": "Settings saved",
+                    "timestamp": datetime.now().isoformat()
+                })
+                
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+        
+        # ========================================================
+        # EXCHANGE TEST API
+        # ========================================================
+        
+        @app.route('/api/exchange/test', methods=['POST'])
+        def api_exchange_test():
+            try:
+                api_key = os.environ.get('KRAKEN_API_KEY', '')
+                api_secret = os.environ.get('KRAKEN_API_SECRET', '')
+                
+                if not api_key or not api_secret:
+                    return jsonify({
+                        "status": "error",
+                        "message": "API keys not configured in .env"
+                    }), 400
+                
+                try:
+                    import krakenex
+                    api = krakenex.API()
+                    api.key = api_key
+                    api.secret = api_secret
+                    
+                    result = api.query_public('Ticker', {'pair': 'XBTUSD'})
+                    
+                    if result.get('error'):
+                        return jsonify({
+                            "status": "error",
+                            "message": result['error'][0]
+                        })
+                    
+                    return jsonify({
+                        "status": "ok",
+                        "message": "Connection successful",
+                        "timestamp": datetime.now().isoformat()
+                    })
+                    
+                except ImportError:
+                    import requests
+                    url = "https://api.kraken.com/0/public/Ticker"
+                    params = {"pair": "XBTUSD"}
+                    response = requests.get(url, params=params, timeout=10)
+                    
+                    if response.status_code == 200:
+                        return jsonify({
+                            "status": "ok",
+                            "message": "Connection successful (REST)",
+                            "timestamp": datetime.now().isoformat()
+                        })
+                    else:
+                        return jsonify({
+                            "status": "error",
+                            "message": f"HTTP {response.status_code}"
+                        })
+                    
+            except Exception as e:
+                return jsonify({
+                    "status": "error",
+                    "message": str(e)
+                }), 500
         
         # ========================================================
         # WATCHLIST API
@@ -735,15 +724,12 @@ def start_api_server(bot_instance):
                 if not token or not chat_id:
                     return jsonify({"status": "error", "message": "Token and Chat ID required"}), 400
                 
-                # Update environment
                 os.environ['TELEGRAM_BOT_TOKEN'] = token
                 os.environ['TELEGRAM_CHAT_ID'] = chat_id
                 
-                # Update global config
                 global TELEGRAM_CONFIGURED
                 TELEGRAM_CONFIGURED = True
                 
-                # Also save to .env file for persistence
                 env_path = CURRENT_DIR / '.env'
                 if env_path.exists():
                     with open(env_path, 'r') as f:
@@ -846,26 +832,6 @@ def start_api_server(bot_instance):
             logger.info(f"Client disconnected: {request.sid}")
         
         # ========================================================
-        # MOCK DATA GENERATORS
-        # ========================================================
-        
-        def generate_mock_market_data():
-            pairs = ["BTC/USD", "ETH/USD", "SOL/USD", "ADA/USD", "XRP/USD"]
-            data = {}
-            for pair in pairs:
-                base = random.uniform(1000, 65000)
-                data[pair] = {
-                    "price": round(base, 2),
-                    "change": round(random.uniform(-5, 5), 2),
-                    "volume": round(random.uniform(100, 2000), 2),
-                    "high": round(base * (1 + random.uniform(0, 0.02)), 2),
-                    "low": round(base * (1 - random.uniform(0, 0.02)), 2),
-                    "trend": random.choice(["BULLISH", "BEARISH", "NEUTRAL"]),
-                    "timestamp": datetime.now().isoformat()
-                }
-            return data
-        
-        # ========================================================
         # START SERVER
         # ========================================================
         
@@ -889,6 +855,10 @@ def start_api_server(bot_instance):
         logger.info(f"   - GET  /api/positions")
         logger.info(f"   - GET  /api/logs")
         logger.info(f"   - GET  /api/diagnostics")
+        logger.info(f"   - GET  /api/system/metrics")
+        logger.info(f"   - GET  /api/settings/status")
+        logger.info(f"   - POST /api/settings")
+        logger.info(f"   - POST /api/exchange/test")
         logger.info(f"   - GET  /api/watchlist")
         logger.info(f"   - POST /api/watchlist")
         logger.info(f"   - DELETE /api/watchlist/<pair>")
@@ -927,35 +897,22 @@ def main_headless():
     
     logger.info("Initializing Cognitive Brain...")
     try:
-        if Brain and Brain != MockBrain:
-            brain_instance = Brain()
-            logger.info("✅ Brain initialized (REAL)")
-        else:
-            brain_instance = MockBrain()
-            logger.info("✅ Brain initialized (MOCK)")
+        brain_instance = Brain()
+        logger.info("✅ Brain initialized")
     except Exception as e:
         logger.error(f"❌ Brain init error: {e}")
-        brain_instance = MockBrain()
-        logger.info("✅ Brain initialized (MOCK - fallback)")
+        sys.exit(1)
     
     logger.info("Initializing Trading Bot...")
     try:
-        if TradingBot and TradingBot != MockTradingBot:
-            bot_instance = TradingBot(
-                brain_instance=brain_instance,
-                exchange_instance=exchange
-            )
-            logger.info("✅ Trading Bot initialized (REAL)")
-        else:
-            bot_instance = MockTradingBot(
-                brain_instance=brain_instance,
-                exchange_instance=exchange
-            )
-            logger.info("✅ Trading Bot initialized (MOCK)")
+        bot_instance = TradingBot(
+            brain_instance=brain_instance,
+            exchange_instance=exchange
+        )
+        logger.info("✅ Trading Bot initialized")
     except Exception as e:
         logger.error(f"❌ Bot init error: {e}")
-        bot_instance = MockTradingBot(brain_instance=brain_instance)
-        logger.info("✅ Trading Bot initialized (MOCK - fallback)")
+        sys.exit(1)
     
     api_started = start_api_server(bot_instance)
     

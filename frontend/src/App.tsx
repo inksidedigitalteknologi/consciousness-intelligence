@@ -30,17 +30,52 @@ import {
   SystemLogEntry,
 } from './types';
 
-import {
-  INITIAL_TICKERS,
-  INITIAL_SIGNALS,
-  INITIAL_INSIGHTS,
-  INITIAL_KNOWLEDGE,
-  INITIAL_COMPONENTS,
-  INITIAL_POSITIONS,
-  INITIAL_LOGS,
-} from './data/mockData';
-
 import { inksideAPI, StatusResponse, Signal as APISignal, BrainStateResponse, PerformanceResponse } from './api/inkside';
+
+// ============================================================
+// LOCALSTORAGE KEYS
+// ============================================================
+
+const PAGE_STORAGE_KEY = 'inkside_current_page';
+
+// ============================================================
+// HELPER FUNCTIONS
+// ============================================================
+
+const loadCurrentPage = (): NavigationPage => {
+  try {
+    const saved = localStorage.getItem(PAGE_STORAGE_KEY);
+    if (saved && saved !== 'undefined') {
+      return saved as NavigationPage;
+    }
+  } catch {}
+  return 'Dashboard';
+};
+
+const saveCurrentPage = (page: NavigationPage) => {
+  try {
+    localStorage.setItem(PAGE_STORAGE_KEY, page);
+  } catch {}
+};
+
+// ============================================================
+// SYSTEM METRICS INTERFACE
+// ============================================================
+
+interface SystemMetrics {
+  cpu: number;
+  ram: number;
+  uptime: number;
+  memory_count: number;
+  knowledge_count: number;
+  pnl: number;
+  win_rate: number;
+  total_trades: number;
+  prediction_accuracy: number;
+  open_positions: number;
+  risk_level: string;
+  health_score: number;
+}
 
 // ============================================================
 // LOADING SCREEN COMPONENT
@@ -57,12 +92,40 @@ const LoadingScreen: React.FC = () => (
 );
 
 // ============================================================
+// DEFAULT SYSTEM METRICS
+// ============================================================
+
+const defaultSystemMetrics: SystemMetrics = {
+  cpu: 0,
+  ram: 0,
+  uptime: 0,
+  memory_count: 0,
+  knowledge_count: 0,
+  pnl: 0,
+  win_rate: 0,
+  total_trades: 0,
+  prediction_accuracy: 0,
+  open_positions: 0,
+  risk_level: '--',
+  health_score: 0,
+};
+
+// ============================================================
 // MAIN APP
 // ============================================================
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<NavigationPage>('Dashboard');
+  // ============================================================
+  // NAVIGATION STATE - LOAD FROM LOCALSTORAGE
+  // ============================================================
   
+  const [currentPage, setCurrentPage] = useState<NavigationPage>(loadCurrentPage);
+  
+  // Auto-save page ke localStorage
+  useEffect(() => {
+    saveCurrentPage(currentPage);
+  }, [currentPage]);
+
   // ============================================================
   // STATE FOR BACKEND REAL DATA
   // ============================================================
@@ -76,23 +139,28 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   
   // ============================================================
-  // STATE FOR UI CONTROLS
+  // STATE FOR UI CONTROLS (REAL DATA)
   // ============================================================
   
-  const [engineRunning, setEngineRunning] = useState(true);
-  const [learningActive, setLearningActive] = useState(true);
-  const [cycleCount, setCycleCount] = useState(1420);
-  const [consciousnessLevel, setConsciousnessLevel] = useState(0.78);
+  const [engineRunning, setEngineRunning] = useState(false);
+  const [learningActive, setLearningActive] = useState(false);
+  const [cycleCount, setCycleCount] = useState(0);
+  const [consciousnessLevel, setConsciousnessLevel] = useState(0.5);
   const [emotionalState, setEmotionalState] = useState('CALM');
+  const [systemMetrics, setSystemMetrics] = useState<SystemMetrics>(defaultSystemMetrics);
 
-  const [tickers, setTickers] = useState<TickerInfo[]>(INITIAL_TICKERS);
-  const [signals, setSignals] = useState<TradingSignal[]>(INITIAL_SIGNALS);
-  const [insights, setInsights] = useState<CognitiveInsight[]>(INITIAL_INSIGHTS);
-  const [knowledgeList, setKnowledgeList] = useState<KnowledgeItem[]>(INITIAL_KNOWLEDGE);
-  const [components, setComponents] = useState<ComponentHealthStatus[]>(INITIAL_COMPONENTS);
-  const [positions, setPositions] = useState<TradingPosition[]>(INITIAL_POSITIONS);
-  const [logs, setLogs] = useState<SystemLogEntry[]>(INITIAL_LOGS);
-  const [telegramConfigured, setTelegramConfigured] = useState(true);
+  // ============================================================
+  // STATE FOR UI DATA (DARI BACKEND ATAU KOSONG)
+  // ============================================================
+  
+  const [tickers, setTickers] = useState<TickerInfo[]>([]);
+  const [signals, setSignals] = useState<TradingSignal[]>([]);
+  const [insights, setInsights] = useState<CognitiveInsight[]>([]);
+  const [knowledgeList, setKnowledgeList] = useState<KnowledgeItem[]>([]);
+  const [components, setComponents] = useState<ComponentHealthStatus[]>([]);
+  const [positions, setPositions] = useState<TradingPosition[]>([]);
+  const [logs, setLogs] = useState<SystemLogEntry[]>([]);
+  const [telegramConfigured, setTelegramConfigured] = useState(false);
 
   // ============================================================
   // MAP DATA API KE FORMAT KOMPATIBEL
@@ -134,7 +202,36 @@ export default function App() {
   };
 
   // ============================================================
-  // FETCH REAL DATA (TANPA LOADING BERKEDIP)
+  // FETCH SYSTEM METRICS
+  // ============================================================
+  
+  const fetchSystemMetrics = async () => {
+    try {
+      const response = await fetch('/api/system/metrics');
+      if (response.ok) {
+        const data = await response.json();
+        setSystemMetrics({
+          cpu: data.cpu || 0,
+          ram: data.ram || 0,
+          uptime: data.uptime || 0,
+          memory_count: data.memory_count || 0,
+          knowledge_count: data.knowledge_count || 0,
+          pnl: data.pnl || 0,
+          win_rate: data.win_rate || 0,
+          total_trades: data.total_trades || 0,
+          prediction_accuracy: data.prediction_accuracy || 0,
+          open_positions: data.open_positions || 0,
+          risk_level: data.risk_level || '--',
+          health_score: data.health_score || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch system metrics:', error);
+    }
+  };
+
+  // ============================================================
+  // FETCH REAL DATA
   // ============================================================
   
   const fetchRealData = async (showRefresh: boolean = false) => {
@@ -166,6 +263,9 @@ export default function App() {
         setCycleCount(statusData.bot.results || 0);
       }
       
+      // Fetch system metrics
+      await fetchSystemMetrics();
+      
     } catch (err) {
       console.error('Failed to fetch real data:', err);
       setError('Gagal mengambil data dari backend. Pastikan backend berjalan di port 5001.');
@@ -177,7 +277,7 @@ export default function App() {
   };
 
   // ============================================================
-  // INITIAL LOAD & AUTO UPDATE (TANPA BERKEDIP)
+  // INITIAL LOAD & AUTO UPDATE
   // ============================================================
   
   useEffect(() => {
@@ -188,41 +288,12 @@ export default function App() {
     };
     init();
     
-    // Update setiap 15 detik TANPA loading indicator
     const interval = setInterval(() => {
       fetchRealData(false);
-    }, 15000);
+    }, 30000);
     
     return () => clearInterval(interval);
   }, []);
-
-  // ============================================================
-  // LIVE SIMULATION (untuk data dummy)
-  // ============================================================
-  
-  useEffect(() => {
-    if (!engineRunning) return;
-
-    const interval = setInterval(() => {
-      setCycleCount((c) => c + 1);
-
-      setTickers((prevTickers) =>
-        prevTickers.map((t) => {
-          const delta = (Math.random() - 0.49) * (t.price * 0.0008);
-          const newPrice = Math.max(0.001, t.price + delta);
-          const updatedHistory = [...t.history.slice(1), newPrice];
-          return {
-            ...t,
-            price: newPrice,
-            change24h: t.change24h + (delta > 0 ? 0.01 : -0.01),
-            history: updatedHistory,
-          };
-        })
-      );
-    }, 2500);
-
-    return () => clearInterval(interval);
-  }, [engineRunning]);
 
   // ============================================================
   // HANDLERS
@@ -365,6 +436,7 @@ export default function App() {
               cycleCount={cycleCount}
               brainState={apiStatus?.bot?.state || 'IDLE'}
               consciousnessLevel={consciousnessLevel}
+              systemMetrics={systemMetrics}
               onNavigate={setCurrentPage}
             />
           )}
@@ -373,7 +445,7 @@ export default function App() {
             <BrainView
               brainState={apiStatus?.bot?.state || 'IDLE'}
               cycleCount={cycleCount}
-              healthScore={95}
+              healthScore={systemMetrics.health_score || 95}
               onRefresh={handleRefreshData}
             />
           )}
@@ -387,7 +459,6 @@ export default function App() {
 
           {currentPage === 'Market' && <MarketView tickers={tickers} />}
 
-          {/* ⬇️ WATCHLIST VIEW - TAMBAHKAN INI ⬇️ */}
           {currentPage === 'Watchlist' && (
             <WatchlistView
               tickers={tickers}
@@ -421,7 +492,7 @@ export default function App() {
           )}
 
           {currentPage === 'Health' && (
-            <HealthView components={components} healthScore={95} />
+            <HealthView components={components} healthScore={systemMetrics.health_score || 95} />
           )}
 
           {currentPage === 'Trading' && (
