@@ -6,6 +6,7 @@
 # COGNITIVE MIRROR ENGINE - FULL HEADLESS (API MODE)
 # WITH TELEGRAM SEND & CONFIG SUPPORT
 # WITH SYSTEM METRICS & SECURE SETTINGS
+# WITH WATCHDOG v3.0 REAL IMPLEMENTATION
 # TANPA DATA DUMMY - 100% REAL DATA
 # ============================================================
 
@@ -127,6 +128,18 @@ def global_exception_handler(exc_type, exc_value, exc_tb):
 sys.excepthook = global_exception_handler
 
 # ============================================================
+# [WATCHDOG] IMPORT
+# ============================================================
+
+try:
+    from core.watchdog import watchdog
+    WATCHDOG_AVAILABLE = True
+    logger.info("✅ Watchdog module loaded")
+except ImportError as e:
+    logger.warning(f"⚠️ Watchdog not available: {e}")
+    WATCHDOG_AVAILABLE = False
+
+# ============================================================
 # IMPORT CORE MODULES
 # ============================================================
 
@@ -208,6 +221,25 @@ def send_telegram_message(message: str) -> bool:
     except Exception as e:
         logger.error(f"Telegram send error: {e}")
         return False
+
+# ============================================================
+# [WATCHDOG] TELEGRAM ALERT CALLBACK
+# ============================================================
+
+def send_telegram_alert(alert: Dict):
+    """Send watchdog alert to Telegram"""
+    try:
+        message = f"""
+🚨 <b>WATCHDOG ALERT</b>
+📌 <b>Component:</b> {alert.get('component', 'unknown')}
+⚠️ <b>Severity:</b> {alert.get('severity', 'info').upper()}
+📝 <b>Message:</b> {alert.get('message', 'No message')}
+🕐 <b>Time:</b> {alert.get('timestamp', datetime.now().isoformat())}
+🔢 <b>Alert ID:</b> #{alert.get('alert_id', 0)}
+        """
+        send_telegram_message(message)
+    except Exception as e:
+        logger.error(f"Failed to send Telegram alert: {e}")
 
 # ============================================================
 # API SERVER
@@ -422,26 +454,88 @@ def start_api_server(bot_instance):
                 return jsonify({"error": str(e)}), 500
         
         # ========================================================
-        # SYSTEM METRICS API
+        # SYSTEM METRICS API - ENHANCED WITH REAL DATA
         # ========================================================
         
         @app.route('/api/system/metrics', methods=['GET'])
         def api_system_metrics():
             try:
                 import psutil
+                
+                # ============================================================
+                # REAL SYSTEM METRICS
+                # ============================================================
+                cpu = psutil.cpu_percent(interval=0.5)
+                mem = psutil.virtual_memory()
+                disk = psutil.disk_usage('/')
+                
+                # ============================================================
+                # HEALTH SCORE - Hitung dari berbagai metrics
+                # ============================================================
+                cpu_score = max(0, 100 - cpu)
+                ram_score = max(0, 100 - mem.percent)
+                disk_score = max(0, 100 - disk.percent)
+                
+                health_score = round((cpu_score * 0.4) + (ram_score * 0.4) + (disk_score * 0.2), 1)
+                
+                # ============================================================
+                # RISK LEVEL
+                # ============================================================
+                if health_score >= 80:
+                    risk_level = "LOW"
+                elif health_score >= 60:
+                    risk_level = "MODERATE"
+                elif health_score >= 40:
+                    risk_level = "HIGH"
+                else:
+                    risk_level = "CRITICAL"
+                
+                # ============================================================
+                # GET DATA FROM BRAIN & BOT
+                # ============================================================
+                knowledge_count = 0
+                memory_count = 0
+                pnl = 0
+                win_rate = 0
+                total_trades = 0
+                prediction_accuracy = 0
+                open_positions = 0
+                
+                # Get from brain if available
+                if brain and hasattr(brain, 'get_state'):
+                    try:
+                        brain_state = brain.get_state()
+                        knowledge_count = brain_state.get('knowledge_count', 0)
+                        memory_count = brain_state.get('memory_count', 0)
+                        prediction_accuracy = brain_state.get('prediction_accuracy', 0)
+                    except:
+                        pass
+                
+                # Get from bot if available
+                if bot_instance and hasattr(bot_instance, 'get_status'):
+                    try:
+                        bot_status = bot_instance.get_status()
+                        perf = bot_status.get('performance', {})
+                        pnl = perf.get('total_pnl', 0)
+                        win_rate = perf.get('win_rate', 0)
+                        total_trades = perf.get('total_trades', 0)
+                        open_positions = len(bot_status.get('positions', []))
+                    except:
+                        pass
+                
                 return jsonify({
-                    "cpu": psutil.cpu_percent(interval=0.5),
-                    "ram": psutil.virtual_memory().used / (1024**3),
+                    "cpu": cpu,
+                    "ram": round(mem.used / (1024**3), 2),
                     "uptime": int(time.time() - _startup_time),
-                    "memory_count": 0,
-                    "knowledge_count": 0,
-                    "pnl": 0,
-                    "win_rate": 0,
-                    "total_trades": 0,
-                    "prediction_accuracy": 0,
-                    "open_positions": 0,
-                    "risk_level": "--",
-                    "health_score": 0,
+                    "memory_count": memory_count,
+                    "knowledge_count": knowledge_count,
+                    "pnl": pnl,
+                    "win_rate": win_rate,
+                    "total_trades": total_trades,
+                    "prediction_accuracy": prediction_accuracy,
+                    "open_positions": open_positions,
+                    "risk_level": risk_level,
+                    "health_score": health_score,
                 })
             except ImportError:
                 return jsonify({
@@ -459,7 +553,22 @@ def start_api_server(bot_instance):
                     "health_score": 0,
                 })
             except Exception as e:
-                return jsonify({"error": str(e)}), 500
+                logger.error(f"System metrics error: {e}")
+                return jsonify({
+                    "cpu": 0,
+                    "ram": 0,
+                    "uptime": int(time.time() - _startup_time),
+                    "memory_count": 0,
+                    "knowledge_count": 0,
+                    "pnl": 0,
+                    "win_rate": 0,
+                    "total_trades": 0,
+                    "prediction_accuracy": 0,
+                    "open_positions": 0,
+                    "risk_level": "--",
+                    "health_score": 0,
+                    "error": str(e)
+                }), 500
         
         # ========================================================
         # SETTINGS API (AMAN - TANPA API KEY)
@@ -814,6 +923,54 @@ def start_api_server(bot_instance):
                 return jsonify({"error": str(e)}), 500
         
         # ========================================================
+        # [WATCHDOG] API ROUTES
+        # ========================================================
+        
+        if WATCHDOG_AVAILABLE:
+            
+            @app.route('/api/watchdog/status', methods=['GET'])
+            def api_watchdog_status():
+                try:
+                    return jsonify(watchdog.get_status())
+                except Exception as e:
+                    return jsonify({"error": str(e)}), 500
+            
+            @app.route('/api/watchdog/snapshot', methods=['GET'])
+            def api_watchdog_snapshot():
+                try:
+                    return jsonify(watchdog.get_snapshot())
+                except Exception as e:
+                    return jsonify({"error": str(e)}), 500
+            
+            @app.route('/api/watchdog/component/<name>', methods=['GET'])
+            def api_watchdog_component(name):
+                try:
+                    detail = watchdog.get_component_detail(name)
+                    if detail:
+                        return jsonify(detail)
+                    return jsonify({"error": "Component not found"}), 404
+                except Exception as e:
+                    return jsonify({"error": str(e)}), 500
+            
+            @app.route('/api/watchdog/circuit/<name>/reset', methods=['POST'])
+            def api_watchdog_reset_circuit(name):
+                try:
+                    watchdog.reset_circuit(name)
+                    return jsonify({"status": "reset", "component": name})
+                except Exception as e:
+                    return jsonify({"error": str(e)}), 500
+            
+            @app.route('/api/watchdog/heartbeat/<name>', methods=['GET'])
+            def api_watchdog_heartbeat(name):
+                try:
+                    watchdog.record_heartbeat(name)
+                    return jsonify({"status": "pong", "component": name})
+                except Exception as e:
+                    return jsonify({"error": str(e)}), 500
+            
+            logger.info("✅ Watchdog API routes registered")
+        
+        # ========================================================
         # WEBSOCKET EVENTS
         # ========================================================
         
@@ -870,6 +1027,13 @@ def start_api_server(bot_instance):
         logger.info(f"   - POST /api/engine/start")
         logger.info(f"   - POST /api/engine/stop")
         logger.info(f"   - GET  /api/learning/status")
+        if WATCHDOG_AVAILABLE:
+            logger.info(f"   [WATCHDOG]")
+            logger.info(f"   - GET  /api/watchdog/status")
+            logger.info(f"   - GET  /api/watchdog/snapshot")
+            logger.info(f"   - GET  /api/watchdog/component/<name>")
+            logger.info(f"   - POST /api/watchdog/circuit/<name>/reset")
+            logger.info(f"   - GET  /api/watchdog/heartbeat/<name>")
         logger.info(f"   - WS   / (WebSocket)")
         
         return True
@@ -881,6 +1045,88 @@ def start_api_server(bot_instance):
     except Exception as e:
         logger.error(f"❌ API Server error: {e}")
         return False
+
+# ============================================================
+# [WATCHDOG] REGISTER COMPONENTS
+# ============================================================
+
+def register_watchdog_components(bot_instance, brain_instance):
+    """Register all components with watchdog"""
+    if not WATCHDOG_AVAILABLE:
+        return
+    
+    try:
+        # Register Brain Engine
+        if brain_instance:
+            watchdog.register_component(
+                "brain_engine",
+                brain_instance,
+                dependencies=[],
+                health_method="get_state",
+                restart_method="restart"
+            )
+            logger.info("✅ Watchdog: Registered brain_engine")
+        
+        # Register Trading Bot
+        if bot_instance:
+            watchdog.register_component(
+                "trading_bot",
+                bot_instance,
+                dependencies=["brain_engine"],
+                health_method="get_status",
+                restart_method="stop"
+            )
+            logger.info("✅ Watchdog: Registered trading_bot")
+        
+        # Register Exchange if available
+        if EXCHANGE_AVAILABLE and exchange:
+            watchdog.register_component(
+                "exchange",
+                exchange,
+                dependencies=[],
+                health_method="health_check"
+            )
+            logger.info("✅ Watchdog: Registered exchange")
+        
+        # Register Telegram
+        if TELEGRAM_CONFIGURED:
+            class TelegramWrapper:
+                def health_check(self):
+                    return bool(os.environ.get('TELEGRAM_BOT_TOKEN'))
+            
+            telegram_wrapper = TelegramWrapper()
+            watchdog.register_component(
+                "telegram_bot",
+                telegram_wrapper,
+                dependencies=[],
+                health_method="health_check"
+            )
+            logger.info("✅ Watchdog: Registered telegram_bot")
+        
+        # Register Signal Engine if available
+        if SignalEngine:
+            try:
+                signal_instance = SignalEngine()
+                watchdog.register_component(
+                    "signal_engine",
+                    signal_instance,
+                    dependencies=["brain_engine", "exchange"],
+                    health_method="health_check"
+                )
+                logger.info("✅ Watchdog: Registered signal_engine")
+            except Exception as e:
+                logger.warning(f"⚠️ Could not register signal_engine: {e}")
+        
+        # Register alert callback
+        watchdog.register_alert_callback(send_telegram_alert)
+        logger.info("✅ Watchdog: Alert callback registered")
+        
+        # Start watchdog
+        watchdog.start()
+        logger.info("✅ Watchdog started")
+        
+    except Exception as e:
+        logger.error(f"❌ Watchdog registration error: {e}")
 
 # ============================================================
 # MAIN HEADLESS FUNCTION
@@ -914,6 +1160,11 @@ def main_headless():
         logger.error(f"❌ Bot init error: {e}")
         sys.exit(1)
     
+    # ========================================================
+    # [WATCHDOG] REGISTER COMPONENTS
+    # ========================================================
+    register_watchdog_components(bot_instance, brain_instance)
+    
     api_started = start_api_server(bot_instance)
     
     if Scanner and Scanner != safe_import('core.scanner', 'CognitiveMarketScanner'):
@@ -936,6 +1187,7 @@ def main_headless():
     logger.info(f"  Exchange    : {'AVAILABLE' if EXCHANGE_AVAILABLE else 'UNAVAILABLE'}")
     logger.info(f"  API Server  : {'ON' if api_started else 'OFF'}")
     logger.info(f"  Telegram    : {'CONFIGURED' if TELEGRAM_CONFIGURED else 'NOT CONFIGURED'}")
+    logger.info(f"  Watchdog    : {'ON' if WATCHDOG_AVAILABLE else 'OFF'}")
     logger.info("=" * 60)
     logger.info("📡 Press Ctrl+C to stop")
     logger.info("=" * 60)
@@ -945,6 +1197,14 @@ def main_headless():
         while not _shutdown_flag.is_set():
             time.sleep(1)
             cycle_count += 1
+            
+            # [WATCHDOG] Record heartbeat setiap 5 detik
+            if cycle_count % 5 == 0 and WATCHDOG_AVAILABLE:
+                try:
+                    watchdog.record_heartbeat("main_loop")
+                except Exception:
+                    pass
+            
             if cycle_count % 30 == 0:
                 try:
                     if bot_instance and hasattr(bot_instance, 'get_status'):
@@ -960,6 +1220,15 @@ def main_headless():
         _graceful_shutdown = True
     
     logger.info("Shutting down...")
+    
+    # [WATCHDOG] Stop watchdog
+    if WATCHDOG_AVAILABLE:
+        try:
+            watchdog.stop()
+            logger.info("✅ Watchdog stopped")
+        except Exception as e:
+            logger.warning(f"Watchdog stop error: {e}")
+    
     try:
         if bot_instance and hasattr(bot_instance, 'stop'):
             bot_instance.stop()
