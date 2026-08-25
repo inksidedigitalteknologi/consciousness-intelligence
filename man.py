@@ -9,7 +9,6 @@
 # WITH WATCHDOG v1.0.0 REAL IMPLEMENTATION
 # WITH PREDICTION ENGINE v1.0.0
 # 100% REAL DATA - TANPA DUMMY
-# ALL FRONTEND API ENDPOINTS INCLUDED
 # ============================================================
 
 import os
@@ -808,6 +807,21 @@ Type /start for available commands.
 🕐 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"""
 
 # ============================================================
+# API KEY AUTHENTICATION DECORATOR
+# ============================================================
+
+def require_api_key(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        api_key = request.headers.get('X-API-Key')
+        expected_key = os.environ.get('API_KEY', 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ')
+        
+        if not api_key or api_key != expected_key:
+            return jsonify({'error': 'Unauthorized - Invalid API Key'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+# ============================================================
 # API SERVER
 # ============================================================
 
@@ -816,26 +830,21 @@ def start_api_server(bot_instance):
         from flask import Flask, jsonify, request
         from flask_cors import CORS
         from flask_socketio import SocketIO, emit
-        from functools import wraps
         
         app = Flask(__name__)
         CORS(app)
         socketio = SocketIO(app, cors_allowed_origins="*")
         
         # ========================================================
-        # API KEY AUTHENTICATION DECORATOR
+        # PREDICTION ENGINE IMPORTS
         # ========================================================
-        
-        def require_api_key(f):
-            @wraps(f)
-            def decorated_function(*args, **kwargs):
-                api_key = request.headers.get('X-API-Key')
-                expected_key = os.environ.get('API_KEY', 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ')
-                
-                if not api_key or api_key != expected_key:
-                    return jsonify({'error': 'Unauthorized - Invalid API Key'}), 401
-                return f(*args, **kwargs)
-            return decorated_function
+        try:
+            from core.prediction_engine import PredictionEngine
+            PREDICTION_AVAILABLE = True
+            logger.info("✅ Prediction Engine loaded")
+        except ImportError as e:
+            logger.warning(f"⚠️ Prediction Engine not available: {e}")
+            PREDICTION_AVAILABLE = False
         
         # ========================================================
         # MONTE CARLO CACHE
@@ -846,7 +855,20 @@ def start_api_server(bot_instance):
         # API ROUTES
         # ========================================================
         
-        # ---- PUBLIC ENDPOINTS ----
+        @app.route('/api/status', methods=['GET'])
+        @require_api_key
+        def api_status():
+            try:
+                status = bot_instance.get_status() if bot_instance else {"status": "unknown"}
+                return jsonify({
+                    "status": "online",
+                    "bot": status,
+                    "version": APP_VERSION,
+                    "mode": MODE,
+                    "timestamp": datetime.now().isoformat()
+                })
+            except Exception as e:
+                return jsonify({"status": "error", "message": str(e)}), 500
         
         @app.route('/api/health', methods=['GET'])
         def api_health():
@@ -863,98 +885,37 @@ def start_api_server(bot_instance):
             except Exception as e:
                 return jsonify({"status": "error", "message": str(e)}), 500
         
-        # ---- FRONTEND ENDPOINTS (WITH AUTH) ----
-        
-        @app.route('/api/status', methods=['GET'])
-        @require_api_key
-        def api_status_frontend():
-            """Get system status for frontend."""
-            try:
-                status = bot_instance.get_status() if bot_instance else {"status": "unknown"}
-                return jsonify({
-                    "status": "online",
-                    "bot": status,
-                    "version": APP_VERSION,
-                    "mode": MODE,
-                    "timestamp": datetime.now().isoformat()
-                })
-            except Exception as e:
-                return jsonify({"status": "error", "message": str(e)}), 500
-        
-        @app.route('/api/performance', methods=['GET'])
-        @require_api_key
-        def api_performance_frontend():
-            """Get trading performance for frontend."""
-            try:
-                if bot_instance and hasattr(bot_instance, 'get_status'):
-                    status = bot_instance.get_status()
-                    perf = status.get('performance', {})
-                else:
-                    perf = {}
-                return jsonify({
-                    "performance": {
-                        "roi": perf.get('total_pnl_percentage', 0.0),
-                        "trades": perf.get('total_trades', 0),
-                        "win_rate": perf.get('win_rate', 0.0),
-                        "total_pnl": perf.get('total_pnl', 0.0)
-                    },
-                    "timestamp": datetime.now().isoformat()
-                })
-            except Exception as e:
-                return jsonify({"error": str(e)}), 500
-        
-        @app.route('/api/brain/state', methods=['GET'])
-        @require_api_key
-        def api_brain_state_frontend():
-            """Get brain state for frontend."""
-            try:
-                if brain and hasattr(brain, 'get_state'):
-                    state = brain.get_state()
-                else:
-                    state = {"state": "unknown"}
-                return jsonify({"brain": state, "timestamp": datetime.now().isoformat()})
-            except Exception as e:
-                return jsonify({"error": str(e)}), 500
-        
-        @app.route('/api/signals', methods=['GET'])
-        @require_api_key
-        def api_signals_frontend():
-            """Get live signals for frontend."""
-            try:
-                if bot_instance and hasattr(bot_instance, 'get_signals'):
-                    signals = bot_instance.get_signals()
-                else:
-                    signals = []
-                return jsonify({"signals": signals, "timestamp": datetime.now().isoformat()})
-            except Exception as e:
-                return jsonify({"error": str(e)}), 500
-        
-        # ---- PREDICTION ENDPOINTS ----
+        # ========================================================
+        # PREDICTION ENDPOINTS (NEW)
+        # ========================================================
         
         @app.route('/api/predictions', methods=['GET'])
         @require_api_key
         def get_predictions():
             """Get real predictions from prediction engine"""
-            pair = request.args.get('pair', 'BTC/USDT')
+            pair = request.args.get('pair', 'BTC/USD')
             horizon = request.args.get('horizon', '1h')
             method = request.args.get('method', 'ensemble_all')
             
+            if not PREDICTION_AVAILABLE:
+                return jsonify({'error': 'Prediction engine not available'}), 503
+            
             try:
-                from core.learning.prediction import PredictionEngineWrapper
-                engine = PredictionEngineWrapper()
+                engine = PredictionEngine()
                 predictions = engine.get_forecasts(pair, horizon, method)
                 return jsonify(predictions)
             except Exception as e:
-                logger.error(f"Prediction error: {e}")
                 return jsonify({'error': str(e)}), 500
         
         @app.route('/api/predictions/metrics', methods=['GET'])
         @require_api_key
         def get_prediction_metrics():
             """Get system prediction metrics"""
+            if not PREDICTION_AVAILABLE:
+                return jsonify({'error': 'Prediction engine not available'}), 503
+            
             try:
-                from core.learning.prediction import PredictionEngineWrapper
-                engine = PredictionEngineWrapper()
+                engine = PredictionEngine()
                 metrics = {
                     'overall_accuracy': engine.get_accuracy(),
                     'sharpe_ratio': engine.get_sharpe_ratio(),
@@ -965,7 +926,6 @@ def start_api_server(bot_instance):
                 }
                 return jsonify(metrics)
             except Exception as e:
-                logger.error(f"Metrics error: {e}")
                 return jsonify({'error': str(e)}), 500
         
         @app.route('/api/predictions/monte_carlo', methods=['POST', 'GET'])
@@ -975,73 +935,36 @@ def start_api_server(bot_instance):
             if request.method == 'POST':
                 data = request.json
                 try:
-                    from core.learning.prediction import PredictionEngineWrapper
-                    engine = PredictionEngineWrapper()
-                    
-                    if SIMULATION_AVAILABLE and simulation_engine:
+                    if SIMULATION_AVAILABLE:
                         result = simulation_engine.run_monte_carlo(
-                            pair=data.get('pair', 'BTC/USDT'),
+                            pair=data.get('pair', 'BTC/USD'),
                             iterations=data.get('iterations', 1000),
                             periods=data.get('periods', 30),
                             method=data.get('method', 'ensemble_all')
                         )
                     else:
-                        import random
-                        import math
-                        current_price = 80755.0
-                        results = []
-                        for _ in range(data.get('iterations', 1000)):
-                            price = current_price
-                            for _ in range(data.get('periods', 30)):
-                                z = random.gauss(0, 1)
-                                price *= math.exp((0.0002 - 0.5 * 0.018**2) + 0.018 * z)
-                            results.append(price)
-                        results.sort()
-                        p5 = results[int(0.05 * len(results))]
-                        p50 = results[int(0.50 * len(results))]
-                        p95 = results[int(0.95 * len(results))]
-                        
-                        result = {
-                            'bullish': {
-                                'price': round(p95, 2),
-                                'change_percent': round(((p95 - current_price) / current_price) * 100, 2),
-                                'probability': 30,
-                                'description': '95th Percentile path holding 50 EMA with strong volume.'
-                            },
-                            'base': {
-                                'price': round(p50, 2),
-                                'change_percent': round(((p50 - current_price) / current_price) * 100, 2),
-                                'probability': 45,
-                                'description': 'Median regression path consolidating between support/resistance.'
-                            },
-                            'bearish': {
-                                'price': round(p5, 2),
-                                'change_percent': round(((p5 - current_price) / current_price) * 100, 2),
-                                'probability': 25,
-                                'description': '5th Percentile path triggering trailing stop at pivot level.'
-                            },
-                            'confidence_interval': {
-                                'lower': round(p5, 2),
-                                'upper': round(p95, 2),
-                                'median': round(p50, 2)
-                            },
-                            'iterations': data.get('iterations', 1000),
-                            'periods': data.get('periods', 30)
-                        }
-                    
-                    monte_carlo_cache[data.get('pair', 'BTC/USDT')] = result
+                        from core.simulation import SimulationEngine
+                        engine = SimulationEngine()
+                        result = engine.run_monte_carlo(
+                            pair=data.get('pair', 'BTC/USD'),
+                            iterations=data.get('iterations', 1000),
+                            periods=data.get('periods', 30),
+                            method=data.get('method', 'ensemble_all')
+                        )
+                    monte_carlo_cache[data.get('pair', 'BTC/USD')] = result
                     return jsonify(result)
                 except Exception as e:
-                    logger.error(f"Monte Carlo error: {e}")
                     return jsonify({'error': str(e)}), 500
             else:
-                pair = request.args.get('pair', 'BTC/USDT')
+                pair = request.args.get('pair', 'BTC/USD')
                 result = monte_carlo_cache.get(pair)
                 if result:
                     return jsonify(result)
                 return jsonify({'error': 'No cached simulation for this pair'}), 404
         
-        # ---- TELEGRAM WEBHOOK ----
+        # ========================================================
+        # TELEGRAM WEBHOOK - COMMAND HANDLER
+        # ========================================================
         
         @app.route('/api/telegram/webhook', methods=['POST'])
         def telegram_webhook():
@@ -1062,7 +985,10 @@ def start_api_server(bot_instance):
                 
                 logger.info(f"📝 Command from {chat_id}: {text}")
                 
+                # Process command
                 response = handle_telegram_command(text)
+                
+                # Send response
                 send_telegram_message_to_chat(chat_id, response)
                 
                 return jsonify({'status': 'ok'}), 200
@@ -1092,6 +1018,10 @@ def start_api_server(bot_instance):
             except Exception as e:
                 logger.error(f"Send response error: {e}")
                 return False
+        
+        # ========================================================
+        # TELEGRAM SET WEBHOOK
+        # ========================================================
         
         @app.route('/api/telegram/set_webhook', methods=['POST'])
         def api_set_webhook():
@@ -1151,7 +1081,9 @@ def start_api_server(bot_instance):
                 logger.error(f"Get webhook error: {e}")
                 return jsonify({'error': str(e)}), 500
         
-        # ---- SYSTEM METRICS ----
+        # ========================================================
+        # SYSTEM METRICS
+        # ========================================================
         
         @app.route('/api/system/metrics', methods=['GET'])
         @require_api_key
@@ -1223,7 +1155,9 @@ def start_api_server(bot_instance):
                 logger.error(f"System metrics error: {e}")
                 return jsonify({"error": str(e)}), 500
         
-        # ---- WATCHDOG API ----
+        # ========================================================
+        # WATCHDOG API
+        # ========================================================
         
         if WATCHDOG_AVAILABLE:
             @app.route('/api/watchdog/status', methods=['GET'])
@@ -1242,7 +1176,9 @@ def start_api_server(bot_instance):
                 except Exception as e:
                     return jsonify({"error": str(e)}), 500
         
-        # ---- WEBSOCKET ----
+        # ========================================================
+        # WEBSOCKET
+        # ========================================================
         
         @socketio.on('connect')
         def handle_connect():
@@ -1267,12 +1203,7 @@ def start_api_server(bot_instance):
         
         logger.info(f"✅ API Server running on http://{API_HOST}:{API_PORT}")
         logger.info(f"   - GET  /api/health (public)")
-        logger.info(f"   - GET  /api/status (requires API Key)")
-        logger.info(f"   - GET  /api/performance (requires API Key)")
-        logger.info(f"   - GET  /api/brain/state (requires API Key)")
-        logger.info(f"   - GET  /api/signals (requires API Key)")
         logger.info(f"   - GET  /api/predictions (requires API Key)")
-        logger.info(f"   - GET  /api/predictions/metrics (requires API Key)")
         logger.info(f"   - POST /api/predictions/monte_carlo (requires API Key)")
         logger.info(f"   - POST /api/telegram/webhook (Telegram webhook)")
         logger.info(f"   - GET  /api/system/metrics (requires API Key)")
@@ -1485,7 +1416,7 @@ def main_headless():
     logger.info(f"  Watchdog    : {'ON' if WATCHDOG_AVAILABLE else 'OFF'}")
     logger.info(f"  Knowledge   : {'ON' if KNOWLEDGE_AVAILABLE else 'OFF'}")
     logger.info(f"  Simulation  : {'ON' if SIMULATION_AVAILABLE else 'OFF'}")
-    logger.info(f"  Prediction  : {'ON' if True else 'OFF'}")
+    logger.info(f"  Prediction  : {'ON' if PREDICTION_AVAILABLE else 'OFF'}")
     logger.info("=" * 60)
     logger.info("📡 Press Ctrl+C to stop")
     logger.info("=" * 60)
