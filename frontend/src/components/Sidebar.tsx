@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import {
   LayoutDashboard,
   Brain,
@@ -21,8 +21,34 @@ import {
   Zap,
   Star,
   X,
+  Wifi,
+  WifiOff,
+  AlertTriangle,
+  Clock,
+  Cpu,
+  HardDrive,
+  GitBranch,
+  Layers,
+  Workflow,
+  BarChart3,
+  FileText,
+  Settings2,
+  Bell,
+  Package,
+  Code2,
+  Server,
+  Globe,
+  Lock,
+  Eye,
+  EyeOff,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { NavigationPage } from '../types';
+
+// ============================================================
+// TYPES
+// ============================================================
 
 interface SidebarProps {
   currentPage: NavigationPage;
@@ -33,7 +59,42 @@ interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
   watchlistCount?: number;
+  wsConnected?: boolean;
+  wsStatus?: string;
+  healthScore?: number;
+  version?: string;
 }
+
+interface NavItem {
+  id: NavigationPage;
+  label: string;
+  icon: React.ElementType;
+  badge?: number | string;
+  isNew?: boolean;
+  isBeta?: boolean;
+}
+
+interface NavGroup {
+  title: string;
+  icon?: React.ElementType;
+  items: NavItem[];
+  collapsible?: boolean;
+}
+
+// ============================================================
+// HELPER FUNCTIONS
+// ============================================================
+
+const getHealthColor = (score: number): string => {
+  if (score >= 80) return 'text-emerald-400';
+  if (score >= 60) return 'text-amber-400';
+  if (score >= 40) return 'text-orange-400';
+  return 'text-red-400';
+};
+
+// ============================================================
+// SIDEBAR COMPONENT
+// ============================================================
 
 export const Sidebar: React.FC<SidebarProps> = ({
   currentPage,
@@ -44,64 +105,159 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpen = false,
   onClose,
   watchlistCount = 0,
+  wsConnected = false,
+  wsStatus = 'disconnected',
+  healthScore = 100,
+  version = '4.4.1',
 }) => {
-  const groups = [
+  // ============================================================
+  // STATE
+  // ============================================================
+  
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({
+    '📊 OVERVIEW': false,
+    '🧠 INTELLIGENCE': false,
+    '📈 MARKET & SIGNALS': false,
+    '📚 KNOWLEDGE & HEALTH': false,
+    '⚙️ CONTROL & BRIDGE': false,
+  });
+
+  // ============================================================
+  // NAVIGATION GROUPS
+  // ============================================================
+  
+  const groups: NavGroup[] = useMemo(() => [
     {
       title: '📊 OVERVIEW',
+      icon: LayoutDashboard,
       items: [
-        { id: 'Dashboard' as NavigationPage, label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'Watchlist' as NavigationPage, label: 'Watchlist', icon: Star, badge: watchlistCount > 0 ? watchlistCount : undefined },
+        { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'Watchlist', label: 'Watchlist', icon: Star, badge: watchlistCount > 0 ? watchlistCount : undefined },
       ],
     },
     {
       title: '🧠 INTELLIGENCE',
+      icon: Brain,
+      collapsible: true,
       items: [
-        { id: 'Brain' as NavigationPage, label: 'Brain Engine', icon: Brain },
-        { id: 'Reflection' as NavigationPage, label: 'Cognitive Mirror', icon: Sparkle },
-        { id: 'Learning' as NavigationPage, label: 'Learning Engine', icon: GraduationCap },
-        { id: 'Memory' as NavigationPage, label: 'Memory Storage', icon: Database },
-        { id: 'Pattern' as NavigationPage, label: 'Pattern Detector', icon: Search },
+        { id: 'Brain', label: 'Brain Engine', icon: Brain },
+        { id: 'Reflection', label: 'Cognitive Mirror', icon: Sparkle },
+        { id: 'Learning', label: 'Learning Engine', icon: GraduationCap, isBeta: true },
+        { id: 'Memory', label: 'Memory Storage', icon: Database },
+        { id: 'Pattern', label: 'Pattern Detector', icon: Search, isNew: true },
       ],
     },
     {
       title: '📈 MARKET & SIGNALS',
+      icon: TrendingUp,
+      collapsible: true,
       items: [
-        { id: 'Market' as NavigationPage, label: 'Live Tickers', icon: TrendingUp },
-        { id: 'Signals' as NavigationPage, label: 'Signals Radar', icon: Radio },
-        { id: 'Prediction' as NavigationPage, label: 'Predictions', icon: LineChart },
-        { id: 'Decision' as NavigationPage, label: 'Decision Engine', icon: Target },
+        { id: 'Market', label: 'Live Tickers', icon: TrendingUp },
+        { id: 'Signals', label: 'Signals Radar', icon: Radio, isNew: true },
+        { id: 'Prediction', label: 'Predictions', icon: LineChart, isBeta: true },
+        { id: 'Decision', label: 'Decision Engine', icon: Target },
       ],
     },
     {
       title: '📚 KNOWLEDGE & HEALTH',
+      icon: BookOpen,
+      collapsible: true,
       items: [
-        { id: 'Knowledge' as NavigationPage, label: 'Knowledge Base', icon: BookOpen },
-        { id: 'Health' as NavigationPage, label: 'System Health', icon: Activity },
-        { id: 'Diagnostics' as NavigationPage, label: 'Diagnostics Test', icon: ShieldCheck },
+        { id: 'Knowledge', label: 'Knowledge Base', icon: BookOpen },
+        { id: 'Health', label: 'System Health', icon: Activity },
+        { id: 'Diagnostics', label: 'Diagnostics', icon: ShieldCheck },
       ],
     },
     {
       title: '⚙️ CONTROL & BRIDGE',
+      icon: Settings2,
+      collapsible: true,
       items: [
-        { id: 'Trading' as NavigationPage, label: 'Trading Engine', icon: Zap },
-        { id: 'Telegram' as NavigationPage, label: 'Telegram Alerts', icon: Send },
-        { id: 'Settings' as NavigationPage, label: 'Bot Settings', icon: Sliders },
+        { id: 'Trading', label: 'Trading Engine', icon: Zap },
+        { id: 'Telegram', label: 'Telegram Alerts', icon: Send },
+        { id: 'Settings', label: 'Settings', icon: Sliders },
       ],
     },
-  ];
+  ], [watchlistCount]);
 
-  const handleItemClick = (pageId: NavigationPage) => {
+  // ============================================================
+  // HANDLERS
+  // ============================================================
+  
+  const handleItemClick = useCallback((pageId: NavigationPage) => {
     onPageChange(pageId);
     if (onClose) {
       onClose();
     }
+  }, [onPageChange, onClose]);
+
+  const toggleGroup = useCallback((title: string) => {
+    setCollapsedGroups(prev => ({
+      ...prev,
+      [title]: !prev[title],
+    }));
+  }, []);
+
+  // ============================================================
+  // RENDER HELPERS
+  // ============================================================
+  
+  const renderNavItem = (item: NavItem, isActive: boolean) => {
+    const Icon = item.icon;
+    return (
+      <button
+        key={item.id}
+        id={`nav-btn-${item.id.toLowerCase()}`}
+        onClick={() => handleItemClick(item.id)}
+        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer group relative ${
+          isActive
+            ? 'bg-gradient-to-r from-blue-600/80 to-blue-600/40 text-white shadow-lg shadow-blue-600/20'
+            : 'text-[#8D9AAA] hover:bg-[#18212B] hover:text-white'
+        }`}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+            isActive ? 'text-white' : 'text-[#8D9AAA] group-hover:text-white'
+          }`} />
+          <span className="truncate text-[11px]">{item.label}</span>
+          
+          {/* New / Beta Badges */}
+          {item.isNew && (
+            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/30 text-emerald-300 border border-emerald-500/20">
+              NEW
+            </span>
+          )}
+          {item.isBeta && (
+            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-amber-500/30 text-amber-300 border border-amber-500/20">
+              BETA
+            </span>
+          )}
+        </div>
+        
+        {item.badge !== undefined && (
+          <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full ${
+            isActive 
+              ? 'bg-white/20 text-white' 
+              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+          }`}>
+            {item.badge}
+          </span>
+        )}
+      </button>
+    );
   };
 
+  // ============================================================
+  // SIDEBAR CONTENT
+  // ============================================================
+  
   const sidebarContent = (
     <div className="flex flex-col justify-between h-full overflow-y-auto select-none">
+      {/* ==========================================================
+          HEADER - Logo & Brand
+          ========================================================== */}
       <div>
-        {/* Logo Section */}
-        <div className="p-4 sm:p-5 border-b border-[#26313D]/60 bg-[#0B0F14]/50">
+        <div className="p-4 sm:p-5 border-b border-[#26313D]/60 bg-gradient-to-b from-[#0B0F14] to-transparent">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20 font-black text-white text-base">
@@ -110,12 +266,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-white font-extrabold text-base tracking-wider">INKSIDE</span>
-                  <span className="text-blue-400 font-bold text-xs px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
+                  <span className="text-blue-400 font-bold text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
                     DIGITAL
                   </span>
                 </div>
                 <p className="text-[10px] text-[#8D9AAA] tracking-tight font-medium">
-                  COGNITIVE MIRROR ENGINE v4.4
+                  COGNITIVE MIRROR ENGINE
                 </p>
               </div>
             </div>
@@ -132,80 +288,131 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
 
-          {/* Quick Learning Status Pill */}
-          <div className="mt-3.5 flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#131A22] border border-[#26313D]/80">
-            <div className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${learningActive ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-              <span className="text-[11px] font-semibold text-[#8D9AAA]">
-                LEARNING: <strong className={learningActive ? 'text-emerald-400' : 'text-amber-400'}>{learningActive ? 'ACTIVE' : 'IDLE'}</strong>
+          {/* Status Pills */}
+          <div className="mt-3.5 grid grid-cols-2 gap-1.5">
+            {/* Learning Status */}
+            <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#131A22] border border-[#26313D]/80">
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${learningActive ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                <span className="text-[10px] font-semibold text-[#8D9AAA]">
+                  {learningActive ? 'LEARNING' : 'IDLE'}
+                </span>
+              </div>
+              <span className="text-[9px] font-mono font-bold text-[#5F6B78] bg-[#0B0F14] px-1.5 py-0.5 rounded">
+                #{cycleCount}
               </span>
             </div>
-            <span className="text-[10px] font-mono font-bold text-[#5F6B78] bg-[#0B0F14] px-1.5 py-0.5 rounded">
-              #{cycleCount}
-            </span>
+
+            {/* WebSocket Status */}
+            <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#131A22] border border-[#26313D]/80">
+              <div className="flex items-center gap-2">
+                {wsConnected ? (
+                  <Wifi className="w-3 h-3 text-emerald-400" />
+                ) : (
+                  <WifiOff className="w-3 h-3 text-rose-400" />
+                )}
+                <span className="text-[10px] font-semibold text-[#8D9AAA]">
+                  {wsConnected ? 'LIVE' : 'OFFLINE'}
+                </span>
+              </div>
+              <span className="text-[9px] font-mono font-bold text-[#5F6B78] bg-[#0B0F14] px-1.5 py-0.5 rounded">
+                WS
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Nav Groups */}
-        <nav className="p-3 space-y-4">
-          {groups.map((group) => (
-            <div key={group.title}>
-              <div className="px-3 mb-1.5 text-[10px] font-bold tracking-wider text-[#5F6B78]">
-                {group.title}
-              </div>
-              <div className="space-y-1">
-                {group.items.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = currentPage === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      id={`nav-btn-${item.id.toLowerCase()}`}
-                      onClick={() => handleItemClick(item.id)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                        isActive
-                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                          : 'text-[#8D9AAA] hover:bg-[#18212B] hover:text-white'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : item.id === 'Watchlist' ? 'text-amber-400' : 'text-[#8D9AAA]'}`} />
-                        <span className="truncate">{item.label}</span>
-                      </div>
-                      {item.badge !== undefined && (
-                        <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
-                          isActive ? 'bg-white text-blue-600' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                        }`}>
-                          {item.badge}
-                        </span>
+        {/* ==========================================================
+            NAVIGATION
+            ========================================================== */}
+        <nav className="p-3 space-y-3">
+          {groups.map((group) => {
+            const isCollapsed = collapsedGroups[group.title] || false;
+            const isActiveGroup = group.items.some(item => item.id === currentPage);
+            
+            return (
+              <div key={group.title}>
+                {/* Group Header */}
+                <div 
+                  className={`flex items-center justify-between px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${
+                    isActiveGroup ? 'bg-blue-600/10' : 'hover:bg-[#131A22]'
+                  }`}
+                  onClick={() => group.collapsible && toggleGroup(group.title)}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold tracking-wider text-[#5F6B78] uppercase">
+                      {group.title}
+                    </span>
+                  </div>
+                  {group.collapsible && (
+                    <button className="text-[#5F6B78] hover:text-white">
+                      {isCollapsed ? (
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5" />
                       )}
                     </button>
-                  );
-                })}
+                  )}
+                </div>
+
+                {/* Group Items */}
+                {!isCollapsed && (
+                  <div className="mt-1 space-y-0.5 pl-1">
+                    {group.items.map((item) => {
+                      const isActive = currentPage === item.id;
+                      return renderNavItem(item, isActive);
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
       </div>
 
-      {/* Footer System Status */}
-      <div className="p-3.5 border-t border-[#26313D] bg-[#131A22]/70">
-        <div className="flex items-center justify-between text-xs">
+      {/* ==========================================================
+          FOOTER - System Status
+          ========================================================== */}
+      <div className="p-3.5 border-t border-[#26313D] bg-[#131A22]/70 space-y-2">
+        {/* Engine Status */}
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className={`w-2.5 h-2.5 rounded-full ${engineRunning ? 'bg-emerald-400' : 'bg-blue-400'}`} />
-            <span className="font-bold text-[#E8EDF2] text-[11px]">
+            <span className={`w-2.5 h-2.5 rounded-full ${engineRunning ? 'bg-emerald-400 animate-pulse' : 'bg-blue-400'}`} />
+            <span className="font-bold text-[11px] text-[#E8EDF2]">
               {engineRunning ? 'ENGINE RUNNING' : 'SYSTEM ONLINE'}
             </span>
           </div>
-          <span className="text-[10px] text-[#5F6B78] font-mono">v4.4.1</span>
+          <span className="text-[9px] text-[#5F6B78] font-mono">v{version}</span>
+        </div>
+
+        {/* Health Score */}
+        <div className="flex items-center gap-2">
+          <div className="flex-1 h-1.5 bg-[#1A2530] rounded-full overflow-hidden">
+            <div 
+              className={`h-full rounded-full transition-all duration-500 ${
+                healthScore >= 80 ? 'bg-emerald-400' :
+                healthScore >= 60 ? 'bg-amber-400' :
+                healthScore >= 40 ? 'bg-orange-400' :
+                'bg-red-400'
+              }`}
+              style={{ width: `${Math.min(100, Math.max(0, healthScore))}%` }}
+            />
+          </div>
+          <span className={`text-[9px] font-bold ${getHealthColor(healthScore)}`}>
+            {Math.round(healthScore)}%
+          </span>
         </div>
       </div>
     </div>
   );
 
+  // ============================================================
+  // RENDER
+  // ============================================================
+  
   return (
     <>
-      {/* Desktop Persistent Sidebar */}
+      {/* Desktop Sidebar */}
       <aside
         id="app-sidebar-desktop"
         className="hidden lg:flex w-64 bg-[#0F141B] border-r border-[#26313D] flex-col justify-between h-screen shrink-0 overflow-y-auto"
@@ -213,15 +420,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {sidebarContent}
       </aside>
 
-      {/* Mobile / Tablet Drawer Overlay */}
+      {/* Mobile Drawer */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 lg:hidden flex transition-opacity animate-in fade-in"
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 lg:hidden flex transition-opacity animate-in fade-in duration-200"
           onClick={onClose}
         >
           <aside
             id="app-sidebar-mobile"
-            className="w-72 sm:w-80 bg-[#0F141B] border-r border-[#26313D] h-full shadow-2xl overflow-y-auto animate-in slide-in-from-left duration-200"
+            className="w-72 sm:w-80 bg-[#0F141B] border-r border-[#26313D] h-full shadow-2xl overflow-y-auto animate-in slide-in-from-left duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             {sidebarContent}
@@ -231,3 +438,5 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </>
   );
 };
+
+export default Sidebar;

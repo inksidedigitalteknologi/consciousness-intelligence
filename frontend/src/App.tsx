@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
+import { BottomNav } from './components/BottomNav';
 import { DashboardView } from './components/DashboardView';
 import { BrainView } from './components/BrainView';
 import { ReflectionView } from './components/ReflectionView';
@@ -31,6 +32,7 @@ import {
 } from './types';
 
 import { inksideAPI, StatusResponse, Signal as APISignal, BrainStateResponse, PerformanceResponse } from './api/inkside';
+import { WebSocketProvider, useWebSocket, useWebSocketChannel, useWebSocketStatus } from './contexts/WebSocketContext';
 
 // ============================================================
 // LOCALSTORAGE KEYS
@@ -45,7 +47,7 @@ const PAGE_STORAGE_KEY = 'inkside_current_page';
 const loadCurrentPage = (): NavigationPage => {
   try {
     const saved = localStorage.getItem(PAGE_STORAGE_KEY);
-    if (saved && saved !== 'undefined') {
+    if (saved && saved !== 'undefined' && saved !== 'null') {
       return saved as NavigationPage;
     }
   } catch {}
@@ -65,6 +67,8 @@ const saveCurrentPage = (page: NavigationPage) => {
 interface SystemMetrics {
   cpu: number;
   ram: number;
+  ram_percent: number;
+  disk_percent: number;
   uptime: number;
   memory_count: number;
   knowledge_count: number;
@@ -75,18 +79,42 @@ interface SystemMetrics {
   open_positions: number;
   risk_level: string;
   health_score: number;
+  last_update: string;
 }
 
 // ============================================================
 // LOADING SCREEN COMPONENT
 // ============================================================
 
-const LoadingScreen: React.FC = () => (
+const LoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading Inkside Digital...' }) => (
   <div className="flex h-screen w-screen bg-[#0B0F14] items-center justify-center">
     <div className="text-center">
-      <div className="text-4xl mb-4">🧠</div>
-      <div className="text-white text-xl">Loading Inkside Digital...</div>
-      <div className="text-gray-500 text-sm mt-2">Menghubungkan ke backend...</div>
+      <div className="text-4xl mb-4 animate-pulse">🧠</div>
+      <div className="text-white text-xl font-light">{message}</div>
+      <div className="text-gray-500 text-sm mt-2 animate-pulse">Menghubungkan ke backend...</div>
+      <div className="mt-4 w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto"></div>
+    </div>
+  </div>
+);
+
+// ============================================================
+// ERROR SCREEN COMPONENT
+// ============================================================
+
+const ErrorScreen: React.FC<{ error: string; onRetry: () => void }> = ({ error, onRetry }) => (
+  <div className="flex h-screen w-screen bg-[#0B0F14] items-center justify-center">
+    <div className="text-center max-w-md p-8 rounded-2xl bg-red-500/10 border border-red-500/30">
+      <div className="text-4xl mb-4">❌</div>
+      <div className="text-red-400 text-lg font-medium">{error}</div>
+      <p className="text-gray-400 text-sm mt-2">
+        Pastikan backend berjalan di port 5001 dan API Key benar.
+      </p>
+      <button
+        onClick={onRetry}
+        className="mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200"
+      >
+        🔄 Retry
+      </button>
     </div>
   </div>
 );
@@ -98,6 +126,8 @@ const LoadingScreen: React.FC = () => (
 const defaultSystemMetrics: SystemMetrics = {
   cpu: 0,
   ram: 0,
+  ram_percent: 0,
+  disk_percent: 0,
   uptime: 0,
   memory_count: 0,
   knowledge_count: 0,
@@ -108,39 +138,71 @@ const defaultSystemMetrics: SystemMetrics = {
   open_positions: 0,
   risk_level: '--',
   health_score: 0,
+  last_update: new Date().toISOString(),
 };
 
 // ============================================================
-// MAIN APP
+// MAIN APP CONTENT
 // ============================================================
 
-export default function App() {
+function AppContent() {
   // ============================================================
-  // NAVIGATION STATE - LOAD FROM LOCALSTORAGE
+  // NAVIGATION STATE
   // ============================================================
   
   const [currentPage, setCurrentPage] = useState<NavigationPage>(loadCurrentPage);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
-  // Auto-save page ke localStorage
   useEffect(() => {
     saveCurrentPage(currentPage);
   }, [currentPage]);
 
   // ============================================================
-  // STATE FOR BACKEND REAL DATA
+  // WEBSOCKET
+  // ============================================================
+  
+  const { isConnected, reconnectAttempts, getConnectionStatus } = useWebSocket();
+  
+  useWebSocketChannel('metrics', (data) => {
+    if (data.type === 'system_metrics') {
+      setSystemMetrics(prev => ({
+        ...prev,
+        ...data.payload,
+        last_update: new Date().toISOString(),
+      }));
+    }
+  });
+
+  useWebSocketChannel('status', (data) => {
+    if (data.type === 'engine_status') {
+      setEngineRunning(data.payload.running || false);
+      setLearningActive(data.payload.learning || false);
+      setCycleCount(data.payload.cycles || 0);
+    }
+  });
+
+  useWebSocketChannel('signals', (data) => {
+    if (data.type === 'signal_update') {
+      const mapped = mapSignalData([data.payload]);
+      setRealSignals(prev => {
+        const filtered = prev.filter(s => s.pair !== data.payload.pair);
+        return [...filtered, ...mapped];
+      });
+    }
+  });
+
+  // ============================================================
+  // STATE
   // ============================================================
   
   const [apiStatus, setApiStatus] = useState<StatusResponse | null>(null);
-  const [realSignals, setRealSignals] = useState<APISignal[]>([]);
+  const [realSignals, setRealSignals] = useState<any[]>([]);
   const [brainState, setBrainState] = useState<BrainStateResponse | null>(null);
   const [performance, setPerformance] = useState<PerformanceResponse | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // ============================================================
-  // STATE FOR UI CONTROLS (REAL DATA)
-  // ============================================================
+  const [retryCount, setRetryCount] = useState(0);
   
   const [engineRunning, setEngineRunning] = useState(false);
   const [learningActive, setLearningActive] = useState(false);
@@ -149,10 +211,6 @@ export default function App() {
   const [emotionalState, setEmotionalState] = useState('CALM');
   const [systemMetrics, setSystemMetrics] = useState<SystemMetrics>(defaultSystemMetrics);
 
-  // ============================================================
-  // STATE FOR UI DATA (DARI BACKEND ATAU KOSONG)
-  // ============================================================
-  
   const [tickers, setTickers] = useState<TickerInfo[]>([]);
   const [signals, setSignals] = useState<TradingSignal[]>([]);
   const [insights, setInsights] = useState<CognitiveInsight[]>([]);
@@ -161,14 +219,14 @@ export default function App() {
   const [positions, setPositions] = useState<TradingPosition[]>([]);
   const [logs, setLogs] = useState<SystemLogEntry[]>([]);
   const [telegramConfigured, setTelegramConfigured] = useState(false);
+  const [watchlistCount, setWatchlistCount] = useState(0);
 
   // ============================================================
-  // MAP DATA API KE FORMAT KOMPATIBEL
+  // HELPERS
   // ============================================================
   
-  const mapSignalData = (apiSignals: any[]): any[] => {
+  const mapSignalData = useCallback((apiSignals: any[]): any[] => {
     if (!apiSignals || apiSignals.length === 0) return [];
-    
     return apiSignals.map((s, index) => ({
       pair: s.pair || '',
       signal: s.signal || 'HOLD',
@@ -199,13 +257,9 @@ export default function App() {
       trend: s.signal === 'BUY' ? 'BULLISH' : s.signal === 'SELL' ? 'BEARISH' : 'NEUTRAL',
       timeframe: '1h',
     }));
-  };
+  }, []);
 
-  // ============================================================
-  // FETCH SYSTEM METRICS
-  // ============================================================
-  
-  const fetchSystemMetrics = async () => {
+  const fetchSystemMetrics = useCallback(async () => {
     try {
       const response = await fetch('/api/system/metrics');
       if (response.ok) {
@@ -213,6 +267,8 @@ export default function App() {
         setSystemMetrics({
           cpu: data.cpu || 0,
           ram: data.ram || 0,
+          ram_percent: data.ram_percent || 0,
+          disk_percent: data.disk_percent || 0,
           uptime: data.uptime || 0,
           memory_count: data.memory_count || 0,
           knowledge_count: data.knowledge_count || 0,
@@ -223,23 +279,17 @@ export default function App() {
           open_positions: data.open_positions || 0,
           risk_level: data.risk_level || '--',
           health_score: data.health_score || 0,
+          last_update: new Date().toISOString(),
         });
       }
     } catch (error) {
       console.error('Failed to fetch system metrics:', error);
     }
-  };
+  }, []);
 
-  // ============================================================
-  // FETCH REAL DATA
-  // ============================================================
-  
-  const fetchRealData = async (showRefresh: boolean = false) => {
+  const fetchRealData = useCallback(async (showRefresh: boolean = false) => {
     try {
-      if (showRefresh) {
-        setIsRefreshing(true);
-      }
-      
+      if (showRefresh) setIsRefreshing(true);
       setError(null);
       
       const [statusData, signalsData, brainData, perfData] = await Promise.all([
@@ -250,10 +300,7 @@ export default function App() {
       ]);
       
       setApiStatus(statusData);
-      
-      const mappedSignals = mapSignalData(signalsData.signals || []);
-      setRealSignals(mappedSignals);
-      
+      setRealSignals(mapSignalData(signalsData.signals || []));
       setBrainState(brainData);
       setPerformance(perfData);
       
@@ -261,48 +308,54 @@ export default function App() {
         setEngineRunning(statusData.bot.state === 'RUNNING' || statusData.bot.state === 'ACTIVE');
         setLearningActive(statusData.bot.consciousness || false);
         setCycleCount(statusData.bot.results || 0);
+        if (brainData?.brain) {
+          setConsciousnessLevel(brainData.brain.health / 100 || 0.5);
+        }
       }
       
-      // Fetch system metrics
       await fetchSystemMetrics();
-      
+      setRetryCount(0);
     } catch (err) {
       console.error('Failed to fetch real data:', err);
       setError('Gagal mengambil data dari backend. Pastikan backend berjalan di port 5001.');
+      setRetryCount(prev => prev + 1);
     } finally {
-      if (showRefresh) {
-        setIsRefreshing(false);
-      }
+      if (showRefresh) setIsRefreshing(false);
     }
-  };
+  }, [mapSignalData, fetchSystemMetrics]);
 
   // ============================================================
-  // INITIAL LOAD & AUTO UPDATE
+  // INIT
   // ============================================================
   
   useEffect(() => {
+    let mounted = true;
     const init = async () => {
+      if (!mounted) return;
       setIsInitialLoading(true);
       await fetchRealData(false);
-      setIsInitialLoading(false);
+      if (mounted) setIsInitialLoading(false);
     };
     init();
     
     const interval = setInterval(() => {
-      fetchRealData(false);
+      if (mounted) fetchRealData(false);
     }, 30000);
     
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [fetchRealData]);
 
   // ============================================================
   // HANDLERS
   // ============================================================
   
-  const handleToggleEngine = () => {
-    setEngineRunning((prev) => {
+  const handleToggleEngine = useCallback(() => {
+    setEngineRunning(prev => {
       const next = !prev;
-      setLogs((prevLogs) => [
+      setLogs(prevLogs => [
         {
           id: Date.now(),
           timestamp: Date.now(),
@@ -312,15 +365,15 @@ export default function App() {
             : 'Trading Engine stopped gracefully.',
           source: 'Engine',
         },
-        ...prevLogs,
+        ...prevLogs.slice(0, 99),
       ]);
       return next;
     });
-  };
+  }, []);
 
-  const handleRefreshData = () => {
+  const handleRefreshData = useCallback(() => {
     fetchRealData(true);
-    setLogs((prevLogs) => [
+    setLogs(prevLogs => [
       {
         id: Date.now(),
         timestamp: Date.now(),
@@ -328,11 +381,11 @@ export default function App() {
         message: 'All subsystems refreshed with real data from backend API.',
         source: 'System',
       },
-      ...prevLogs,
+      ...prevLogs.slice(0, 99),
     ]);
-  };
+  }, [fetchRealData]);
 
-  const handleAddKnowledge = (item: Partial<KnowledgeItem>) => {
+  const handleAddKnowledge = useCallback((item: Partial<KnowledgeItem>) => {
     const newItem: KnowledgeItem = {
       id: `kb-${Date.now()}`,
       content: item.content || '',
@@ -344,9 +397,8 @@ export default function App() {
       status: 'active',
       createdAt: item.createdAt || new Date().toISOString(),
     };
-    setKnowledgeList((prev) => [newItem, ...prev]);
-
-    setLogs((prevLogs) => [
+    setKnowledgeList(prev => [newItem, ...prev]);
+    setLogs(prevLogs => [
       {
         id: Date.now(),
         timestamp: Date.now(),
@@ -354,168 +406,209 @@ export default function App() {
         message: `Added new knowledge item: "${newItem.content.substring(0, 50)}..."`,
         source: 'Knowledge',
       },
-      ...prevLogs,
+      ...prevLogs.slice(0, 99),
     ]);
-  };
+  }, []);
 
-  const handleClosePosition = (id: string) => {
-    setPositions((prev) => prev.filter((p) => p.id !== id));
-    setLogs((prevLogs) => [
+  const handleClosePosition = useCallback((id: string) => {
+    setPositions(prev => prev.filter(p => p.id !== id));
+    setLogs(prevLogs => [
       {
         id: Date.now(),
         timestamp: Date.now(),
         level: 'INFO',
-        message: `Position ${id} closed with profit.`,
+        message: `Position ${id} closed.`,
         source: 'TradingBot',
       },
-      ...prevLogs,
+      ...prevLogs.slice(0, 99),
     ]);
-  };
+  }, []);
 
   // ============================================================
-  // RENDER - Loading
+  // RENDER
   // ============================================================
   
   if (isInitialLoading) {
-    return <LoadingScreen />;
+    return <LoadingScreen message="Loading Inkside Digital..." />;
   }
 
-  if (error) {
+  if (error && retryCount > 3) {
     return (
-      <div className="flex h-screen w-screen bg-[#0B0F14] items-center justify-center">
-        <div className="text-center max-w-md">
-          <div className="text-4xl mb-4">❌</div>
-          <div className="text-red-400 text-xl">{error}</div>
-          <button
-            onClick={() => fetchRealData(true)}
-            className="mt-4 px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
+      <ErrorScreen 
+        error={error} 
+        onRetry={() => {
+          setRetryCount(0);
+          fetchRealData(true);
+        }} 
+      />
     );
   }
 
-  // ============================================================
-  // RENDER - Main App
-  // ============================================================
+  const connectionStatus = getConnectionStatus();
   
   return (
-    <div className="flex h-screen w-screen bg-[#0B0F14] text-[#E8EDF2] overflow-hidden font-sans">
-      {/* Left Sidebar */}
-      <Sidebar
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-        engineRunning={engineRunning}
-        learningActive={learningActive}
-        cycleCount={cycleCount}
-      />
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        <TopBar
+    <div className="flex flex-col h-screen w-screen bg-[#0B0F14] text-[#E8EDF2] overflow-hidden font-sans">
+      {/* Main Layout: Sidebar + Content */}
+      <div className="flex flex-1 min-h-0">
+        {/* Sidebar */}
+        <Sidebar
           currentPage={currentPage}
+          onPageChange={setCurrentPage}
           engineRunning={engineRunning}
-          onToggleEngine={handleToggleEngine}
-          telegramConfigured={telegramConfigured}
-          onRefreshData={handleRefreshData}
-          isRefreshing={isRefreshing}
+          learningActive={learningActive}
+          cycleCount={cycleCount}
+          wsConnected={isConnected}
+          wsStatus={connectionStatus}
+          healthScore={systemMetrics.health_score}
+          version="1.0.0"
+          watchlistCount={watchlistCount}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
         />
 
-        {/* Scrollable View Container */}
-        <main className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-[#26313D] scrollbar-track-transparent">
-          
-          {currentPage === 'Dashboard' && (
-            <DashboardView
-              tickers={tickers}
-              signals={realSignals.length > 0 ? realSignals as any : signals}
-              insights={insights}
-              engineRunning={engineRunning}
-              learningActive={learningActive}
-              cycleCount={cycleCount}
-              brainState={apiStatus?.bot?.state || 'IDLE'}
-              consciousnessLevel={consciousnessLevel}
-              systemMetrics={systemMetrics}
-              onNavigate={setCurrentPage}
-            />
-          )}
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+          <TopBar
+            currentPage={currentPage}
+            engineRunning={engineRunning}
+            onToggleEngine={handleToggleEngine}
+            telegramConfigured={telegramConfigured}
+            onRefreshData={handleRefreshData}
+            isRefreshing={isRefreshing}
+            wsConnected={isConnected}
+            wsStatus={connectionStatus}
+            healthScore={systemMetrics.health_score}
+            uptime={systemMetrics.uptime}
+            systemMode="PAPER"
+            riskLevel={systemMetrics.risk_level}
+            watchlistCount={watchlistCount}
+            onOpenSidebar={() => setIsSidebarOpen(true)}
+          />
 
-          {currentPage === 'Brain' && (
-            <BrainView
-              brainState={apiStatus?.bot?.state || 'IDLE'}
-              cycleCount={cycleCount}
-              healthScore={systemMetrics.health_score || 95}
-              onRefresh={handleRefreshData}
-            />
-          )}
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 pb-20 sm:pb-6 scrollbar-thin scrollbar-thumb-[#26313D] scrollbar-track-transparent">
+            
+            {currentPage === 'Dashboard' && (
+              <DashboardView
+                tickers={tickers}
+                signals={realSignals.length > 0 ? realSignals as any : signals}
+                insights={insights}
+                engineRunning={engineRunning}
+                learningActive={learningActive}
+                cycleCount={cycleCount}
+                brainState={apiStatus?.bot?.state || 'IDLE'}
+                consciousnessLevel={consciousnessLevel}
+                systemMetrics={systemMetrics}
+                onNavigate={setCurrentPage}
+                wsConnected={isConnected}
+              />
+            )}
 
-          {currentPage === 'Reflection' && (
-            <ReflectionView
-              consciousnessLevel={consciousnessLevel}
-              emotionalState={emotionalState}
-            />
-          )}
+            {currentPage === 'Brain' && (
+              <BrainView
+                brainState={apiStatus?.bot?.state || 'IDLE'}
+                cycleCount={cycleCount}
+                healthScore={systemMetrics.health_score || 95}
+                onRefresh={handleRefreshData}
+                wsConnected={isConnected}
+              />
+            )}
 
-          {currentPage === 'Market' && <MarketView tickers={tickers} />}
+            {currentPage === 'Reflection' && (
+              <ReflectionView
+                consciousnessLevel={consciousnessLevel}
+                emotionalState={emotionalState}
+                wsConnected={isConnected}
+              />
+            )}
 
-          {currentPage === 'Watchlist' && (
-            <WatchlistView
-              tickers={tickers}
-              signals={realSignals.length > 0 ? realSignals as any : signals}
-              onNavigateToTrading={(pair: string) => {
-                setCurrentPage('Trading');
-                localStorage.setItem('inkside_selected_pair', pair);
-              }}
-              onNavigateToSignals={(pair: string) => {
-                setCurrentPage('Signals');
-                localStorage.setItem('inkside_selected_pair', pair);
-              }}
-            />
-          )}
+            {currentPage === 'Market' && (
+              <MarketView tickers={tickers} wsConnected={isConnected} />
+            )}
 
-          {currentPage === 'Signals' && (
-            <SignalsView signals={realSignals.length > 0 ? realSignals as any : signals} />
-          )}
+            {currentPage === 'Watchlist' && (
+              <WatchlistView
+                tickers={tickers}
+                signals={realSignals.length > 0 ? realSignals as any : signals}
+                onNavigateToTrading={(pair: string) => {
+                  setCurrentPage('Trading');
+                  localStorage.setItem('inkside_selected_pair', pair);
+                }}
+                onNavigateToSignals={(pair: string) => {
+                  setCurrentPage('Signals');
+                  localStorage.setItem('inkside_selected_pair', pair);
+                }}
+                wsConnected={isConnected}
+              />
+            )}
 
-          {currentPage === 'Learning' && (
-            <LearningView learningActive={learningActive} cycleCount={cycleCount} />
-          )}
+            {currentPage === 'Signals' && (
+              <SignalsView signals={realSignals.length > 0 ? realSignals as any : signals} wsConnected={isConnected} />
+            )}
 
-          {currentPage === 'Memory' && <MemoryView />}
-          {currentPage === 'Pattern' && <PatternView />}
-          {currentPage === 'Prediction' && <PredictionView />}
-          {currentPage === 'Decision' && <DecisionView />}
+            {currentPage === 'Learning' && (
+              <LearningView learningActive={learningActive} cycleCount={cycleCount} wsConnected={isConnected} />
+            )}
 
-          {currentPage === 'Knowledge' && (
-            <KnowledgeView knowledgeList={knowledgeList} onAddKnowledge={handleAddKnowledge} />
-          )}
+            {currentPage === 'Memory' && <MemoryView wsConnected={isConnected} />}
+            {currentPage === 'Pattern' && <PatternView wsConnected={isConnected} />}
+            {currentPage === 'Prediction' && <PredictionView wsConnected={isConnected} />}
+            {currentPage === 'Decision' && <DecisionView wsConnected={isConnected} />}
 
-          {currentPage === 'Health' && (
-            <HealthView components={components} healthScore={systemMetrics.health_score || 95} />
-          )}
+            {currentPage === 'Knowledge' && (
+              <KnowledgeView knowledgeList={knowledgeList} onAddKnowledge={handleAddKnowledge} wsConnected={isConnected} />
+            )}
 
-          {currentPage === 'Trading' && (
-            <TradingControlView
-              engineRunning={engineRunning}
-              onToggleEngine={handleToggleEngine}
-              positions={positions}
-              onClosePosition={handleClosePosition}
-            />
-          )}
+            {currentPage === 'Health' && (
+              <HealthView components={components} healthScore={systemMetrics.health_score || 95} wsConnected={isConnected} />
+            )}
 
-          {currentPage === 'Telegram' && (
-            <TelegramView
-              isConfigured={telegramConfigured}
-              onSaveConfig={() => setTelegramConfigured(true)}
-            />
-          )}
+            {currentPage === 'Trading' && (
+              <TradingControlView
+                engineRunning={engineRunning}
+                onToggleEngine={handleToggleEngine}
+                positions={positions}
+                onClosePosition={handleClosePosition}
+                wsConnected={isConnected}
+              />
+            )}
 
-          {currentPage === 'Diagnostics' && <DiagnosticsView />}
-          {currentPage === 'Settings' && <SettingsView />}
-          
-        </main>
+            {currentPage === 'Telegram' && (
+              <TelegramView
+                isConfigured={telegramConfigured}
+                onSaveConfig={() => setTelegramConfigured(true)}
+                wsConnected={isConnected}
+              />
+            )}
+
+            {currentPage === 'Diagnostics' && <DiagnosticsView wsConnected={isConnected} />}
+            {currentPage === 'Settings' && <SettingsView wsConnected={isConnected} />}
+            
+          </main>
+        </div>
       </div>
+
+      {/* Bottom Navigation (Mobile Only) */}
+      <BottomNav
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+        onOpenMenu={() => setIsSidebarOpen(true)}
+        watchlistCount={watchlistCount}
+        engineRunning={engineRunning}
+        wsConnected={isConnected}
+        healthScore={systemMetrics.health_score}
+      />
     </div>
+  );
+}
+
+// ============================================================
+// MAIN APP WITH WEBSOCKET PROVIDER
+// ============================================================
+
+export default function App() {
+  return (
+    <WebSocketProvider>
+      <AppContent />
+    </WebSocketProvider>
   );
 }

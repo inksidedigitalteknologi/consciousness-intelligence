@@ -45,7 +45,7 @@ import {
   CloudRain,
   Snowflake,
 } from 'lucide-react';
-import { TickerInfo, TradingSignal, CognitiveInsight } from '../types';
+import { TickerInfo, TradingSignal, CognitiveInsight, NavigationPage } from '../types';
 
 // ============================================================
 // TYPES
@@ -54,6 +54,8 @@ import { TickerInfo, TradingSignal, CognitiveInsight } from '../types';
 interface SystemMetrics {
   cpu: number;
   ram: number;
+  ram_percent?: number;
+  disk_percent?: number;
   uptime: number;
   memory_count: number;
   knowledge_count: number;
@@ -64,6 +66,7 @@ interface SystemMetrics {
   open_positions: number;
   risk_level: string;
   health_score: number;
+  last_update?: string;
 }
 
 interface DashboardViewProps {
@@ -76,7 +79,8 @@ interface DashboardViewProps {
   brainState: string;
   consciousnessLevel: number;
   systemMetrics: SystemMetrics;
-  onNavigate: (page: any) => void;
+  onNavigate: (page: NavigationPage) => void;
+  wsConnected?: boolean;
 }
 
 // ============================================================
@@ -116,6 +120,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   consciousnessLevel,
   systemMetrics,
   onNavigate,
+  wsConnected = false,
 }) => {
   const [signalPage, setSignalPage] = useState(0);
   const [metricPage, setMetricPage] = useState(0);
@@ -409,6 +414,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30">
               {engineRunning ? 'ACTIVE' : 'STANDBY'}
             </span>
+            {wsConnected && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                LIVE
+              </span>
+            )}
           </div>
           <p className="text-xs text-[#8D9AAA]">
             {engineRunning 
@@ -745,3 +755,5 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     </div>
   );
 };
+
+export default DashboardView;

@@ -8,6 +8,7 @@
 # WITH SYSTEM METRICS & SECURE SETTINGS
 # WITH WATCHDOG v1.0.0 REAL IMPLEMENTATION
 # WITH PREDICTION ENGINE v1.0.0
+# WITH WEBSOCKET BROADCAST
 # 100% REAL DATA - TANPA DUMMY
 # ALL FRONTEND API ENDPOINTS INCLUDED
 # ============================================================
@@ -823,6 +824,23 @@ def start_api_server(bot_instance):
         socketio = SocketIO(app, cors_allowed_origins="*")
         
         # ========================================================
+        # WEBSOCKET BROADCAST FUNCTION
+        # ========================================================
+        
+        def broadcast_update(channel: str, payload: dict):
+            """Broadcast update ke semua client via WebSocket."""
+            try:
+                socketio.emit(channel, {
+                    'channel': channel,
+                    'payload': payload,
+                    'type': 'update',
+                    'timestamp': datetime.now().isoformat()
+                })
+                logger.debug(f"📡 Broadcast to {channel}: {str(payload)[:100]}")
+            except Exception as e:
+                logger.error(f"Broadcast error: {e}")
+        
+        # ========================================================
         # API KEY AUTHENTICATION DECORATOR
         # ========================================================
         
@@ -863,7 +881,7 @@ def start_api_server(bot_instance):
             except Exception as e:
                 return jsonify({"status": "error", "message": str(e)}), 500
         
-        # ---- FRONTEND ENDPOINTS (WITH AUTH) ----
+        # ---- FRONTEND ENDPOINTS (WITH AUTH & BROADCAST) ----
         
         @app.route('/api/status', methods=['GET'])
         @require_api_key
@@ -871,13 +889,25 @@ def start_api_server(bot_instance):
             """Get system status for frontend."""
             try:
                 status = bot_instance.get_status() if bot_instance else {"status": "unknown"}
-                return jsonify({
+                result = {
                     "status": "online",
                     "bot": status,
                     "version": APP_VERSION,
                     "mode": MODE,
                     "timestamp": datetime.now().isoformat()
+                }
+                
+                # Broadcast ke WebSocket
+                broadcast_update('status', {
+                    'type': 'engine_status',
+                    'payload': {
+                        'running': status.get('state') == 'RUNNING' if status else False,
+                        'learning': status.get('consciousness', False) if status else False,
+                        'cycles': status.get('results', 0) if status else 0
+                    }
                 })
+                
+                return jsonify(result)
             except Exception as e:
                 return jsonify({"status": "error", "message": str(e)}), 500
         
@@ -925,6 +955,13 @@ def start_api_server(bot_instance):
                     signals = bot_instance.get_signals()
                 else:
                     signals = []
+                
+                # Broadcast ke WebSocket
+                broadcast_update('signals', {
+                    'type': 'signal_update',
+                    'payload': signals
+                })
+                
                 return jsonify({"signals": signals, "timestamp": datetime.now().isoformat()})
             except Exception as e:
                 return jsonify({"error": str(e)}), 500
@@ -943,6 +980,14 @@ def start_api_server(bot_instance):
                 from core.learning.prediction import PredictionEngineWrapper
                 engine = PredictionEngineWrapper()
                 predictions = engine.get_forecasts(pair, horizon, method)
+                
+                # Broadcast ke WebSocket
+                broadcast_update('predictions', {
+                    'type': 'prediction_update',
+                    'payload': predictions,
+                    'pair': pair
+                })
+                
                 return jsonify(predictions)
             except Exception as e:
                 logger.error(f"Prediction error: {e}")
@@ -966,6 +1011,7 @@ def start_api_server(bot_instance):
                 return jsonify(metrics)
             except Exception as e:
                 logger.error(f"Metrics error: {e}")
+
                 return jsonify({'error': str(e)}), 500
         
         @app.route('/api/predictions/monte_carlo', methods=['POST', 'GET'])
@@ -1030,6 +1076,14 @@ def start_api_server(bot_instance):
                         }
                     
                     monte_carlo_cache[data.get('pair', 'BTC/USDT')] = result
+                    
+                    # Broadcast ke WebSocket
+                    broadcast_update('monte_carlo', {
+                        'type': 'monte_carlo_update',
+                        'payload': result,
+                        'pair': data.get('pair', 'BTC/USDT')
+                    })
+                    
                     return jsonify(result)
                 except Exception as e:
                     logger.error(f"Monte Carlo error: {e}")
@@ -1040,6 +1094,86 @@ def start_api_server(bot_instance):
                 if result:
                     return jsonify(result)
                 return jsonify({'error': 'No cached simulation for this pair'}), 404
+        
+        # ---- SYSTEM METRICS ----
+        
+        @app.route('/api/system/metrics', methods=['GET'])
+        @require_api_key
+        def api_system_metrics():
+            try:
+                import psutil
+                cpu = psutil.cpu_percent(interval=0.5)
+                mem = psutil.virtual_memory()
+                disk = psutil.disk_usage('/')
+                
+                cpu_score = max(0, 100 - cpu)
+                ram_score = max(0, 100 - mem.percent)
+                disk_score = max(0, 100 - disk.percent)
+                health_score = round((cpu_score * 0.4) + (ram_score * 0.4) + (disk_score * 0.2), 1)
+                
+                if health_score >= 80:
+                    risk_level = "LOW"
+                elif health_score >= 60:
+                    risk_level = "MODERATE"
+                elif health_score >= 40:
+                    risk_level = "HIGH"
+                else:
+                    risk_level = "CRITICAL"
+                
+                knowledge_count = 0
+                memory_count = 0
+                prediction_accuracy = 0
+                if brain and hasattr(brain, 'get_state'):
+                    try:
+                        brain_state = brain.get_state()
+                        knowledge_count = brain_state.get('knowledge_count', 0)
+                        memory_count = brain_state.get('memory_count', 0)
+                        prediction_accuracy = brain_state.get('prediction_accuracy', 0)
+                    except:
+                        pass
+                
+                pnl = 0
+                win_rate = 0
+                total_trades = 0
+                open_positions = 0
+                if bot_instance and hasattr(bot_instance, 'get_status'):
+                    try:
+                        bot_status = bot_instance.get_status()
+                        perf = bot_status.get('performance', {})
+                        pnl = perf.get('total_pnl', 0)
+                        win_rate = perf.get('win_rate', 0)
+                        total_trades = perf.get('total_trades', 0)
+                        open_positions = len(bot_status.get('positions', []))
+                    except:
+                        pass
+                
+                metrics = {
+                    "cpu": cpu,
+                    "ram": round(mem.used / (1024**3), 2),
+                    "ram_percent": mem.percent,
+                    "disk_percent": disk.percent,
+                    "uptime": int(time.time() - _startup_time),
+                    "memory_count": memory_count,
+                    "knowledge_count": knowledge_count,
+                    "pnl": pnl,
+                    "win_rate": win_rate,
+                    "total_trades": total_trades,
+                    "prediction_accuracy": prediction_accuracy,
+                    "open_positions": open_positions,
+                    "risk_level": risk_level,
+                    "health_score": health_score,
+                }
+                
+                # Broadcast ke WebSocket
+                broadcast_update('metrics', {
+                    'type': 'system_metrics',
+                    'payload': metrics
+                })
+                
+                return jsonify(metrics)
+            except Exception as e:
+                logger.error(f"System metrics error: {e}")
+                return jsonify({"error": str(e)}), 500
         
         # ---- TELEGRAM WEBHOOK ----
         
@@ -1151,78 +1285,6 @@ def start_api_server(bot_instance):
                 logger.error(f"Get webhook error: {e}")
                 return jsonify({'error': str(e)}), 500
         
-        # ---- SYSTEM METRICS ----
-        
-        @app.route('/api/system/metrics', methods=['GET'])
-        @require_api_key
-        def api_system_metrics():
-            try:
-                import psutil
-                cpu = psutil.cpu_percent(interval=0.5)
-                mem = psutil.virtual_memory()
-                disk = psutil.disk_usage('/')
-                
-                cpu_score = max(0, 100 - cpu)
-                ram_score = max(0, 100 - mem.percent)
-                disk_score = max(0, 100 - disk.percent)
-                health_score = round((cpu_score * 0.4) + (ram_score * 0.4) + (disk_score * 0.2), 1)
-                
-                if health_score >= 80:
-                    risk_level = "LOW"
-                elif health_score >= 60:
-                    risk_level = "MODERATE"
-                elif health_score >= 40:
-                    risk_level = "HIGH"
-                else:
-                    risk_level = "CRITICAL"
-                
-                knowledge_count = 0
-                memory_count = 0
-                prediction_accuracy = 0
-                if brain and hasattr(brain, 'get_state'):
-                    try:
-                        brain_state = brain.get_state()
-                        knowledge_count = brain_state.get('knowledge_count', 0)
-                        memory_count = brain_state.get('memory_count', 0)
-                        prediction_accuracy = brain_state.get('prediction_accuracy', 0)
-                    except:
-                        pass
-                
-                pnl = 0
-                win_rate = 0
-                total_trades = 0
-                open_positions = 0
-                if bot_instance and hasattr(bot_instance, 'get_status'):
-                    try:
-                        bot_status = bot_instance.get_status()
-                        perf = bot_status.get('performance', {})
-                        pnl = perf.get('total_pnl', 0)
-                        win_rate = perf.get('win_rate', 0)
-                        total_trades = perf.get('total_trades', 0)
-                        open_positions = len(bot_status.get('positions', []))
-                    except:
-                        pass
-                
-                return jsonify({
-                    "cpu": cpu,
-                    "ram": round(mem.used / (1024**3), 2),
-                    "ram_percent": mem.percent,
-                    "disk_percent": disk.percent,
-                    "uptime": int(time.time() - _startup_time),
-                    "memory_count": memory_count,
-                    "knowledge_count": knowledge_count,
-                    "pnl": pnl,
-                    "win_rate": win_rate,
-                    "total_trades": total_trades,
-                    "prediction_accuracy": prediction_accuracy,
-                    "open_positions": open_positions,
-                    "risk_level": risk_level,
-                    "health_score": health_score,
-                })
-            except Exception as e:
-                logger.error(f"System metrics error: {e}")
-                return jsonify({"error": str(e)}), 500
-        
         # ---- WATCHDOG API ----
         
         if WATCHDOG_AVAILABLE:
@@ -1242,16 +1304,24 @@ def start_api_server(bot_instance):
                 except Exception as e:
                     return jsonify({"error": str(e)}), 500
         
-        # ---- WEBSOCKET ----
+        # ---- WEBSOCKET EVENTS ----
         
         @socketio.on('connect')
         def handle_connect():
-            logger.info(f"Client connected: {request.sid}")
-            emit('connected', {'status': 'ok', 'timestamp': datetime.now().isoformat()})
+            logger.info(f"🔗 Client connected: {request.sid}")
+            emit('connected', {
+                'status': 'ok',
+                'timestamp': datetime.now().isoformat(),
+                'version': APP_VERSION
+            })
         
         @socketio.on('disconnect')
         def handle_disconnect():
-            logger.info(f"Client disconnected: {request.sid}")
+            logger.info(f"🔌 Client disconnected: {request.sid}")
+        
+        @socketio.on('ping')
+        def handle_ping():
+            emit('pong', {'timestamp': datetime.now().isoformat()})
         
         # ========================================================
         # START SERVER
@@ -1276,6 +1346,7 @@ def start_api_server(bot_instance):
         logger.info(f"   - POST /api/predictions/monte_carlo (requires API Key)")
         logger.info(f"   - POST /api/telegram/webhook (Telegram webhook)")
         logger.info(f"   - GET  /api/system/metrics (requires API Key)")
+        logger.info(f"   - 📡 WebSocket: /socket.io/ (real-time updates)")
         
         # Set webhook automatically if token is configured
         if TELEGRAM_CONFIGURED:
@@ -1486,6 +1557,7 @@ def main_headless():
     logger.info(f"  Knowledge   : {'ON' if KNOWLEDGE_AVAILABLE else 'OFF'}")
     logger.info(f"  Simulation  : {'ON' if SIMULATION_AVAILABLE else 'OFF'}")
     logger.info(f"  Prediction  : {'ON' if True else 'OFF'}")
+    logger.info(f"  WebSocket   : {'ON' if True else 'OFF'}")
     logger.info("=" * 60)
     logger.info("📡 Press Ctrl+C to stop")
     logger.info("=" * 60)
