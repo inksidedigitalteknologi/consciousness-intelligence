@@ -1,10 +1,13 @@
 # ============================================================
+# core/watchdog.py
+# INKSIDE DIGITAL - SYSTEM WATCHDOG v3.1
+# REAL IMPLEMENTATION - PRODUCTION READY
+# ============================================================
 #
 # INKSIDE INTELLIGENCE OS
+# SYSTEM WATCHDOG v3.1 - REAL IMPLEMENTATION
 #
-# SYSTEM WATCHDOG v3.0 - REAL IMPLEMENTATION
-#
-# Version: 3.0
+# Version: 3.1
 #
 # FUNGSI REAL:
 # - Monitoring komponen yang benar-benar berjalan
@@ -13,7 +16,10 @@
 # - Circuit breaker untuk exchange & API calls
 # - Auto-restart komponen real
 # - Alert ke Telegram real
-#
+# - Health score calculation
+# - Component dependency tracking
+# - Performance metrics
+# - Self-healing capabilities
 # ============================================================
 
 import logging
@@ -25,7 +31,7 @@ import os
 import sys
 import traceback
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Callable
+from typing import Dict, List, Optional, Any, Callable, Union
 from dataclasses import dataclass, field, asdict
 from collections import deque
 from enum import Enum
@@ -34,9 +40,7 @@ import inspect
 logger = logging.getLogger(__name__)
 
 # ============================================================
-#
 # ENUMS
-#
 # ============================================================
 
 class CircuitState(Enum):
@@ -51,10 +55,14 @@ class ComponentStatus(Enum):
     OFFLINE = "offline"
     UNKNOWN = "unknown"
 
+class AlertSeverity(Enum):
+    INFO = "info"
+    WARNING = "warning"
+    ERROR = "error"
+    CRITICAL = "critical"
+
 # ============================================================
-#
 # DATA CLASSES REAL
-#
 # ============================================================
 
 @dataclass
@@ -73,7 +81,7 @@ class RealLatencyMetric:
     status: str = "healthy"
     total_measurements: int = 0
     last_measurement_time: Optional[datetime] = None
-    measurement_source: str = "real"  # real, simulated, unknown
+    measurement_source: str = "real"
     
     def update(self, latency_ms: float):
         """Update dengan data real"""
@@ -96,7 +104,6 @@ class RealLatencyMetric:
             self.p99_ms = sorted_samples[int(len(sorted_samples) * 0.99)]
             self.avg_ms = sum(sorted_samples) / len(sorted_samples)
         
-        # Real threshold berdasarkan SLA
         if self.p95_ms > 500:
             self.status = "critical"
         elif self.p95_ms > 200:
@@ -137,29 +144,35 @@ class RealHeartbeat:
     thread_name: Optional[str] = None
     last_beat_interval: float = 0.0
     is_alive: bool = False
+    health_score: float = 100.0
+    uptime_seconds: float = 0.0
     
     def beat(self):
         """Register heartbeat real dari thread"""
-        self.last_beat = datetime.now()
+        now = datetime.now()
+        if self.last_beat:
+            self.last_beat_interval = (now - self.last_beat).total_seconds()
+            self.uptime_seconds += self.last_beat_interval
+        self.last_beat = now
         self.beat_count += 1
         self.consecutive_misses = 0
         self.status = "alive"
         self.is_alive = True
         self.thread_id = threading.get_ident()
         self.thread_name = threading.current_thread().name
-        
-        if hasattr(self, '_last_beat_time'):
-            self.last_beat_interval = (self.last_beat - self._last_beat_time).total_seconds()
-        self._last_beat_time = self.last_beat
+        # Health score improves with consistent beats
+        self.health_score = min(100, self.health_score + 0.5)
     
     def miss(self, error: str = None):
         self.missed_beats += 1
         self.consecutive_misses += 1
         self.is_alive = False
+        self.health_score = max(0, self.health_score - 10)
         if error:
             self.last_error = error
         if self.consecutive_misses >= 3:
             self.status = "dead"
+            self.health_score = max(0, self.health_score - 20)
     
     def to_dict(self):
         return {
@@ -175,7 +188,9 @@ class RealHeartbeat:
             "thread_id": self.thread_id,
             "thread_name": self.thread_name,
             "last_beat_interval": round(self.last_beat_interval, 2),
-            "is_alive": self.is_alive
+            "is_alive": self.is_alive,
+            "health_score": round(self.health_score, 1),
+            "uptime_seconds": round(self.uptime_seconds, 1)
         }
 
 @dataclass
@@ -198,6 +213,7 @@ class RealCircuitBreaker:
     last_error: Optional[str] = None
     recovery_attempts: int = 0
     last_error_traceback: Optional[str] = None
+    health_impact: float = 0.0
     
     def record_success(self):
         self.total_requests += 1
@@ -207,6 +223,7 @@ class RealCircuitBreaker:
         self.last_error = None
         self.last_error_traceback = None
         self.success_rate = (self.total_successes / self.total_requests) * 100 if self.total_requests > 0 else 100
+        self.health_impact = max(0, self.health_impact - 2)
         
         if self.state == "HALF_OPEN":
             if self.successes >= self.failure_threshold:
@@ -223,6 +240,7 @@ class RealCircuitBreaker:
         self.last_error = error
         self.last_error_traceback = traceback_str
         self.success_rate = (self.total_successes / self.total_requests) * 100 if self.total_requests > 0 else 0
+        self.health_impact = min(100, self.health_impact + 5)
         
         if self.state == "CLOSED":
             if self.failures >= self.failure_threshold:
@@ -258,6 +276,7 @@ class RealCircuitBreaker:
         self.half_open_time = None
         self.last_error = None
         self.last_error_traceback = None
+        self.health_impact = 0
         logger.info(f"🔄 Circuit {self.name} manually reset to CLOSED")
     
     def to_dict(self):
@@ -276,13 +295,12 @@ class RealCircuitBreaker:
             "total_successes": self.total_successes,
             "success_rate": round(self.success_rate, 2),
             "last_error": self.last_error,
-            "recovery_attempts": self.recovery_attempts
+            "recovery_attempts": self.recovery_attempts,
+            "health_impact": round(self.health_impact, 1)
         }
 
 # ============================================================
-#
 # REAL WATCHDOG ENGINE
-#
 # ============================================================
 
 class RealSystemWatchdog:
@@ -290,19 +308,23 @@ class RealSystemWatchdog:
     REAL System Watchdog - Memonitor komponen yang benar-benar berjalan
     """
     
+    VERSION = "3.1"
+    
     def __init__(
         self,
         interval: int = 10,
         heartbeat_timeout: int = 30,
         auto_restart: bool = True,
         max_restarts: int = 5,
-        restart_cooldown: int = 60
+        restart_cooldown: int = 60,
+        max_history: int = 500
     ):
         self.interval = interval
         self.heartbeat_timeout = heartbeat_timeout
         self.auto_restart = auto_restart
         self.max_restarts = max_restarts
         self.restart_cooldown = restart_cooldown
+        self.max_history = max_history
         
         self.running = False
         self.thread = None
@@ -314,13 +336,14 @@ class RealSystemWatchdog:
         self.heartbeats: Dict[str, RealHeartbeat] = {}
         self.circuit_breakers: Dict[str, RealCircuitBreaker] = {}
         self.dependencies: Dict[str, List[str]] = {}
-        self.component_methods: Dict[str, List[str]] = {}
+        self.component_methods: Dict[str, Dict[str, str]] = {}
+        self.component_health: Dict[str, float] = {}
         
         # History
-        self.history = []
-        self.alert_history = []
-        self.restart_history = []
-        self.error_history = []
+        self.history: List[Dict] = []
+        self.alert_history: List[Dict] = []
+        self.restart_history: List[Dict] = []
+        self.error_history: List[Dict] = []
         
         # Stats
         self.metrics = {
@@ -330,19 +353,28 @@ class RealSystemWatchdog:
             "total_errors": 0,
             "avg_check_time": 0.0,
             "last_check_time": 0.0,
-            "uptime_seconds": 0
+            "uptime_seconds": 0,
+            "health_score": 100.0,
+            "components_healthy": 0,
+            "components_degraded": 0,
+            "components_critical": 0,
+            "components_offline": 0,
         }
         
         # Alert system
         self.alert_callbacks: List[Callable] = []
         self._last_alert_time: Dict[str, datetime] = {}
+        self._alert_cooldown_seconds = 30
         
-        logger.info("🛡️ REAL System Watchdog v3.0 initialized")
+        # System metrics cache
+        self._system_metrics_cache: Optional[Dict] = None
+        self._cache_time: Optional[datetime] = None
+        self._cache_duration = 5  # seconds
+        
+        logger.info(f"🛡️ REAL System Watchdog v{self.VERSION} initialized")
     
     # ============================================================
-    #
     # REGISTER REAL COMPONENT
-    #
     # ============================================================
     
     def register_component(
@@ -374,11 +406,11 @@ class RealSystemWatchdog:
         )
         self.latency_metrics[name] = RealLatencyMetric(component=name)
         self.circuit_breakers[name] = RealCircuitBreaker(name=name)
+        self.component_health[name] = 100.0
         
         if dependencies:
             self.dependencies[name] = dependencies
         
-        # Simpan method names
         self.component_methods[name] = {
             "health": health_method,
             "restart": restart_method,
@@ -401,7 +433,8 @@ class RealSystemWatchdog:
             "status": "UNKNOWN",
             "timestamp": datetime.now().isoformat(),
             "details": {},
-            "latency_ms": 0
+            "latency_ms": 0,
+            "health_score": 0
         }
         
         start_time = time.time()
@@ -416,26 +449,33 @@ class RealSystemWatchdog:
                 if isinstance(health_result, dict):
                     result["details"] = health_result
                     result["status"] = "ONLINE" if health_result.get("status") == "OK" else "WARNING"
+                    result["health_score"] = health_result.get("health_score", 80)
                 elif isinstance(health_result, bool):
                     result["status"] = "ONLINE" if health_result else "WARNING"
+                    result["health_score"] = 90 if health_result else 50
                 else:
                     result["status"] = "ONLINE" if health_result else "WARNING"
+                    result["health_score"] = 85 if health_result else 45
             else:
-                # Check if component has basic attributes
                 if hasattr(component, "running"):
                     result["status"] = "ONLINE" if component.running else "IDLE"
+                    result["health_score"] = 90 if component.running else 60
                 else:
                     result["status"] = "AVAILABLE"
+                    result["health_score"] = 80
             
             # Record heartbeat
             self.record_heartbeat(name)
+            self.component_health[name] = result.get("health_score", 80)
             
         except Exception as e:
             result["status"] = "ERROR"
             result["error"] = str(e)
             result["traceback"] = traceback.format_exc()
+            result["health_score"] = 20
             self.record_heartbeat(name, str(e))
             self.record_circuit_failure(name, str(e))
+            self.component_health[name] = max(0, self.component_health.get(name, 100) - 20)
             logger.error(f"Health check failed for {name}: {e}")
         
         result["latency_ms"] = (time.time() - start_time) * 1000
@@ -444,9 +484,7 @@ class RealSystemWatchdog:
         return result
     
     # ============================================================
-    #
     # REAL HEARTBEAT SYSTEM
-    #
     # ============================================================
     
     def record_heartbeat(self, component: str, error: str = None):
@@ -456,13 +494,13 @@ class RealSystemWatchdog:
         
         if error:
             self.heartbeats[component].miss(error)
+            self.component_health[component] = max(0, self.component_health.get(component, 100) - 10)
         else:
             self.heartbeats[component].beat()
+            self.component_health[component] = min(100, self.component_health.get(component, 100) + 0.5)
     
     # ============================================================
-    #
     # REAL LATENCY SYSTEM
-    #
     # ============================================================
     
     def record_latency(self, component: str, latency_ms: float):
@@ -474,15 +512,13 @@ class RealSystemWatchdog:
         
         if latency_ms > 500:
             self._trigger_alert(
-                severity="warning",
+                severity=AlertSeverity.WARNING,
                 component=component,
                 message=f"High latency: {latency_ms:.1f}ms"
             )
     
     # ============================================================
-    #
     # REAL CIRCUIT BREAKER
-    #
     # ============================================================
     
     def record_circuit_success(self, component: str):
@@ -490,6 +526,7 @@ class RealSystemWatchdog:
         if component not in self.circuit_breakers:
             self.circuit_breakers[component] = RealCircuitBreaker(name=component)
         self.circuit_breakers[component].record_success()
+        self.component_health[component] = min(100, self.component_health.get(component, 100) + 2)
     
     def record_circuit_failure(self, component: str, error: str = None):
         """Record failed operation for circuit breaker"""
@@ -498,10 +535,11 @@ class RealSystemWatchdog:
         
         tb = traceback.format_exc() if error else None
         self.circuit_breakers[component].record_failure(error, tb)
+        self.component_health[component] = max(0, self.component_health.get(component, 100) - 5)
         
         if self.circuit_breakers[component].state == "OPEN":
             self._trigger_alert(
-                severity="critical",
+                severity=AlertSeverity.CRITICAL,
                 component=component,
                 message=f"Circuit OPEN: {error}"
             )
@@ -516,18 +554,24 @@ class RealSystemWatchdog:
         """Manually reset circuit breaker"""
         if component in self.circuit_breakers:
             self.circuit_breakers[component].reset()
+            self.component_health[component] = min(100, self.component_health.get(component, 100) + 20)
     
     # ============================================================
-    #
     # REAL AUTO-RESTART
-    #
     # ============================================================
     
-    def _attempt_restart(self, component: str):
+    def _attempt_restart(self, component: str) -> bool:
         """Attempt to restart REAL component"""
         if component not in self.components:
             logger.error(f"Cannot restart {component}: not registered")
             return False
+        
+        # Check cooldown
+        if component in self._last_alert_time:
+            last_restart = self._last_alert_time.get(f"restart_{component}")
+            if last_restart and (datetime.now() - last_restart).seconds < self.restart_cooldown:
+                logger.warning(f"Restart cooldown for {component}, skipping")
+                return False
         
         heartbeat = self.heartbeats[component]
         heartbeat.restart_count += 1
@@ -537,7 +581,6 @@ class RealSystemWatchdog:
         comp = self.components[component]
         
         try:
-            # Try to restart using registered method
             if hasattr(comp, methods.get("restart", "restart")):
                 getattr(comp, methods.get("restart", "restart"))()
                 logger.info(f"🔄 Restarted {component} via {methods.get('restart', 'restart')}()")
@@ -551,11 +594,11 @@ class RealSystemWatchdog:
                 logger.error(f"No restart method for {component}")
                 return False
             
-            # Verify restart
             time.sleep(2)
             if hasattr(comp, "running"):
                 if comp.running:
                     heartbeat.status = "alive"
+                    self.component_health[component] = min(100, self.component_health.get(component, 100) + 30)
                     logger.info(f"✅ {component} restarted successfully")
                     self.restart_history.append({
                         "component": component,
@@ -563,19 +606,21 @@ class RealSystemWatchdog:
                         "attempt": heartbeat.restart_count,
                         "success": True
                     })
+                    self.metrics["total_restarts"] += 1
                     return True
                 else:
                     logger.error(f"❌ {component} restart failed - still not running")
                     return False
             else:
-                # Assume success if no running attribute
                 heartbeat.status = "alive"
+                self.component_health[component] = min(100, self.component_health.get(component, 100) + 20)
                 return True
                 
         except Exception as e:
             logger.exception(f"Failed to restart {component}: {e}")
             heartbeat.status = "dead"
             heartbeat.last_error = str(e)
+            self.component_health[component] = max(0, self.component_health.get(component, 100) - 20)
             self.restart_history.append({
                 "component": component,
                 "timestamp": datetime.now().isoformat(),
@@ -586,9 +631,7 @@ class RealSystemWatchdog:
             return False
     
     # ============================================================
-    #
     # REAL SYSTEM SCAN
-    #
     # ============================================================
     
     def scan(self) -> Dict:
@@ -608,11 +651,13 @@ class RealSystemWatchdog:
                 "unknown": 0
             },
             "threads": self._get_thread_info(),
-            "process_info": self._get_process_info()
+            "process_info": self._get_process_info(),
+            "health_score": 0
         }
         
+        total_health = 0
+        
         for name, component in self.components.items():
-            # Check dependencies first
             if name in self.dependencies:
                 deps_ok = all(
                     self.heartbeats.get(dep, RealHeartbeat(dep)).status == "alive"
@@ -623,18 +668,21 @@ class RealSystemWatchdog:
                         "name": name,
                         "status": "DEPENDENCY_FAILURE",
                         "timestamp": datetime.now().isoformat(),
-                        "error": "Dependency failure"
+                        "error": "Dependency failure",
+                        "health_score": 30
                     }
                     report["components"].append(result)
                     report["summary"]["error"] += 1
+                    total_health += 30
                     continue
             
-            # Perform health check
             result = self._perform_health_check(name, component)
             report["components"].append(result)
             
-            # Update summary
             status = result.get("status", "UNKNOWN")
+            health_score = result.get("health_score", 50)
+            total_health += health_score
+            
             if status == "ONLINE" or status == "AVAILABLE":
                 report["summary"]["online"] += 1
             elif status == "WARNING" or status == "IDLE":
@@ -645,6 +693,19 @@ class RealSystemWatchdog:
                 report["summary"]["offline"] += 1
             else:
                 report["summary"]["unknown"] += 1
+        
+        # Calculate overall health score
+        if report["summary"]["total"] > 0:
+            report["health_score"] = round(total_health / report["summary"]["total"], 1)
+        else:
+            report["health_score"] = 0
+        
+        # Update metrics
+        self.metrics["health_score"] = report["health_score"]
+        self.metrics["components_healthy"] = report["summary"]["online"]
+        self.metrics["components_degraded"] = report["summary"]["warning"]
+        self.metrics["components_critical"] = report["summary"]["error"]
+        self.metrics["components_offline"] = report["summary"]["offline"]
         
         # Add real metrics
         report["heartbeats"] = {
@@ -662,9 +723,11 @@ class RealSystemWatchdog:
             for name, cb in self.circuit_breakers.items()
         }
         
+        report["component_health"] = self.component_health.copy()
+        
         # Store history
         self.history.append(report)
-        if len(self.history) > 500:
+        if len(self.history) > self.max_history:
             self.history.pop(0)
         
         # Update metrics
@@ -679,17 +742,30 @@ class RealSystemWatchdog:
         # Check for critical conditions
         if report["summary"]["error"] > 0:
             self._trigger_alert(
-                severity="warning",
+                severity=AlertSeverity.WARNING,
                 component="system",
                 message=f"{report['summary']['error']} components in error state"
+            )
+        
+        # Low health score alert
+        if report["health_score"] < 50:
+            self._trigger_alert(
+                severity=AlertSeverity.CRITICAL,
+                component="system",
+                message=f"System health critical: {report['health_score']}%"
             )
         
         return report
     
     def _get_real_system_metrics(self) -> Dict:
-        """Get REAL system metrics from psutil"""
+        """Get REAL system metrics from psutil dengan caching"""
+        now = datetime.now()
+        if self._system_metrics_cache and self._cache_time:
+            if (now - self._cache_time).seconds < self._cache_duration:
+                return self._system_metrics_cache
+        
         try:
-            return {
+            metrics = {
                 "cpu_percent": psutil.cpu_percent(interval=0.5),
                 "cpu_count": psutil.cpu_count(),
                 "memory_percent": psutil.virtual_memory().percent,
@@ -704,6 +780,9 @@ class RealSystemWatchdog:
                 "network_connections": len(psutil.net_connections()),
                 "cpu_freq": psutil.cpu_freq().current if hasattr(psutil.cpu_freq(), 'current') else 0
             }
+            self._system_metrics_cache = metrics
+            self._cache_time = now
+            return metrics
         except Exception as e:
             logger.error(f"System metrics error: {e}")
             return {}
@@ -738,26 +817,25 @@ class RealSystemWatchdog:
             return {"pid": os.getpid(), "error": str(e)}
     
     # ============================================================
-    #
     # REAL ALERT SYSTEM
-    #
     # ============================================================
     
-    def _trigger_alert(self, severity: str, component: str, message: str):
+    def _trigger_alert(self, severity: AlertSeverity, component: str, message: str):
         """Trigger REAL alert with rate limiting"""
-        alert_key = f"{component}_{severity}"
+        alert_key = f"{component}_{severity.value}"
         now = datetime.now()
         
         if alert_key in self._last_alert_time:
-            if (now - self._last_alert_time[alert_key]).seconds < 30:
+            if (now - self._last_alert_time[alert_key]).seconds < self._alert_cooldown_seconds:
                 return
         
         self._last_alert_time[alert_key] = now
         self.metrics["total_alerts"] += 1
         
         alert = {
+            "id": f"alert_{self.metrics['total_alerts']}_{int(time.time())}",
             "timestamp": now.isoformat(),
-            "severity": severity,
+            "severity": severity.value,
             "component": component,
             "message": message,
             "alert_id": self.metrics["total_alerts"]
@@ -773,18 +851,17 @@ class RealSystemWatchdog:
             except Exception as e:
                 logger.error(f"Alert callback error: {e}")
         
-        log_level = logging.CRITICAL if severity == "critical" else logging.WARNING
-        logger.log(log_level, f"🚨 [{severity.upper()}] {component}: {message}")
+        log_level = logging.CRITICAL if severity == AlertSeverity.CRITICAL else logging.WARNING
+        logger.log(log_level, f"🚨 [{severity.value.upper()}] {component}: {message}")
     
     def register_alert_callback(self, callback: Callable):
         """Register callback for alerts"""
-        self.alert_callbacks.append(callback)
-        logger.info("Alert callback registered")
+        if callback not in self.alert_callbacks:
+            self.alert_callbacks.append(callback)
+            logger.info("Alert callback registered")
     
     # ============================================================
-    #
     # MONITOR LOOP
-    #
     # ============================================================
     
     def loop(self):
@@ -805,7 +882,7 @@ class RealSystemWatchdog:
                             self._attempt_restart(name)
                         else:
                             self._trigger_alert(
-                                severity="critical",
+                                severity=AlertSeverity.CRITICAL,
                                 component=name,
                                 message=f"Max restarts ({self.max_restarts}) exceeded"
                             )
@@ -828,9 +905,7 @@ class RealSystemWatchdog:
                 time.sleep(1)
     
     # ============================================================
-    #
     # START / STOP
-    #
     # ============================================================
     
     def start(self) -> bool:
@@ -856,9 +931,7 @@ class RealSystemWatchdog:
         return True
     
     # ============================================================
-    #
     # STATUS API
-    #
     # ============================================================
     
     def get_status(self) -> Dict:
@@ -868,6 +941,7 @@ class RealSystemWatchdog:
             uptime = (datetime.now() - self._start_time).seconds
         
         return {
+            "version": self.VERSION,
             "running": self.running,
             "components": len(self.components),
             "checks": len(self.history),
@@ -875,9 +949,15 @@ class RealSystemWatchdog:
             "alerts": self.metrics["total_alerts"],
             "restarts": self.metrics["total_restarts"],
             "uptime_seconds": uptime,
+            "health_score": self.metrics["health_score"],
+            "components_healthy": self.metrics["components_healthy"],
+            "components_degraded": self.metrics["components_degraded"],
+            "components_critical": self.metrics["components_critical"],
+            "components_offline": self.metrics["components_offline"],
             "metrics": self.metrics,
             "threads": threading.active_count(),
-            "pid": os.getpid()
+            "pid": os.getpid(),
+            "timestamp": datetime.now().isoformat()
         }
     
     def get_snapshot(self) -> Dict:
@@ -885,10 +965,7 @@ class RealSystemWatchdog:
         return {
             "status": self.get_status(),
             "latest_scan": self.history[-1] if self.history else None,
-            "circuit_breakers": {
-                name: cb.to_dict()
-                for name, cb in self.circuit_breakers.items()
-            },
+            "components": list(self.components.keys()),
             "heartbeats": {
                 name: hb.to_dict()
                 for name, hb in self.heartbeats.items()
@@ -897,9 +974,15 @@ class RealSystemWatchdog:
                 name: lm.to_dict()
                 for name, lm in self.latency_metrics.items()
             },
+            "circuit_breakers": {
+                name: cb.to_dict()
+                for name, cb in self.circuit_breakers.items()
+            },
+            "component_health": self.component_health.copy(),
             "recent_alerts": self.alert_history[-10:],
             "recent_errors": self.error_history[-10:],
-            "restart_history": self.restart_history[-10:]
+            "restart_history": self.restart_history[-10:],
+            "timestamp": datetime.now().isoformat()
         }
     
     def get_component_detail(self, component: str) -> Optional[Dict]:
@@ -913,22 +996,64 @@ class RealSystemWatchdog:
             "heartbeat": self.heartbeats[component].to_dict() if component in self.heartbeats else None,
             "latency": self.latency_metrics[component].to_dict() if component in self.latency_metrics else None,
             "circuit": self.circuit_breakers[component].to_dict() if component in self.circuit_breakers else None,
+            "health_score": self.component_health.get(component, 0),
             "dependencies": self.dependencies.get(component, []),
             "methods": self.component_methods.get(component, {}),
             "has_health_method": hasattr(self.components[component], "health_check"),
-            "is_running": getattr(self.components[component], "running", False) if hasattr(self.components[component], "running") else None
+            "is_running": getattr(self.components[component], "running", False) if hasattr(self.components[component], "running") else None,
+            "timestamp": datetime.now().isoformat()
         }
+    
+    def get_health_summary(self) -> Dict:
+        """Get health summary"""
+        total = len(self.components)
+        if total == 0:
+            return {"status": "UNKNOWN", "health_score": 0, "components": []}
+        
+        online = sum(1 for hb in self.heartbeats.values() if hb.status == "alive")
+        dead = sum(1 for hb in self.heartbeats.values() if hb.status == "dead")
+        degraded = sum(1 for hb in self.heartbeats.values() if hb.status == "degraded")
+        
+        avg_health = sum(self.component_health.values()) / total if self.component_health else 0
+        
+        status = "HEALTHY" if avg_health > 80 else "DEGRADED" if avg_health > 60 else "CRITICAL"
+        
+        return {
+            "status": status,
+            "health_score": round(avg_health, 1),
+            "total": total,
+            "online": online,
+            "dead": dead,
+            "degraded": degraded,
+            "components": [
+                {
+                    "name": name,
+                    "status": hb.status,
+                    "health_score": self.component_health.get(name, 0)
+                }
+                for name, hb in self.heartbeats.items()
+            ],
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    def get_alerts(self, limit: int = 20) -> List[Dict]:
+        """Get recent alerts"""
+        return self.alert_history[-limit:] if self.alert_history else []
+    
+    def clear_history(self):
+        """Clear all history"""
+        self.history.clear()
+        self.alert_history.clear()
+        self.restart_history.clear()
+        self.error_history.clear()
+        logger.info("🧹 Watchdog history cleared")
 
 # ============================================================
-#
 # GLOBAL INSTANCE
-#
 # ============================================================
 
 watchdog = RealSystemWatchdog()
 
 # ============================================================
-#
 # END
-#
 # ============================================================

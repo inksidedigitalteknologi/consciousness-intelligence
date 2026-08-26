@@ -131,8 +131,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       title: '📊 OVERVIEW',
       icon: LayoutDashboard,
       items: [
-        { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'Watchlist', label: 'Watchlist', icon: Star, badge: watchlistCount > 0 ? watchlistCount : undefined },
+        { id: 'Dashboard' as NavigationPage, label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'Watchlist' as NavigationPage, label: 'Watchlist', icon: Star, badge: watchlistCount > 0 ? watchlistCount : undefined },
       ],
     },
     {
@@ -140,11 +140,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Brain,
       collapsible: true,
       items: [
-        { id: 'Brain', label: 'Brain Engine', icon: Brain },
-        { id: 'Reflection', label: 'Cognitive Mirror', icon: Sparkle },
-        { id: 'Learning', label: 'Learning Engine', icon: GraduationCap, isBeta: true },
-        { id: 'Memory', label: 'Memory Storage', icon: Database },
-        { id: 'Pattern', label: 'Pattern Detector', icon: Search, isNew: true },
+        { id: 'Brain' as NavigationPage, label: 'Brain Engine', icon: Brain },
+        { id: 'Reflection' as NavigationPage, label: 'Cognitive Mirror', icon: Sparkle },
+        { id: 'Learning' as NavigationPage, label: 'Learning Engine', icon: GraduationCap, isBeta: true },
+        { id: 'Memory' as NavigationPage, label: 'Memory Storage', icon: Database },
+        { id: 'Pattern' as NavigationPage, label: 'Pattern Detector', icon: Search, isNew: true },
       ],
     },
     {
@@ -152,10 +152,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: TrendingUp,
       collapsible: true,
       items: [
-        { id: 'Market', label: 'Live Tickers', icon: TrendingUp },
-        { id: 'Signals', label: 'Signals Radar', icon: Radio, isNew: true },
-        { id: 'Prediction', label: 'Predictions', icon: LineChart, isBeta: true },
-        { id: 'Decision', label: 'Decision Engine', icon: Target },
+        { id: 'Market' as NavigationPage, label: 'Live Tickers', icon: TrendingUp },
+        { id: 'Signals' as NavigationPage, label: 'Signals Radar', icon: Radio, isNew: true },
+        { id: 'Prediction' as NavigationPage, label: 'Predictions', icon: LineChart, isBeta: true },
+        { id: 'Decision' as NavigationPage, label: 'Decision Engine', icon: Target },
       ],
     },
     {
@@ -163,9 +163,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: BookOpen,
       collapsible: true,
       items: [
-        { id: 'Knowledge', label: 'Knowledge Base', icon: BookOpen },
-        { id: 'Health', label: 'System Health', icon: Activity },
-        { id: 'Diagnostics', label: 'Diagnostics', icon: ShieldCheck },
+        { id: 'Knowledge' as NavigationPage, label: 'Knowledge Base', icon: BookOpen },
+        { id: 'Health' as NavigationPage, label: 'System Health', icon: Activity },
+        { id: 'Diagnostics' as NavigationPage, label: 'Diagnostics', icon: ShieldCheck },
       ],
     },
     {
@@ -173,9 +173,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Settings2,
       collapsible: true,
       items: [
-        { id: 'Trading', label: 'Trading Engine', icon: Zap },
-        { id: 'Telegram', label: 'Telegram Alerts', icon: Send },
-        { id: 'Settings', label: 'Settings', icon: Sliders },
+        { id: 'Trading' as NavigationPage, label: 'Trading Engine', icon: Zap },
+        { id: 'Telegram' as NavigationPage, label: 'Telegram Alerts', icon: Send },
+        { id: 'Settings' as NavigationPage, label: 'Settings', icon: Sliders },
       ],
     },
   ], [watchlistCount]);
@@ -371,7 +371,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* ==========================================================
-          FOOTER - System Status
+          FOOTER - System Status (HEALTH SCORE FIXED)
           ========================================================== */}
       <div className="p-3.5 border-t border-[#26313D] bg-[#131A22]/70 space-y-2">
         {/* Engine Status */}
@@ -385,7 +385,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="text-[9px] text-[#5F6B78] font-mono">v{version}</span>
         </div>
 
-        {/* Health Score */}
+        {/* Health Score - FIXED: Menampilkan nilai real dari props */}
         <div className="flex items-center gap-2">
           <div className="flex-1 h-1.5 bg-[#1A2530] rounded-full overflow-hidden">
             <div 

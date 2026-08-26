@@ -63,7 +63,10 @@ import {
   LineChart,
   PieChart,
   BarChart2,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
+import { useWebSocketChannel, useWebSocketStatus } from '../contexts/WebSocketContext';
 
 // ============================================================
 // TYPES - REAL DATA STRUCTURES
@@ -193,8 +196,6 @@ const API_BASE = '/api';
 
 class LearningAPI {
   private static instance: LearningAPI;
-  private eventSource: EventSource | null = null;
-  private listeners: Map<string, Set<Function>> = new Map();
 
   static getInstance(): LearningAPI {
     if (!LearningAPI.instance) {
@@ -204,8 +205,12 @@ class LearningAPI {
   }
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    const apiKey = import.meta.env.VITE_API_KEY || '';
     const response = await fetch(`${API_BASE}${endpoint}`, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-API-Key': apiKey,
+      },
       ...options,
     });
     if (!response.ok) {
@@ -225,17 +230,17 @@ class LearningAPI {
 
   async getModules(): Promise<Module[]> {
     const data = await this.request<{ modules: Module[] }>('/modules/list');
-    return data.modules;
+    return data.modules || [];
   }
 
   async getAdaptiveWeights(): Promise<AdaptiveEntry[]> {
     const data = await this.request<{ entries: AdaptiveEntry[] }>('/learning/adaptive');
-    return data.entries;
+    return data.entries || [];
   }
 
   async getCuriosityQuestions(): Promise<CuriosityQuestion[]> {
     const data = await this.request<{ questions: CuriosityQuestion[] }>('/learning/curiosity');
-    return data.questions;
+    return data.questions || [];
   }
 
   async addCuriosityQuestion(question: string, domain?: string, area?: string): Promise<string> {
@@ -248,7 +253,7 @@ class LearningAPI {
 
   async getGoals(): Promise<Goal[]> {
     const data = await this.request<{ goals: Goal[] }>('/learning/goals');
-    return data.goals;
+    return data.goals || [];
   }
 
   async simulateScenario(scenario: string): Promise<SimulationResult> {
@@ -268,37 +273,6 @@ class LearningAPI {
 
   async getEvaluatorStats(): Promise<EvaluatorStats> {
     return this.request<EvaluatorStats>('/learning/evaluator');
-  }
-
-  // ============================================================
-  // WEBSOCKET / SSE
-  // ============================================================
-
-  connectSSE(onMessage: (data: any) => void): void {
-    if (this.eventSource) {
-      this.eventSource.close();
-    }
-
-    this.eventSource = new EventSource(`${API_BASE}/learning/stream`);
-    this.eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        onMessage(data);
-      } catch (e) {
-        console.error('SSE parse error:', e);
-      }
-    };
-    this.eventSource.onerror = () => {
-      console.warn('SSE connection error, reconnecting in 5s...');
-      setTimeout(() => this.connectSSE(onMessage), 5000);
-    };
-  }
-
-  disconnectSSE(): void {
-    if (this.eventSource) {
-      this.eventSource.close();
-      this.eventSource = null;
-    }
   }
 }
 
@@ -322,9 +296,10 @@ type TabType =
 interface LearningViewProps {
   learningActive?: boolean;
   cycleCount?: number;
+  wsConnected?: boolean;
 }
 
-export const LearningView: React.FC<LearningViewProps> = () => {
+export const LearningView: React.FC<LearningViewProps> = ({ wsConnected = false }) => {
   // ============================================================
   // STATE - REAL DATA
   // ============================================================
@@ -356,11 +331,42 @@ export const LearningView: React.FC<LearningViewProps> = () => {
   const [selectedPriority, setSelectedPriority] = useState<string>('All');
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [showAdvanced, setShowAdvanced] = useState(false);
   
   // Refs
   const refreshTimeoutRef = useRef<number>();
-  const sseCallbackRef = useRef<(data: any) => void>();
+
+  // ============================================================
+  // WEBSOCKET - SOCKET.IO CHANNELS
+  // ============================================================
+  
+  const { isConnected, status } = useWebSocketStatus();
+
+  useWebSocketChannel('learning', (data) => {
+    if (data?.type === 'stats') {
+      setStats(prev => ({ ...prev, ...data.payload }));
+      setLastUpdate(new Date());
+    }
+    if (data?.type === 'modules') {
+      setModules(data.payload || []);
+      setLastUpdate(new Date());
+    }
+    if (data?.type === 'adaptive') {
+      setAdaptiveEntries(data.payload || []);
+      setLastUpdate(new Date());
+    }
+    if (data?.type === 'questions') {
+      setQuestions(data.payload || []);
+      setLastUpdate(new Date());
+    }
+    if (data?.type === 'goals') {
+      setGoals(data.payload || []);
+      setLastUpdate(new Date());
+    }
+    if (data?.type === 'simulation') {
+      setSimulationResult(data.payload);
+      setLastUpdate(new Date());
+    }
+  });
 
   // ============================================================
   // DATA FETCHING
@@ -416,37 +422,11 @@ export const LearningView: React.FC<LearningViewProps> = () => {
   useEffect(() => {
     fetchAllData();
 
-    // Auto-refresh every 5 seconds
     if (autoRefresh) {
       const interval = setInterval(fetchAllData, 5000);
       return () => clearInterval(interval);
     }
   }, [fetchAllData, autoRefresh]);
-
-  // SSE Connection for real-time updates
-  useEffect(() => {
-    sseCallbackRef.current = (data: any) => {
-      console.log('SSE Data:', data);
-      // Update relevant states based on data type
-      if (data.type === 'stats') setStats(data.data);
-      if (data.type === 'modules') setModules(data.data);
-      if (data.type === 'adaptive') setAdaptiveEntries(data.data);
-      if (data.type === 'questions') setQuestions(data.data);
-      if (data.type === 'goals') setGoals(data.data);
-      if (data.type === 'simulation') setSimulationResult(data.data);
-      setLastUpdate(new Date());
-    };
-
-    api.connectSSE((data) => {
-      if (sseCallbackRef.current) {
-        sseCallbackRef.current(data);
-      }
-    });
-
-    return () => {
-      api.disconnectSSE();
-    };
-  }, []);
 
   // ============================================================
   // HANDLERS
@@ -468,12 +448,11 @@ export const LearningView: React.FC<LearningViewProps> = () => {
   const handleAddQuestion = async () => {
     if (!newQuestionInput.trim()) return;
     try {
-      const id = await api.addCuriosityQuestion(
+      await api.addCuriosityQuestion(
         newQuestionInput.trim(),
         'trading',
         'custom_discovery'
       );
-      // Refresh questions
       const updated = await api.getCuriosityQuestions();
       setQuestions(updated);
       setNewQuestionInput('');
@@ -504,7 +483,6 @@ export const LearningView: React.FC<LearningViewProps> = () => {
       a.click();
       URL.revokeObjectURL(url);
     } else {
-      // CSV export
       const headers = ['Type', 'Name', 'Value', 'Confidence', 'Status', 'Updated'];
       const rows = [
         headers,
@@ -659,8 +637,13 @@ export const LearningView: React.FC<LearningViewProps> = () => {
             <h2 className="text-lg font-bold text-white tracking-wide">
               Autonomous Intelligence Learning Suite v4.0
             </h2>
-            <p className="text-xs text-[#8D9AAA]">
+            <p className="text-xs text-[#8D9AAA] flex items-center gap-2">
               Real-time Learning Analytics · {modules.length} Modules · Last updated: {lastUpdate.toLocaleTimeString()}
+              {isConnected ? (
+                <Wifi className="w-3 h-3 text-emerald-400" />
+              ) : (
+                <WifiOff className="w-3 h-3 text-amber-400" />
+              )}
             </p>
           </div>
         </div>
@@ -736,14 +719,6 @@ export const LearningView: React.FC<LearningViewProps> = () => {
             >
               <Icon className="w-3.5 h-3.5" />
               <span>{tab.label}</span>
-              {isActive && (
-                <span className="text-[10px] opacity-70 ml-1">
-                  {tab.id === 'overview' && modules.length}
-                  {tab.id === 'adaptive' && adaptiveEntries.length}
-                  {tab.id === 'curiosity' && questions.length}
-                  {tab.id === 'goals' && goals.length}
-                </span>
-              )}
             </button>
           );
         })}
@@ -1449,7 +1424,14 @@ export const LearningView: React.FC<LearningViewProps> = () => {
       ============================================================ */}
       <div className="flex items-center justify-between text-[10px] text-[#5F6B78] border-t border-[#26313D]/40 pt-4">
         <span>Last update: {lastUpdate.toLocaleString()}</span>
-        <span>Data source: REAL API · v4.0</span>
+        <div className="flex items-center gap-2">
+          {isConnected ? (
+            <Wifi className="w-3 h-3 text-emerald-400" />
+          ) : (
+            <WifiOff className="w-3 h-3 text-amber-400" />
+          )}
+          <span>Data source: REAL API · v4.0</span>
+        </div>
       </div>
     </div>
   );

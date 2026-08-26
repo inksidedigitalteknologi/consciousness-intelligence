@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Star,
   Plus,
@@ -20,9 +20,13 @@ import {
   Sparkles,
   LayoutGrid,
   List as ListIcon,
-  RefreshCw
+  RefreshCw,
+  Wifi,
+  WifiOff,
+  Loader2,
 } from 'lucide-react';
 import { TickerInfo, WatchlistEntry, TradingSignal } from '../types';
+import { useWebSocketStatus, useWebSocketChannel } from '../contexts/WebSocketContext';
 
 // ============================================================
 // WATCHLIST STORAGE
@@ -47,19 +51,33 @@ const saveWatchlistData = (data: WatchlistEntry[]) => {
   }
 };
 
+// ============================================================
+// TYPES
+// ============================================================
+
 interface WatchlistViewProps {
   tickers: TickerInfo[];
   signals: TradingSignal[];
   onNavigateToTrading: (pair: string) => void;
   onNavigateToSignals: (pair: string) => void;
+  wsConnected?: boolean;
 }
+
+// ============================================================
+// MAIN COMPONENT
+// ============================================================
 
 export const WatchlistView: React.FC<WatchlistViewProps> = ({
   tickers,
   signals,
   onNavigateToTrading,
   onNavigateToSignals,
+  wsConnected = false,
 }) => {
+  // ============================================================
+  // STATE
+  // ============================================================
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'bullish' | 'bearish' | 'alerts' | 'pinned'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
@@ -71,89 +89,129 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
   const [alertLowDraft, setAlertLowDraft] = useState<string>('');
   const [watchlist, setWatchlist] = useState<WatchlistEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  // Load watchlist dari localStorage
+  // ============================================================
+  // WEBSOCKET - REAL-TIME UPDATES
+  // ============================================================
+
+  const { isConnected, status } = useWebSocketStatus();
+
+  useWebSocketChannel('watchlist', (data) => {
+    if (data?.type === 'ticker_update') {
+      // Update ticker data real-time
+      setLastUpdate(new Date());
+    }
+    if (data?.type === 'signal_update') {
+      // Update signals real-time
+      setLastUpdate(new Date());
+    }
+  });
+
+  // ============================================================
+  // LOAD WATCHLIST
+  // ============================================================
+
   useEffect(() => {
     try {
       const data = loadWatchlistData();
-      console.log('📦 Loading watchlist:', data);
       if (data && data.length > 0) {
         setWatchlist(data);
-        console.log('✅ Watchlist loaded:', data.length, 'items');
-      } else {
-        console.log('⚠️ Watchlist is empty');
       }
     } catch (error) {
-      console.error('❌ Failed to load watchlist:', error);
+      console.error('Failed to load watchlist:', error);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Map watchlist entries with live ticker data
-  const watchlistedTickers = watchlist.map((entry) => {
-    const ticker = tickers.find((t) => t.pair === entry.pair);
-    if (!ticker) {
+  // ============================================================
+  // MEMOIZED DATA
+  // ============================================================
+
+  const watchlistedTickers = useMemo(() => {
+    return watchlist.map((entry) => {
+      const ticker = tickers.find((t) => t.pair === entry.pair);
+      if (!ticker) {
+        return {
+          entry,
+          ticker: {
+            pair: entry.pair,
+            name: entry.pair.split('/')[0],
+            price: 0,
+            change24h: 0,
+            high24h: 0,
+            low24h: 0,
+            volume24h: 0,
+            trend: 'NEUTRAL' as const,
+            rsi: 50,
+            macd: 0,
+            atr: 0,
+            history: [0, 0, 0, 0, 0, 0, 0, 0],
+            bid: 0,
+            ask: 0,
+            depth: 0,
+            candles: [],
+          } as TickerInfo,
+          signal: signals.find((s) => s.pair === entry.pair),
+        };
+      }
       return {
         entry,
-        ticker: {
-          pair: entry.pair,
-          name: entry.pair.split('/')[0],
-          price: 0,
-          change24h: 0,
-          high24h: 0,
-          low24h: 0,
-          volume24h: 0,
-          trend: 'NEUTRAL' as const,
-          rsi: 50,
-          macd: 0,
-          atr: 0,
-          history: [0, 0, 0, 0, 0, 0, 0, 0],
-          bid: 0,
-          ask: 0,
-          depth: 0,
-          candles: [],
-        } as TickerInfo,
+        ticker,
         signal: signals.find((s) => s.pair === entry.pair),
       };
-    }
-    return {
-      entry,
-      ticker,
-      signal: signals.find((s) => s.pair === entry.pair),
-    };
-  });
+    });
+  }, [watchlist, tickers, signals]);
 
-  // Sort pinned items first
-  const sortedItems = [...watchlistedTickers].sort((a, b) => {
-    if (a.entry.pinned && !b.entry.pinned) return -1;
-    if (!a.entry.pinned && b.entry.pinned) return 1;
-    return b.ticker.volume24h - a.ticker.volume24h;
-  });
+  const sortedItems = useMemo(() => {
+    return [...watchlistedTickers].sort((a, b) => {
+      if (a.entry.pinned && !b.entry.pinned) return -1;
+      if (!a.entry.pinned && b.entry.pinned) return 1;
+      return b.ticker.volume24h - a.ticker.volume24h;
+    });
+  }, [watchlistedTickers]);
 
-  // Filter
-  const filteredItems = sortedItems.filter((item) => {
-    const matchSearch =
-      item.ticker.pair.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.ticker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.entry.notes && item.entry.notes.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredItems = useMemo(() => {
+    return sortedItems.filter((item) => {
+      const matchSearch =
+        item.ticker.pair.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.ticker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.entry.notes && item.entry.notes.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    if (!matchSearch) return false;
+      if (!matchSearch) return false;
 
-    if (filterMode === 'bullish') return item.ticker.trend === 'BULLISH';
-    if (filterMode === 'bearish') return item.ticker.trend === 'BEARISH';
-    if (filterMode === 'alerts') return item.entry.alertHigh || item.entry.alertLow;
-    if (filterMode === 'pinned') return item.entry.pinned;
+      if (filterMode === 'bullish') return item.ticker.trend === 'BULLISH';
+      if (filterMode === 'bearish') return item.ticker.trend === 'BEARISH';
+      if (filterMode === 'alerts') return !!(item.entry.alertHigh || item.entry.alertLow);
+      if (filterMode === 'pinned') return item.entry.pinned;
 
-    return true;
-  });
+      return true;
+    });
+  }, [sortedItems, searchTerm, filterMode]);
 
-  // Unwatched tickers available to add
-  const availableTickersToAdd = tickers.filter(
-    (t) => !watchlist.some((w) => w.pair === t.pair)
-  );
+  const availableTickersToAdd = useMemo(() => {
+    return tickers.filter(
+      (t) => !watchlist.some((w) => w.pair === t.pair)
+    );
+  }, [tickers, watchlist]);
 
-  const handleToggleWatchlist = (pair: string) => {
+  // ============================================================
+  // STATS
+  // ============================================================
+
+  const totalWatchlist = watchlist.length;
+  const topGainer = watchlistedTickers.length > 0
+    ? [...watchlistedTickers].sort((a, b) => b.ticker.change24h - a.ticker.change24h)[0]
+    : null;
+  const bullishCount = watchlistedTickers.filter((w) => w.ticker.trend === 'BULLISH').length;
+  const totalAlerts = watchlistedTickers.filter((w) => w.entry.alertHigh || w.entry.alertLow).length;
+
+  // ============================================================
+  // HANDLERS
+  // ============================================================
+
+  const handleToggleWatchlist = useCallback((pair: string) => {
     const exists = watchlist.some(item => item.pair === pair);
     let newList;
     if (exists) {
@@ -163,36 +221,36 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
     }
     setWatchlist(newList);
     saveWatchlistData(newList);
-  };
+  }, [watchlist]);
 
-  const handleAddSelectedPair = () => {
+  const handleAddSelectedPair = useCallback(() => {
     if (selectedPairToAdd) {
       handleToggleWatchlist(selectedPairToAdd);
       setSelectedPairToAdd('');
     }
-  };
+  }, [selectedPairToAdd, handleToggleWatchlist]);
 
-  const handleOpenNotes = (pair: string, currentNotes?: string) => {
+  const handleOpenNotes = useCallback((pair: string, currentNotes?: string) => {
     setEditingNotesPair(pair);
     setNoteDraft(currentNotes || '');
-  };
+  }, []);
 
-  const handleSaveNotes = (pair: string) => {
+  const handleSaveNotes = useCallback((pair: string) => {
     const newList = watchlist.map(item =>
       item.pair === pair ? { ...item, notes: noteDraft } : item
     );
     setWatchlist(newList);
     saveWatchlistData(newList);
     setEditingNotesPair(null);
-  };
+  }, [watchlist, noteDraft]);
 
-  const handleOpenAlerts = (pair: string, high?: number, low?: number) => {
+  const handleOpenAlerts = useCallback((pair: string, high?: number, low?: number) => {
     setEditingAlertPair(pair);
     setAlertHighDraft(high ? high.toString() : '');
     setAlertLowDraft(low ? low.toString() : '');
-  };
+  }, []);
 
-  const handleSaveAlerts = (pair: string) => {
+  const handleSaveAlerts = useCallback((pair: string) => {
     const high = alertHighDraft ? parseFloat(alertHighDraft) : undefined;
     const low = alertLowDraft ? parseFloat(alertLowDraft) : undefined;
     const newList = watchlist.map(item =>
@@ -201,17 +259,17 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
     setWatchlist(newList);
     saveWatchlistData(newList);
     setEditingAlertPair(null);
-  };
+  }, [watchlist, alertHighDraft, alertLowDraft]);
 
-  const handleTogglePin = (pair: string) => {
+  const handleTogglePin = useCallback((pair: string) => {
     const newList = watchlist.map(item =>
       item.pair === pair ? { ...item, pinned: !item.pinned } : item
     );
     setWatchlist(newList);
     saveWatchlistData(newList);
-  };
+  }, [watchlist]);
 
-  const handleAddBundle = (pairs: string[]) => {
+  const handleAddBundle = useCallback((pairs: string[]) => {
     const existingPairs = watchlist.map(w => w.pair);
     const newPairs = pairs.filter(p => !existingPairs.includes(p));
     if (newPairs.length > 0) {
@@ -220,31 +278,33 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
       setWatchlist(newList);
       saveWatchlistData(newList);
     }
-  };
+  }, [watchlist]);
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     setLoading(true);
     const data = loadWatchlistData();
     setWatchlist(data);
     setLoading(false);
-  };
+  }, []);
 
-  // Stats calculation
-  const totalWatchlist = watchlist.length;
-  const topGainer = [...watchlistedTickers].sort((a, b) => b.ticker.change24h - a.ticker.change24h)[0];
-  const bullishCount = watchlistedTickers.filter((w) => w.ticker.trend === 'BULLISH').length;
-  const totalAlerts = watchlistedTickers.filter((w) => w.entry.alertHigh || w.entry.alertLow).length;
+  // ============================================================
+  // LOADING STATE
+  // ============================================================
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="text-4xl animate-pulse mb-4">⏳</div>
-          <div className="text-gray-400">Loading watchlist...</div>
+          <Loader2 className="w-12 h-12 text-amber-400 animate-spin mx-auto" />
+          <div className="text-gray-400 mt-4 text-sm">Loading watchlist...</div>
         </div>
       </div>
     );
   }
+
+  // ============================================================
+  // RENDER
+  // ============================================================
 
   return (
     <div id="watchlist-view" className="space-y-6 pb-12">
@@ -263,9 +323,17 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
                 <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 font-bold border border-amber-500/20 font-mono">
                   {totalWatchlist} PAIRS TRACKED
                 </span>
+                {isConnected ? (
+                  <Wifi className="w-3.5 h-3.5 text-emerald-400" />
+                ) : (
+                  <WifiOff className="w-3.5 h-3.5 text-amber-400" />
+                )}
               </div>
               <p className="text-xs text-[#8D9AAA] mt-0.5">
                 Pin target assets, set automated price breakout alerts, attach trade thesis notes, and execute rapid orders.
+                {isConnected && (
+                  <span className="text-emerald-400 ml-2">● LIVE</span>
+                )}
               </p>
             </div>
           </div>
@@ -305,7 +373,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
         </div>
       </div>
 
-      {/* Summary KPI Cards */}
+      {/* Summary KPI Cards - REAL DATA */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <div className="p-3.5 sm:p-4 rounded-xl bg-[#131A22] border border-[#26313D]">
           <span className="text-[10px] uppercase font-bold text-[#8D9AAA] block">Tracked Assets</span>
@@ -342,7 +410,6 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
 
       {/* Controls & Filter Bar */}
       <div className="p-3.5 sm:p-4 rounded-2xl bg-[#131A22] border border-[#26313D] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
-        {/* Search */}
         <div className="relative flex-1 max-w-xs">
           <Search className="w-4 h-4 text-[#5F6B78] absolute left-3 top-2.5" />
           <input
@@ -354,7 +421,6 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
           />
         </div>
 
-        {/* Filter Pills */}
         <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           {[
             { id: 'all', label: 'All' },
@@ -377,7 +443,6 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
           ))}
         </div>
 
-        {/* View Mode Toggle */}
         <div className="flex items-center gap-1 bg-[#0B0F14] p-1 rounded-xl border border-[#26313D] self-end sm:self-auto">
           <button
             onClick={() => setViewMode('grid')}
@@ -400,7 +465,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
         </div>
       </div>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       {filteredItems.length === 0 ? (
         <div className="p-8 sm:p-12 rounded-2xl bg-[#131A22] border border-[#26313D] text-center space-y-4">
           <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto">
@@ -409,46 +474,42 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
           <div>
             <h3 className="text-base font-bold text-white">No Pairs in Watchlist</h3>
             <p className="text-xs text-[#8D9AAA] max-w-md mx-auto mt-1">
-              Add your favorite cryptocurrency pairs from the selector above or click a starter preset below to quickly populate your trading radar.
+              Add your favorite cryptocurrency pairs from the selector above or click a starter preset below.
             </p>
           </div>
 
-          {/* Starter presets */}
           <div className="pt-2 flex flex-wrap items-center justify-center gap-2 max-w-lg mx-auto">
             <button
               onClick={() => handleAddBundle(['BTC/USD', 'ETH/USD', 'SOL/USD'])}
               className="px-3 py-1.5 rounded-xl bg-[#1A2530] hover:bg-amber-500 hover:text-black border border-[#26313D] text-xs font-semibold text-white transition-colors cursor-pointer flex items-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Add Top 3 Bluechips</span>
+              <span>Add Top 3</span>
             </button>
             <button
               onClick={() => handleAddBundle(['AVAX/USD', 'LINK/USD', 'DOT/USD'])}
               className="px-3 py-1.5 rounded-xl bg-[#1A2530] hover:bg-amber-500 hover:text-black border border-[#26313D] text-xs font-semibold text-white transition-colors cursor-pointer flex items-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Add Layer 1 & Infra</span>
+              <span>Add Layer 1</span>
             </button>
             <button
-              onClick={() => handleAddBundle(['XRP/USD', 'ADA/USD', 'LTC/USD', 'BCH/USD'])}
+              onClick={() => handleAddBundle(['XRP/USD', 'ADA/USD', 'LTC/USD'])}
               className="px-3 py-1.5 rounded-xl bg-[#1A2530] hover:bg-amber-500 hover:text-black border border-[#26313D] text-xs font-semibold text-white transition-colors cursor-pointer flex items-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-              <span>Add Major Altcoins</span>
+              <span>Add Altcoins</span>
             </button>
           </div>
         </div>
       ) : viewMode === 'grid' ? (
-        /* Grid View Cards */
+        /* Grid View */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredItems.map(({ entry, ticker, signal }) => {
             const isPositive = ticker.change24h >= 0;
             const minPrice = Math.min(...ticker.history) * 0.998;
             const maxPrice = Math.max(...ticker.history) * 1.002;
             const priceSpread = maxPrice - minPrice || 1;
-
-            const isHighAlertTriggered = entry.alertHigh && ticker.price >= entry.alertHigh;
-            const isLowAlertTriggered = entry.alertLow && ticker.price <= entry.alertLow;
 
             return (
               <div
@@ -458,7 +519,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
                 }`}
               >
                 <div>
-                  {/* Card Header */}
+                  {/* Header */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">
                       <div className="w-9 h-9 rounded-xl bg-[#1A2530] border border-[#26313D] flex items-center justify-center font-bold text-white text-xs">
@@ -468,9 +529,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
                         <div className="flex items-center gap-1.5">
                           <span className="font-mono font-bold text-white text-base">{ticker.pair}</span>
                           {entry.pinned && (
-                            <span title="Pinned Asset" className="text-amber-400">
-                              <Pin className="w-3.5 h-3.5 fill-amber-400" />
-                            </span>
+                            <Pin className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                           )}
                         </div>
                         <span className="text-[11px] text-[#8D9AAA] block">{ticker.name}</span>
@@ -478,7 +537,6 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
                     </div>
 
                     <div className="flex items-center gap-1">
-                      {/* Pin Button */}
                       <button
                         onClick={() => handleTogglePin(ticker.pair)}
                         title={entry.pinned ? 'Unpin' : 'Pin to top'}
@@ -488,8 +546,6 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
                       >
                         <Pin className={`w-3.5 h-3.5 ${entry.pinned ? 'fill-current' : ''}`} />
                       </button>
-
-                      {/* Remove Button */}
                       <button
                         onClick={() => handleToggleWatchlist(ticker.pair)}
                         title="Remove from Watchlist"
@@ -500,7 +556,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Price & Change Row */}
+                  {/* Price */}
                   <div className="mt-3 flex items-baseline justify-between">
                     <div>
                       <span className="text-xl sm:text-2xl font-black font-mono text-white">
@@ -516,13 +572,12 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
                         }`}
                       >
                         {isPositive ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
-                        {isPositive ? '+' : ''}
-                        {ticker.change24h.toFixed(2)}%
+                        {isPositive ? '+' : ''}{ticker.change24h.toFixed(2)}%
                       </span>
                     </div>
                   </div>
 
-                  {/* Mini Sparkline Chart */}
+                  {/* Mini Chart */}
                   <div className="mt-3 h-14 w-full bg-[#0B0F14] rounded-xl border border-[#26313D]/70 p-2 flex items-end gap-1.5 relative overflow-hidden">
                     {ticker.history.map((val, idx) => {
                       const heightPct = Math.max(15, Math.min(95, ((val - minPrice) / priceSpread) * 100));
@@ -544,7 +599,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
                     })}
                   </div>
 
-                  {/* Technical Indicators Pill Row */}
+                  {/* Indicators */}
                   <div className="mt-3 grid grid-cols-3 gap-2 text-center font-mono text-[10px]">
                     <div className="p-2 rounded-lg bg-[#0B0F14] border border-[#26313D]/60">
                       <span className="text-[#5F6B78] block">RSI (14)</span>
@@ -566,21 +621,21 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Price Alerts Status */}
+                  {/* Alerts */}
                   {(entry.alertHigh || entry.alertLow) && (
                     <div className="mt-3 p-2.5 rounded-xl bg-[#0B0F14] border border-[#26313D] text-[11px] font-mono flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
-                        <BellRing className={`w-3.5 h-3.5 ${isHighAlertTriggered || isLowAlertTriggered ? 'text-amber-400 animate-bounce' : 'text-purple-400'}`} />
+                        <BellRing className="w-3.5 h-3.5 text-purple-400" />
                         <span className="text-[#8D9AAA]">Alerts:</span>
                       </div>
                       <div className="flex items-center gap-2">
                         {entry.alertHigh && (
-                          <span className={`px-1.5 py-0.5 rounded ${isHighAlertTriggered ? 'bg-emerald-500/20 text-emerald-300 font-bold' : 'text-[#8D9AAA]'}`}>
+                          <span className="px-1.5 py-0.5 rounded text-[#8D9AAA]">
                             ▲ ${entry.alertHigh.toLocaleString()}
                           </span>
                         )}
                         {entry.alertLow && (
-                          <span className={`px-1.5 py-0.5 rounded ${isLowAlertTriggered ? 'bg-rose-500/20 text-rose-300 font-bold' : 'text-[#8D9AAA]'}`}>
+                          <span className="px-1.5 py-0.5 rounded text-[#8D9AAA]">
                             ▼ ${entry.alertLow.toLocaleString()}
                           </span>
                         )}
@@ -588,7 +643,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
                     </div>
                   )}
 
-                  {/* Notes / Thesis Section */}
+                  {/* Notes */}
                   {entry.notes && (
                     <div className="mt-3 p-2.5 rounded-xl bg-[#0B0F14]/70 border border-[#26313D]/60 text-xs text-[#8D9AAA] italic flex items-start gap-2">
                       <Edit3 className="w-3 h-3 text-amber-400 shrink-0 mt-0.5" />
@@ -596,7 +651,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
                     </div>
                   )}
 
-                  {/* Signal Radar Hint if any */}
+                  {/* Signal */}
                   {signal && (
                     <div className="mt-3 px-3 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-between text-xs">
                       <div className="flex items-center gap-1.5">
@@ -608,7 +663,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
                   )}
                 </div>
 
-                {/* Card Action Footer */}
+                {/* Actions */}
                 <div className="pt-2 border-t border-[#26313D]/60 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1">
                     <button
@@ -663,7 +718,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#26313D]/40">
-                {filteredItems.map(({ entry, ticker, signal }) => {
+                {filteredItems.map(({ entry, ticker }) => {
                   const isPositive = ticker.change24h >= 0;
                   return (
                     <tr key={ticker.pair} className="hover:bg-[#1A2530]/60 transition-colors">
@@ -695,8 +750,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
                               : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                           }`}
                         >
-                          {isPositive ? '+' : ''}
-                          {ticker.change24h.toFixed(2)}%
+                          {isPositive ? '+' : ''}{ticker.change24h.toFixed(2)}%
                         </span>
                       </td>
                       <td className="py-3 text-center text-white hidden sm:table-cell">
@@ -752,7 +806,8 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
         </div>
       )}
 
-      {/* Price Alert Modal */}
+      {/* Modals */}
+      {/* Alert Modal */}
       {editingAlertPair && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="w-full max-w-md p-5 rounded-2xl bg-[#131A22] border border-[#26313D] space-y-4 shadow-2xl">
@@ -770,7 +825,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
             </div>
 
             <p className="text-xs text-[#8D9AAA]">
-              Receive instant in-app and Telegram push alerts when {editingAlertPair} crosses your target levels.
+              Receive instant alerts when {editingAlertPair} crosses your target levels.
             </p>
 
             <div className="space-y-3 font-mono text-xs">
@@ -821,7 +876,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
         </div>
       )}
 
-      {/* Notes / Trade Thesis Modal */}
+      {/* Notes Modal */}
       {editingNotesPair && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="w-full max-w-md p-5 rounded-2xl bg-[#131A22] border border-[#26313D] space-y-4 shadow-2xl">
@@ -871,3 +926,5 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
     </div>
   );
 };
+
+export default WatchlistView;

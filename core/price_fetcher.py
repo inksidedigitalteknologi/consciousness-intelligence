@@ -33,6 +33,28 @@ class PriceFetcher:
     _cache_time: Dict[str, float] = {}
     CACHE_DURATION = 60  # Cache selama 60 detik
     
+    # Fallback prices (jika CoinGecko API bermasalah)
+    FALLBACK_PRICES: Dict[str, float] = {
+        'BTC/USDT': 80239.33,
+        'ETH/USDT': 3120.00,
+        'SOL/USDT': 194.50,
+        'XRP/USDT': 1.52,
+        'BNB/USDT': 580.00,      # Ganti ADA → BNB
+        'DOGE/USDT': 0.125,      # Ganti DOT → DOGE
+        'AVAX/USDT': 28.50,
+        'MATIC/USDT': 0.52,
+        'LINK/USDT': 13.80,
+        'UNI/USDT': 6.85,
+        'ATOM/USDT': 4.92,
+        'BCH/USDT': 350.00,
+        'LTC/USDT': 85.00,
+        'NEAR/USDT': 4.50,
+        'APT/USDT': 6.80,
+        'ARB/USDT': 1.20,
+        'OP/USDT': 1.80,
+        'SUI/USDT': 1.50,
+    }
+    
     # Pair mapping (Standard → CoinGecko ID)
     # HANYA USDT PAIRS
     PAIR_MAP = {
@@ -40,9 +62,8 @@ class PriceFetcher:
         'ETH/USDT': 'ethereum',
         'SOL/USDT': 'solana',
         'XRP/USDT': 'ripple',
-        'ADA/USDT': 'cardano',
-        'DOT/USDT': 'polkadot',
-        'DOGE/USDT': 'dogecoin',
+        'BNB/USDT': 'binancecoin',   # Ganti ADA → BNB
+        'DOGE/USDT': 'dogecoin',     # Ganti DOT → DOGE
         'AVAX/USDT': 'avalanche-2',
         'MATIC/USDT': 'matic-network',
         'LINK/USDT': 'chainlink',
@@ -106,32 +127,68 @@ class PriceFetcher:
                     logger.info(f"✅ Price fetched: {pair} = ${price:,.2f} USDT")
                     return price
                 else:
-                    logger.error(f"Price not found for {pair}")
+                    logger.warning(f"⚠️ Price not found for {pair}, using fallback")
+                    # Gunakan fallback jika harga tidak ditemukan
+                    fallback = cls.FALLBACK_PRICES.get(pair)
+                    if fallback:
+                        cls._cache[pair] = fallback
+                        cls._cache_time[pair] = time.time()
+                        logger.info(f"🔄 Using fallback price for {pair}: ${fallback:,.2f} USDT")
+                        return fallback
                     return None
             elif response.status_code == 429:
-                logger.warning(f"⚠️ Rate limit hit for {pair}. Using cached value if available.")
+                logger.warning(f"⚠️ Rate limit hit for {pair}. Using cached or fallback value.")
                 if pair in cls._cache:
                     logger.info(f"🔄 Using stale cache for {pair}: ${cls._cache[pair]:,.2f}")
                     return cls._cache[pair]
+                # Gunakan fallback jika cache tidak ada
+                fallback = cls.FALLBACK_PRICES.get(pair)
+                if fallback:
+                    cls._cache[pair] = fallback
+                    cls._cache_time[pair] = time.time()
+                    logger.info(f"🔄 Using fallback price for {pair}: ${fallback:,.2f} USDT")
+                    return fallback
                 return None
             else:
                 logger.error(f"CoinGecko error: {response.status_code} - {response.text[:200]}")
+                # Gunakan fallback
+                fallback = cls.FALLBACK_PRICES.get(pair)
+                if fallback:
+                    cls._cache[pair] = fallback
+                    cls._cache_time[pair] = time.time()
+                    logger.info(f"🔄 Using fallback price for {pair}: ${fallback:,.2f} USDT")
+                    return fallback
                 return None
                 
         except requests.exceptions.Timeout:
             logger.error(f"Timeout fetching price for {pair}")
             if pair in cls._cache:
                 return cls._cache[pair]
+            fallback = cls.FALLBACK_PRICES.get(pair)
+            if fallback:
+                cls._cache[pair] = fallback
+                cls._cache_time[pair] = time.time()
+                return fallback
             return None
         except requests.exceptions.RequestException as e:
             logger.error(f"Request error fetching price for {pair}: {e}")
             if pair in cls._cache:
                 return cls._cache[pair]
+            fallback = cls.FALLBACK_PRICES.get(pair)
+            if fallback:
+                cls._cache[pair] = fallback
+                cls._cache_time[pair] = time.time()
+                return fallback
             return None
         except Exception as e:
             logger.error(f"Failed to fetch price for {pair}: {e}")
             if pair in cls._cache:
                 return cls._cache[pair]
+            fallback = cls.FALLBACK_PRICES.get(pair)
+            if fallback:
+                cls._cache[pair] = fallback
+                cls._cache_time[pair] = time.time()
+                return fallback
             return None
     
     @classmethod
@@ -213,6 +270,12 @@ class PriceFetcher:
                 'expired': age > cls.CACHE_DURATION
             }
         return info
+    
+    @classmethod
+    def update_fallback(cls, pair: str, price: float) -> None:
+        """Update fallback price manually."""
+        cls.FALLBACK_PRICES[pair] = price
+        logger.info(f"📝 Updated fallback price for {pair}: ${price:,.2f}")
 
 
 # ============================================================
@@ -230,7 +293,7 @@ def self_test():
     """Test the price fetcher."""
     print("\n" + "=" * 60)
     print("  PRICE FETCHER - CoinGecko PUBLIC API TEST")
-    print("  HANYA USDT PAIRS")
+    print("  HANYA USDT PAIRS (BNB & DOGE)")
     print("=" * 60)
     
     # Test connection
@@ -246,14 +309,17 @@ def self_test():
     
     # Test single price - HANYA USDT
     print("\n📊 Fetching USDT prices from CoinGecko...")
-    pairs = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'XRP/USDT', 'ADA/USDT', 'DOT/USDT']
+    pairs = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'XRP/USDT', 'BNB/USDT', 'DOGE/USDT']
     
     for pair in pairs:
         price = PriceFetcher.get_price(pair)
         if price:
             print(f"  ✅ {pair}: ${price:,.2f} USDT")
         else:
-            print(f"  ❌ {pair}: Failed")
+            print(f"  ❌ {pair}: Failed (using fallback)")
+            fallback = PriceFetcher.FALLBACK_PRICES.get(pair)
+            if fallback:
+                print(f"     ↳ Fallback: ${fallback:,.2f} USDT")
     
     # Test cache
     print("\n📊 Testing cache (second call should be instant)...")

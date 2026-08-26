@@ -205,6 +205,7 @@ function AppContent() {
   const [retryCount, setRetryCount] = useState(0);
   
   const [engineRunning, setEngineRunning] = useState(false);
+  const [isToggling, setIsToggling] = useState(false); // <-- TAMBAHKAN INI
   const [learningActive, setLearningActive] = useState(false);
   const [cycleCount, setCycleCount] = useState(0);
   const [consciousnessLevel, setConsciousnessLevel] = useState(0.5);
@@ -352,24 +353,82 @@ function AppContent() {
   // HANDLERS
   // ============================================================
   
-  const handleToggleEngine = useCallback(() => {
-    setEngineRunning(prev => {
-      const next = !prev;
+  const handleToggleEngine = useCallback(async () => {
+    setIsToggling(true);
+    try {
+      const next = !engineRunning;
+      
+      // Kirim request ke backend
+      if (next) {
+        try {
+          await fetch('/api/engine/start', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ'
+            }
+          });
+        } catch (e) {
+          console.warn('Start engine API failed, using fallback:', e);
+        }
+      } else {
+        try {
+          await fetch('/api/engine/stop', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ'
+            }
+          });
+        } catch (e) {
+          console.warn('Stop engine API failed, using fallback:', e);
+        }
+      }
+      
+      // Update local state
+      setEngineRunning(next);
+      
+      // Simpan ke localStorage
+      localStorage.setItem('inkside_engine_state', JSON.stringify({
+        running: next,
+        updatedAt: new Date().toISOString()
+      }));
+      
+      // Tambah log
       setLogs(prevLogs => [
         {
           id: Date.now(),
           timestamp: Date.now(),
           level: next ? 'SUCCESS' : 'WARNING',
           message: next
-            ? 'Trading Engine & MTF Scanner started by user command.'
+            ? 'Trading Engine & MTF Scanner started.'
             : 'Trading Engine stopped gracefully.',
           source: 'Engine',
         },
         ...prevLogs.slice(0, 99),
       ]);
-      return next;
-    });
-  }, []);
+      
+      // Broadcast via WebSocket (optional)
+      try {
+        const ws = new WebSocket('ws://45.41.204.21/socket.io/');
+        ws.onopen = () => {
+          ws.send(JSON.stringify({
+            channel: 'engine',
+            payload: { running: next, type: 'engine_status' }
+          }));
+          ws.close();
+        };
+      } catch (e) {
+        // Silent fail
+      }
+      
+    } catch (err) {
+      console.error('Engine toggle error:', err);
+      setError('Failed to toggle engine');
+    } finally {
+      setIsToggling(false);
+    }
+  }, [engineRunning]);
 
   const handleRefreshData = useCallback(() => {
     fetchRealData(true);
@@ -482,7 +541,10 @@ function AppContent() {
             systemMode="PAPER"
             riskLevel={systemMetrics.risk_level}
             watchlistCount={watchlistCount}
+            engineState={engineRunning ? 'RUNNING' : 'IDLE'}
+            isToggling={isToggling}
             onOpenSidebar={() => setIsSidebarOpen(true)}
+            onNavigateWatchlist={() => setCurrentPage('Watchlist')}
           />
 
           <main className="flex-1 overflow-y-auto p-4 sm:p-6 pb-20 sm:pb-6 scrollbar-thin scrollbar-thumb-[#26313D] scrollbar-track-transparent">

@@ -3,9 +3,10 @@ import {
   Play, Square, RefreshCw, Radio, Send, Activity, Brain, Menu, Star, 
   Wifi, WifiOff, AlertTriangle, Clock, Zap, Shield, Server, 
   ChevronDown, ChevronUp, Cpu, HardDrive, Database, TrendingUp,
-  Power, PowerOff, Signal, Bell
+  Power, PowerOff, Signal, Bell, Loader2, CheckCircle2, XCircle
 } from 'lucide-react';
 import { NavigationPage } from '../types';
+import { useWebSocketStatus, useWebSocketChannel } from '../contexts/WebSocketContext';
 
 // ============================================================
 // TYPES
@@ -27,6 +28,8 @@ interface TopBarProps {
   uptime?: number;
   systemMode?: 'PAPER' | 'LIVE' | 'SIMULATION';
   riskLevel?: string;
+  engineState?: 'IDLE' | 'RUNNING' | 'PAUSED' | 'ERROR';
+  isToggling?: boolean;
 }
 
 // ============================================================
@@ -81,6 +84,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   uptime = 0,
   systemMode = 'PAPER',
   riskLevel = 'LOW',
+  engineState = 'IDLE',
+  isToggling = false,
 }) => {
   // ============================================================
   // STATE
@@ -90,6 +95,18 @@ export const TopBar: React.FC<TopBarProps> = ({
   const [dateStr, setDateStr] = useState('');
   const [showSystemMenu, setShowSystemMenu] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+
+  // ============================================================
+  // WEBSOCKET - REAL-TIME ENGINE STATUS
+  // ============================================================
+  
+  const { isConnected, status } = useWebSocketStatus();
+
+  useWebSocketChannel('engine', (data) => {
+    if (data?.type === 'engine_status') {
+      // Status akan update otomatis via props dari parent
+    }
+  });
 
   // ============================================================
   // CLOCK UPDATES
@@ -112,7 +129,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   }, []);
 
   // ============================================================
-  // MEMOIZED VALUES - SEMUA MENGGUNAKAN currentPage, BUKAN page
+  // MEMOIZED VALUES
   // ============================================================
   
   const healthColor = useMemo(() => {
@@ -153,12 +170,46 @@ export const TopBar: React.FC<TopBarProps> = ({
   }, [currentPage]);
 
   // ============================================================
-  // HANDLERS
+  // RENDER FUNCTIONS
   // ============================================================
-  
-  const handleToggleSystemMenu = useCallback(() => {
-    setShowSystemMenu(prev => !prev);
-  }, []);
+
+  const renderEngineButton = () => {
+    if (isToggling) {
+      return (
+        <button
+          disabled
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#1A2530] border border-[#26313D] text-[#8D9AAA] text-xs font-bold cursor-not-allowed min-w-[80px] justify-center"
+        >
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          <span className="hidden sm:inline">LOADING...</span>
+        </button>
+      );
+    }
+
+    if (engineRunning) {
+      return (
+        <button
+          id="stop-engine-btn"
+          onClick={onToggleEngine}
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600 hover:text-white border border-rose-500/40 text-rose-300 text-xs font-bold transition-all duration-200 shadow-sm cursor-pointer hover:shadow-rose-600/20 min-w-[80px] justify-center"
+        >
+          <Square className="w-3.5 h-3.5 fill-current shrink-0" />
+          <span className="hidden sm:inline">STOP</span>
+        </button>
+      );
+    }
+
+    return (
+      <button
+        id="start-engine-btn"
+        onClick={onToggleEngine}
+        className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all duration-200 shadow-md shadow-emerald-600/30 cursor-pointer hover:scale-105 min-w-[80px] justify-center"
+      >
+        <Play className="w-3.5 h-3.5 fill-current shrink-0" />
+        <span className="hidden sm:inline">START</span>
+      </button>
+    );
+  };
 
   // ============================================================
   // RENDER
@@ -169,9 +220,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       id="app-topbar"
       className="h-14 sm:h-16 bg-gradient-to-r from-[#131A22] to-[#1A2530] border-b border-[#26313D] px-3 sm:px-6 flex items-center justify-between shrink-0 select-none z-10 gap-2 backdrop-blur-sm"
     >
-      {/* ==========================================================
-          LEFT: Mobile Menu & Page Title
-          ========================================================== */}
+      {/* LEFT: Mobile Menu & Page Title */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {onOpenSidebar && (
           <button
@@ -197,17 +246,26 @@ export const TopBar: React.FC<TopBarProps> = ({
           }`}>
             {wsConnected ? '● LIVE' : '○ RECONNECTING'}
           </span>
+
+          {/* Engine State Badge */}
+          <span className={`hidden md:inline-block text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+            engineState === 'RUNNING' 
+              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse'
+              : engineState === 'PAUSED'
+              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+              : engineState === 'ERROR'
+              ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+              : 'bg-[#26313D] text-[#5F6B78]'
+          }`}>
+            {engineState}
+          </span>
         </div>
       </div>
 
-      {/* ==========================================================
-          RIGHT: Controls & Status
-          ========================================================== */}
+      {/* RIGHT: Controls & Status */}
       <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         
-        {/* ==========================================================
-            HEALTH SCORE
-            ========================================================== */}
+        {/* HEALTH SCORE */}
         <div 
           className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0B0F14] border border-[#26313D] cursor-help"
           title={`Health Score: ${healthScore}%`}
@@ -224,9 +282,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           </span>
         </div>
 
-        {/* ==========================================================
-            UPTIME
-            ========================================================== */}
+        {/* UPTIME */}
         <div 
           className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#0B0F14] border border-[#26313D]"
           title="System Uptime"
@@ -237,9 +293,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           </span>
         </div>
 
-        {/* ==========================================================
-            MODE INDICATOR
-            ========================================================== */}
+        {/* MODE INDICATOR */}
         <div 
           className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border ${
             systemMode === 'LIVE' 
@@ -257,9 +311,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           </span>
         </div>
 
-        {/* ==========================================================
-            RISK LEVEL
-            ========================================================== */}
+        {/* RISK LEVEL */}
         <div className={`hidden 2xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border ${getRiskBadge(riskLevel)}`}>
           <AlertTriangle className={`w-3.5 h-3.5 ${getRiskColor(riskLevel)}`} />
           <span className={`text-[10px] font-bold uppercase tracking-wider ${getRiskColor(riskLevel)}`}>
@@ -267,9 +319,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           </span>
         </div>
 
-        {/* ==========================================================
-            TELEGRAM STATUS
-            ========================================================== */}
+        {/* TELEGRAM STATUS */}
         <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#0B0F14] border border-[#26313D]">
           <Send className="w-3.5 h-3.5 text-sky-400" />
           <span className={`text-[10px] font-bold ${
@@ -279,9 +329,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           </span>
         </div>
 
-        {/* ==========================================================
-            WEBSOCKET STATUS
-            ========================================================== */}
+        {/* WEBSOCKET STATUS */}
         <div 
           className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#0B0F14] border border-[#26313D] cursor-help"
           title={`WebSocket: ${wsStatus}`}
@@ -298,9 +346,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           </span>
         </div>
 
-        {/* ==========================================================
-            WATCHLIST BUTTON
-            ========================================================== */}
+        {/* WATCHLIST BUTTON */}
         {onNavigateWatchlist && (
           <button
             onClick={onNavigateWatchlist}
@@ -318,33 +364,11 @@ export const TopBar: React.FC<TopBarProps> = ({
           </button>
         )}
 
-        {/* ==========================================================
-            ENGINE CONTROL
-            ========================================================== */}
+        {/* ENGINE CONTROL */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {engineRunning ? (
-            <button
-              id="stop-engine-btn"
-              onClick={onToggleEngine}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600 hover:text-white border border-rose-500/40 text-rose-300 text-xs font-bold transition-all duration-200 shadow-sm cursor-pointer hover:shadow-rose-600/20"
-            >
-              <Square className="w-3.5 h-3.5 fill-current shrink-0" />
-              <span className="hidden sm:inline">STOP</span>
-            </button>
-          ) : (
-            <button
-              id="start-engine-btn"
-              onClick={onToggleEngine}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all duration-200 shadow-md shadow-emerald-600/30 cursor-pointer hover:scale-105"
-            >
-              <Play className="w-3.5 h-3.5 fill-current shrink-0" />
-              <span className="hidden sm:inline">START</span>
-            </button>
-          )}
+          {renderEngineButton()}
 
-          {/* ==========================================================
-              REFRESH BUTTON
-              ========================================================== */}
+          {/* REFRESH BUTTON */}
           <button
             id="refresh-btn"
             onClick={onRefreshData}
@@ -356,9 +380,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           </button>
         </div>
 
-        {/* ==========================================================
-            CLOCK
-            ========================================================== */}
+        {/* CLOCK */}
         <div className="hidden sm:block pl-2.5 border-l border-[#26313D] text-right font-mono">
           <div className="text-xs font-bold text-white tracking-wider tabular-nums">
             {timeStr || '--:--:--'}

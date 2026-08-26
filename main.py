@@ -9,6 +9,7 @@
 # WITH WATCHDOG v1.0.0 REAL IMPLEMENTATION
 # WITH PREDICTION ENGINE v1.0.0
 # WITH WEBSOCKET BROADCAST
+# WITH ENGINE CONTROL (START/STOP)
 # 100% REAL DATA - TANPA DUMMY
 # ALL FRONTEND API ENDPOINTS INCLUDED
 # ============================================================
@@ -97,6 +98,9 @@ LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
 MODE = os.environ.get('INKSIDE_MODE', 'PAPER')
 API_PORT = int(os.environ.get('API_PORT', 5001))
 API_HOST = os.environ.get('API_HOST', '0.0.0.0')
+
+# Variabel global untuk status engine
+engine_running = False
 
 # API Key untuk autentikasi
 API_KEY = os.environ.get('API_KEY', 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ')
@@ -1011,7 +1015,6 @@ def start_api_server(bot_instance):
                 return jsonify(metrics)
             except Exception as e:
                 logger.error(f"Metrics error: {e}")
-
                 return jsonify({'error': str(e)}), 500
         
         @app.route('/api/predictions/monte_carlo', methods=['POST', 'GET'])
@@ -1174,6 +1177,64 @@ def start_api_server(bot_instance):
             except Exception as e:
                 logger.error(f"System metrics error: {e}")
                 return jsonify({"error": str(e)}), 500
+        
+        # ---- ENGINE CONTROL ----
+        
+        @app.route('/api/engine/start', methods=['POST'])
+        @require_api_key
+        def start_engine():
+            """Start the trading engine."""
+            global engine_running
+            try:
+                engine_running = True
+                if bot_instance and hasattr(bot_instance, 'start'):
+                    bot_instance.start()
+                logger.info("🚀 Engine started manually")
+                return jsonify({
+                    'status': 'success',
+                    'message': 'Engine started successfully',
+                    'running': True,
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                logger.error(f"Start engine error: {e}")
+                return jsonify({'error': str(e)}), 500
+        
+        @app.route('/api/engine/stop', methods=['POST'])
+        @require_api_key
+        def stop_engine():
+            """Stop the trading engine."""
+            global engine_running
+            try:
+                engine_running = False
+                if bot_instance and hasattr(bot_instance, 'stop'):
+                    bot_instance.stop()
+                logger.info("🛑 Engine stopped manually")
+                return jsonify({
+                    'status': 'success',
+                    'message': 'Engine stopped successfully',
+                    'running': False,
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                logger.error(f"Stop engine error: {e}")
+                return jsonify({'error': str(e)}), 500
+        
+        @app.route('/api/engine/status', methods=['GET'])
+        @require_api_key
+        def get_engine_status():
+            """Get engine status."""
+            try:
+                status = {
+                    'running': engine_running,
+                    'mode': MODE,
+                    'state': 'RUNNING' if engine_running else 'IDLE',
+                    'uptime': int(time.time() - _startup_time),
+                    'timestamp': datetime.now().isoformat()
+                }
+                return jsonify(status)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
         
         # ---- TELEGRAM WEBHOOK ----
         
@@ -1344,6 +1405,9 @@ def start_api_server(bot_instance):
         logger.info(f"   - GET  /api/predictions (requires API Key)")
         logger.info(f"   - GET  /api/predictions/metrics (requires API Key)")
         logger.info(f"   - POST /api/predictions/monte_carlo (requires API Key)")
+        logger.info(f"   - POST /api/engine/start (requires API Key)")
+        logger.info(f"   - POST /api/engine/stop (requires API Key)")
+        logger.info(f"   - GET  /api/engine/status (requires API Key)")
         logger.info(f"   - POST /api/telegram/webhook (Telegram webhook)")
         logger.info(f"   - GET  /api/system/metrics (requires API Key)")
         logger.info(f"   - 📡 WebSocket: /socket.io/ (real-time updates)")
@@ -1558,6 +1622,7 @@ def main_headless():
     logger.info(f"  Simulation  : {'ON' if SIMULATION_AVAILABLE else 'OFF'}")
     logger.info(f"  Prediction  : {'ON' if True else 'OFF'}")
     logger.info(f"  WebSocket   : {'ON' if True else 'OFF'}")
+    logger.info(f"  Engine      : {'ON' if True else 'OFF'}")
     logger.info("=" * 60)
     logger.info("📡 Press Ctrl+C to stop")
     logger.info("=" * 60)

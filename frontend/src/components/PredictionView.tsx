@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   LineChart, 
   Sparkles, 
@@ -19,10 +19,12 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Minus,
-  Loader2
+  Loader2,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import { predictionService } from '../services/predictionService';
-import { useWebSocket } from '../hooks/useWebSocket';
+import { useWebSocketChannel, useWebSocketStatus } from '../contexts/WebSocketContext';
 
 // ============================================================
 // TYPES / INTERFACES
@@ -89,7 +91,7 @@ interface SystemMetrics {
 
 export const PredictionView: React.FC = () => {
   // State untuk filter
-  const [selectedPair, setSelectedPair] = useState('BTC/USD');
+  const [selectedPair, setSelectedPair] = useState('BTC/USDT');
   const [selectedHorizon, setSelectedHorizon] = useState('1h');
   const [selectedMethod, setSelectedMethod] = useState('ensemble_all');
   
@@ -109,16 +111,57 @@ export const PredictionView: React.FC = () => {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   // ============================================================
-  // WEBSOCKET HOOK
+  // WEBSOCKET - MENGGUNAKAN SOCKET.IO (BUKAN RAW WEBSOCKET)
   // ============================================================
   
-  const { lastMessage, isConnected } = useWebSocket('/ws/predictions');
+  const { isConnected, status } = useWebSocketStatus();
+
+  // Subscribe ke channel predictions via Socket.IO
+  useWebSocketChannel('predictions', (data) => {
+    if (data?.type === 'prediction_update') {
+      const payload = data.payload || data.data;
+      if (Array.isArray(payload)) {
+        setPredictions(payload);
+      } else if (payload?.pair) {
+        setPredictions(prev => 
+          prev.map(p => 
+            p.pair === payload.pair ? { ...p, ...payload } : p
+          )
+        );
+      }
+      setLastUpdated(new Date());
+    }
+  });
+
+  useWebSocketChannel('metrics', (data) => {
+    if (data?.type === 'system_metrics' || data?.type === 'metrics_update') {
+      const payload = data.payload || data.data;
+      if (payload) {
+        setMetrics(prev => ({
+          ...prev,
+          ...payload,
+          last_update: new Date().toISOString()
+        }));
+      }
+    }
+  });
+
+  useWebSocketChannel('monte_carlo', (data) => {
+    if (data?.type === 'monte_carlo_update') {
+      const payload = data.payload || data.data;
+      if (payload) {
+        setMonteCarlo(payload);
+        setSimulationRan(true);
+        setLastUpdated(new Date());
+      }
+    }
+  });
 
   // ============================================================
   // FETCH DATA FUNCTION
   // ============================================================
   
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setRefreshing(true);
       setError(null);
@@ -158,7 +201,7 @@ export const PredictionView: React.FC = () => {
     } finally {
       setRefreshing(false);
     }
-  };
+  }, [selectedPair, selectedHorizon, selectedMethod, simulationRan]);
 
   // ============================================================
   // EFFECTS
@@ -167,32 +210,7 @@ export const PredictionView: React.FC = () => {
   // Fetch on mount and when filters change
   useEffect(() => {
     fetchData();
-  }, [selectedPair, selectedHorizon, selectedMethod]);
-
-  // WebSocket real-time updates
-  useEffect(() => {
-    if (lastMessage) {
-      try {
-        const data = JSON.parse(lastMessage);
-        if (data.type === 'prediction_update') {
-          setPredictions(prev => 
-            prev.map(p => 
-              p.pair === data.pair ? { ...p, ...data.data } : p
-            )
-          );
-          setLastUpdated(new Date());
-        }
-        if (data.type === 'metrics_update') {
-          setMetrics(data.data);
-        }
-        if (data.type === 'monte_carlo_update') {
-          setMonteCarlo(data.data);
-        }
-      } catch (e) {
-        // Silent fail for malformed WebSocket messages
-      }
-    }
-  }, [lastMessage]);
+  }, [fetchData]);
 
   // ============================================================
   // HANDLERS
@@ -223,9 +241,9 @@ export const PredictionView: React.FC = () => {
     }
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     fetchData();
-  };
+  }, [fetchData]);
 
   const handlePairChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedPair(e.target.value);
@@ -335,12 +353,17 @@ export const PredictionView: React.FC = () => {
           ========================================================== */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          {/* WebSocket Status */}
+          {/* WebSocket Status - Menggunakan Socket.IO */}
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#131A22] border border-[#26313D]">
-            <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400' : 'bg-red-400'} animate-pulse`} />
-            <span className="text-[10px] text-[#5F6B78] font-mono">
+            {isConnected ? (
+              <Wifi className="w-3.5 h-3.5 text-emerald-400" />
+            ) : (
+              <WifiOff className="w-3.5 h-3.5 text-amber-400" />
+            )}
+            <span className={`text-[10px] font-mono font-bold ${isConnected ? 'text-emerald-400' : 'text-amber-400'}`}>
               {isConnected ? 'LIVE' : 'RECONNECTING...'}
             </span>
+            <span className="text-[8px] text-[#5F6B78]">({status})</span>
           </div>
           
           {/* Last Updated */}
@@ -376,7 +399,9 @@ export const PredictionView: React.FC = () => {
               Prediction & Forecasting Engine v4.0
             </h2>
             <p className="text-xs text-[#8D9AAA]">
-              {metrics ? `Last update: ${new Date(metrics.last_update).toLocaleString()}` : 'Real-time market intelligence'}
+              {metrics?.last_update 
+                ? `Last update: ${new Date(metrics.last_update).toLocaleString()}` 
+                : 'Real-time market intelligence'}
             </p>
           </div>
         </div>
@@ -393,7 +418,7 @@ export const PredictionView: React.FC = () => {
                 <option key={p.pair} value={p.pair}>{p.pair}</option>
               ))
             ) : (
-              <option value="BTC/USD">BTC/USD</option>
+              <option value="BTC/USDT">BTC/USDT</option>
             )}
           </select>
 
