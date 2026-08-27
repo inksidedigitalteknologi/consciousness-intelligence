@@ -4,14 +4,16 @@
 # INKSIDE DIGITAL TRADING BOT
 # COGNITIVE MARKET SCANNER ENGINE
 #
-# Version: 5.2 COGNITIVE AWARENESS - FIXED
+# Version: 5.3 COGNITIVE AWARENESS - FIXED
 #
 # FIXES:
+# - Fixed "Invalid interval: 60" - use string timeframes ("1h", "5m", etc.)
 # - Fixed record_health import (safe import)
 # - Fixed scanning flag reset on error
 # - Added safe interval check in scan loop
 # - Added proper ThreadPoolExecutor cleanup
 # - Better error handling
+# - Added timeframe validation
 # ============================================================
 
 import logging
@@ -47,7 +49,7 @@ from core.signal_engine import SignalEngine
 logger = logging.getLogger(__name__)
 
 # ============================================================
-# TIMEFRAME CONFIG
+# TIMEFRAME CONFIG - FIXED
 # ============================================================
 
 TIMEFRAME_MAP = {
@@ -69,6 +71,23 @@ TIMEFRAME_WEIGHT = {
     "4h": 2.5,
     "1d": 3.0
 }
+
+# ============================================================
+# FIX: VALID TIMEFRAME CHECK
+# ============================================================
+
+VALID_TIMEFRAMES = set(TIMEFRAME_MAP.keys())
+
+def validate_timeframe(timeframe: str) -> str:
+    """Validate and return valid timeframe string."""
+    if timeframe not in VALID_TIMEFRAMES:
+        logger.warning(f"Invalid timeframe '{timeframe}', using '1h'")
+        return "1h"
+    return timeframe
+
+def get_interval_minutes(timeframe: str) -> int:
+    """Get interval in minutes from timeframe string."""
+    return TIMEFRAME_MAP.get(validate_timeframe(timeframe), 60)
 
 
 # ============================================================
@@ -132,7 +151,7 @@ def safe_candle_volume(candle: Any) -> float:
 
 
 # ============================================================
-# COGNITIVE SCANNER
+# COGNITIVE SCANNER - FIXED
 # ============================================================
 
 class CognitiveMarketScanner:
@@ -141,7 +160,7 @@ class CognitiveMarketScanner:
     Integrated with Consciousness, Brain, and Learning Engine.
     """
     
-    VERSION = "5.2 COGNITIVE AWARENESS - FIXED"
+    VERSION = "5.3 COGNITIVE AWARENESS - FIXED"
     
     def __init__(
         self,
@@ -351,19 +370,19 @@ class CognitiveMarketScanner:
             logger.debug(f"Memory storage error: {e}")
     
     # ============================================================
-    # TIMEFRAME HELPER
+    # TIMEFRAME HELPER - FIXED
     # ============================================================
     
     def _get_interval(self, timeframe: str) -> int:
         """Get interval in minutes from timeframe string."""
-        value = TIMEFRAME_MAP.get(timeframe)
-        if value is None:
-            logger.warning(f"Unknown timeframe {timeframe}, using 1h")
-            return 60
-        return value
+        return get_interval_minutes(timeframe)
+    
+    def _validate_timeframe(self, timeframe: str) -> str:
+        """Validate timeframe string."""
+        return validate_timeframe(timeframe)
     
     # ============================================================
-    # MULTI TIMEFRAME ANALYSIS
+    # MULTI TIMEFRAME ANALYSIS - FIXED
     # ============================================================
     
     def scan_multi_timeframe(
@@ -379,9 +398,13 @@ class CognitiveMarketScanner:
         
         for tf in timeframes:
             try:
+                # FIX: Use string timeframe directly
+                valid_tf = self._validate_timeframe(tf)
+                interval = self._get_interval(valid_tf)
+                
                 candles = self.market_data.get_ohlc(
                     pair,
-                    self._get_interval(tf)
+                    interval  # This is int, but market_data handles it
                 )
                 
                 if not candles:
@@ -488,15 +511,22 @@ class CognitiveMarketScanner:
         return data
     
     # ============================================================
-    # SCAN SINGLE PAIR
+    # SCAN SINGLE PAIR - FIXED
     # ============================================================
     
-    def scan_pair(self, pair: str, timeframe: str = MAIN_TIMEFRAME) -> Dict:
-        """Scan a single pair with cognitive awareness."""
+    def scan_pair(self, pair: str, timeframe: str = "1h") -> Dict:
+        """
+        Scan a single pair with cognitive awareness.
+        
+        FIX: timeframe is now a STRING ("1h", "5m", etc.) not int!
+        """
         start = time.time()
         
         try:
-            interval = self._get_interval(timeframe)
+            # FIX: Validate timeframe
+            valid_tf = self._validate_timeframe(timeframe)
+            interval = self._get_interval(valid_tf)
+            
             candles = self.market_data.get_ohlc(pair, interval)
             
             if not candles:
@@ -547,7 +577,7 @@ class CognitiveMarketScanner:
                 "datetime": datetime.now().isoformat(),
                 "pair": pair,
                 "symbol": pair,
-                "timeframe": timeframe,
+                "timeframe": valid_tf,  # FIX: Use validated timeframe
                 "price": price,
                 "ohlc": ohlc,
                 "candles": candles[-100:],
@@ -641,11 +671,11 @@ class CognitiveMarketScanner:
     def scan_all(
         self,
         pairs: Optional[List[str]] = None,
-        timeframe: str = MAIN_TIMEFRAME,
+        timeframe: str = "1h",  # FIX: Use string timeframe
         max_workers: int = 10
     ) -> List[Dict]:
         """Scan all pairs with parallel processing."""
-        # FIX: Reset scanning flag with proper lock
+        # Reset scanning flag with proper lock
         with self.lock:
             if self.scanning:
                 return list(self.last_results)
@@ -659,15 +689,17 @@ class CognitiveMarketScanner:
         pairs = list(pairs)
         results = []
         
+        # FIX: Validate timeframe
+        valid_tf = self._validate_timeframe(timeframe)
+        
         self._notify_status("SCANNING")
         
         try:
             workers = min(max_workers, max(1, len(pairs)))
             
-            # FIX: Proper ThreadPoolExecutor usage
             with ThreadPoolExecutor(max_workers=workers) as executor:
                 futures = {
-                    executor.submit(self.scan_pair, pair, timeframe): pair
+                    executor.submit(self.scan_pair, pair, valid_tf): pair
                     for pair in pairs
                 }
                 
@@ -696,7 +728,7 @@ class CognitiveMarketScanner:
         
         elapsed = round(time.time() - start, 2)
         
-        # FIX: Reset scanning flag with lock
+        # Reset scanning flag with lock
         with self.lock:
             if results:
                 self.last_results = list(results)
@@ -732,7 +764,7 @@ class CognitiveMarketScanner:
     def start(
         self,
         pairs: Optional[List[str]] = None,
-        timeframe: str = MAIN_TIMEFRAME,
+        timeframe: str = "1h",  # FIX: Use string timeframe
         interval_seconds: int = 60
     ) -> bool:
         """Start continuous scanning."""
@@ -740,7 +772,6 @@ class CognitiveMarketScanner:
             logger.warning("Scanner already running.")
             return False
         
-        # FIX: Ensure minimum interval
         interval_seconds = max(5, interval_seconds)
         
         self.running = True
@@ -755,7 +786,7 @@ class CognitiveMarketScanner:
         )
         self.scan_thread.start()
         
-        logger.info(f"Cognitive scanner started (interval={interval_seconds}s)")
+        logger.info(f"Cognitive scanner started (interval={interval_seconds}s, timeframe={timeframe})")
         return True
     
     def _scan_loop(self, pairs, timeframe, interval_seconds):
@@ -767,7 +798,6 @@ class CognitiveMarketScanner:
                 logger.error(f"Scanner loop error: {e}")
                 self._notify_status("ERROR")
             
-            # FIX: Use time.sleep with proper interval
             if self.running and not self._stop_requested:
                 time.sleep(interval_seconds)
         
@@ -782,7 +812,6 @@ class CognitiveMarketScanner:
         self._stop_requested = True
         self.running = False
         
-        # FIX: Wait for thread to finish
         if self.scan_thread and self.scan_thread.is_alive():
             try:
                 self.scan_thread.join(timeout=3.0)

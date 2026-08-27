@@ -160,7 +160,6 @@ class RealHeartbeat:
         self.is_alive = True
         self.thread_id = threading.get_ident()
         self.thread_name = threading.current_thread().name
-        # Health score improves with consistent beats
         self.health_score = min(100, self.health_score + 0.5)
     
     def miss(self, error: str = None):
@@ -960,30 +959,86 @@ class RealSystemWatchdog:
             "timestamp": datetime.now().isoformat()
         }
     
+    # ============================================================
+    # GET SNAPSHOT - REVISED (TANPA CIRCULAR REFERENCE)
+    # ============================================================
+    
     def get_snapshot(self) -> Dict:
-        """Get full REAL snapshot"""
-        return {
-            "status": self.get_status(),
-            "latest_scan": self.history[-1] if self.history else None,
-            "components": list(self.components.keys()),
-            "heartbeats": {
-                name: hb.to_dict()
-                for name, hb in self.heartbeats.items()
-            },
-            "latency": {
-                name: lm.to_dict()
-                for name, lm in self.latency_metrics.items()
-            },
-            "circuit_breakers": {
-                name: cb.to_dict()
-                for name, cb in self.circuit_breakers.items()
-            },
-            "component_health": self.component_health.copy(),
-            "recent_alerts": self.alert_history[-10:],
-            "recent_errors": self.error_history[-10:],
-            "restart_history": self.restart_history[-10:],
-            "timestamp": datetime.now().isoformat()
-        }
+        """Get full REAL snapshot tanpa circular reference"""
+        try:
+            # Get status safely
+            status = self.get_status()
+            
+            # Get components safely
+            components = list(self.components.keys())
+            
+            # Get heartbeats safely
+            heartbeats = {}
+            for name, hb in self.heartbeats.items():
+                try:
+                    heartbeats[name] = hb.to_dict() if hasattr(hb, 'to_dict') else str(hb)
+                except Exception as e:
+                    heartbeats[name] = {"error": f"Cannot serialize: {e}"}
+            
+            # Get latency safely
+            latency = {}
+            for name, lm in self.latency_metrics.items():
+                try:
+                    latency[name] = lm.to_dict() if hasattr(lm, 'to_dict') else str(lm)
+                except Exception as e:
+                    latency[name] = {"error": f"Cannot serialize: {e}"}
+            
+            # Get circuit breakers safely
+            circuit_breakers = {}
+            for name, cb in self.circuit_breakers.items():
+                try:
+                    circuit_breakers[name] = cb.to_dict() if hasattr(cb, 'to_dict') else str(cb)
+                except Exception as e:
+                    circuit_breakers[name] = {"error": f"Cannot serialize: {e}"}
+            
+            # Get latest scan safely - tanpa circular reference
+            latest_scan = None
+            if self.history:
+                try:
+                    # Ambil data terakhir dengan cara yang aman
+                    last = self.history[-1]
+                    latest_scan = {
+                        "timestamp": last.get("timestamp", ""),
+                        "health_score": last.get("health_score", 0),
+                        "summary": last.get("summary", {}),
+                        "system_metrics": last.get("system_metrics", {}),
+                        "component_count": len(last.get("components", [])),
+                    }
+                except Exception as e:
+                    latest_scan = {"error": f"Cannot serialize latest scan: {e}"}
+            
+            return {
+                "status": status,
+                "components": components,
+                "heartbeats": heartbeats,
+                "latency": latency,
+                "circuit_breakers": circuit_breakers,
+                "component_health": self.component_health.copy(),
+                "latest_scan": latest_scan,
+                "recent_alerts": self.alert_history[-10:] if self.alert_history else [],
+                "recent_errors": self.error_history[-10:] if self.error_history else [],
+                "restart_history": self.restart_history[-10:] if self.restart_history else [],
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Snapshot error: {e}")
+            # Fallback: return basic info
+            return {
+                "error": str(e),
+                "timestamp": datetime.now().isoformat(),
+                "status": self.get_status(),
+                "components": list(self.components.keys()),
+                "heartbeats": {},
+                "latency": {},
+                "circuit_breakers": {},
+                "component_health": self.component_health.copy() if hasattr(self, 'component_health') else {}
+            }
     
     def get_component_detail(self, component: str) -> Optional[Dict]:
         """Get REAL detail for specific component"""
