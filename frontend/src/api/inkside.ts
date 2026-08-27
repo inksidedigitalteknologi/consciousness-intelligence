@@ -1,7 +1,14 @@
 // src/api/inkside.ts
+// INKSIDE DIGITAL - API SERVICE v2.0
+// FIX: Base URL sekarang tanpa /api di akhir
+
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://45.41.204.21/api';
+// ============================================================
+// ✅ FIX: BASE URL TANPA /api di akhir
+// ============================================================
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://45.41.204.21';
 const API_KEY = import.meta.env.VITE_API_KEY || '';
 
 // ============================================================
@@ -279,7 +286,9 @@ class InksideAPI {
 
   private async get<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
     try {
-      const response = await axios.get<T>(`${this.baseUrl}${endpoint}`, {
+      // ✅ PASTIKAN endpoint dimulai dengan /api/
+      const url = endpoint.startsWith('/api/') ? endpoint : `/api${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+      const response = await axios.get<T>(`${this.baseUrl}${url}`, {
         params,
         timeout: 30000,
         headers: this.getHeaders(),
@@ -293,7 +302,8 @@ class InksideAPI {
 
   private async post<T>(endpoint: string, data?: any): Promise<T> {
     try {
-      const response = await axios.post<T>(`${this.baseUrl}${endpoint}`, data, {
+      const url = endpoint.startsWith('/api/') ? endpoint : `/api${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+      const response = await axios.post<T>(`${this.baseUrl}${url}`, data, {
         timeout: 30000,
         headers: this.getHeaders(),
       });
@@ -306,7 +316,8 @@ class InksideAPI {
 
   private async put<T>(endpoint: string, data?: any): Promise<T> {
     try {
-      const response = await axios.put<T>(`${this.baseUrl}${endpoint}`, data, {
+      const url = endpoint.startsWith('/api/') ? endpoint : `/api${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+      const response = await axios.put<T>(`${this.baseUrl}${url}`, data, {
         timeout: 30000,
         headers: this.getHeaders(),
       });
@@ -319,7 +330,8 @@ class InksideAPI {
 
   private async delete<T>(endpoint: string): Promise<T> {
     try {
-      const response = await axios.delete<T>(`${this.baseUrl}${endpoint}`, {
+      const url = endpoint.startsWith('/api/') ? endpoint : `/api${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+      const response = await axios.delete<T>(`${this.baseUrl}${url}`, {
         timeout: 30000,
         headers: this.getHeaders(),
       });
@@ -395,7 +407,7 @@ class InksideAPI {
   }
 
   // ============================================================
-  // PREDICTION API (NEW)
+  // PREDICTION API
   // ============================================================
 
   async getPredictions(params?: { pair?: string; horizon?: string; method?: string }): Promise<Prediction[]> {
@@ -434,12 +446,36 @@ class InksideAPI {
     return this.get<any>('/watchdog/snapshot');
   }
 
+  async getWatchdogData(): Promise<any> {
+    return this.get<any>('/watchdog/data');
+  }
+
+  async getWatchdogComponent(name: string): Promise<any> {
+    return this.get<any>(`/watchdog/component/${name}`);
+  }
+
   async resetCircuitBreaker(component: string): Promise<{ status: string; message: string }> {
     return this.post<{ status: string; message: string }>(`/watchdog/circuit/${component}/reset`);
   }
 
   // ============================================================
-  // TELEGRAM API (Extended)
+  // PATTERN API
+  // ============================================================
+
+  async getPatterns(params?: { pair?: string; bias?: string; type?: string }): Promise<any> {
+    return this.get<any>('/patterns', params);
+  }
+
+  async getPatternStats(): Promise<any> {
+    return this.get<any>('/patterns/stats');
+  }
+
+  async detectPatterns(text: string): Promise<any> {
+    return this.post<any>('/patterns/detect', { text });
+  }
+
+  // ============================================================
+  // TELEGRAM API
   // ============================================================
 
   async setTelegramWebhook(url: string): Promise<{ status: string; message: string }> {
@@ -496,6 +532,10 @@ class InksideAPI {
     return this.post('/knowledge/ask', { question });
   }
 
+  async fetchUrl(url: string): Promise<any> {
+    return this.post('/knowledge/fetch-url', { url });
+  }
+
   // ============================================================
   // LEARNING API
   // ============================================================
@@ -512,6 +552,10 @@ class InksideAPI {
     return this.get('/learning/curiosity');
   }
 
+  async addCuriosityQuestion(question: string, domain?: string, area?: string): Promise<any> {
+    return this.post('/learning/curiosity', { question, domain, area });
+  }
+
   async getGoals(): Promise<any> {
     return this.get('/learning/goals');
   }
@@ -522,6 +566,18 @@ class InksideAPI {
 
   async getKnowledgeGraph(): Promise<any> {
     return this.get('/learning/graph');
+  }
+
+  async getEvaluatorStats(): Promise<any> {
+    return this.get('/learning/evaluator');
+  }
+
+  // ============================================================
+  // MODULES API
+  // ============================================================
+
+  async getModules(): Promise<any> {
+    return this.get('/modules/list');
   }
 
   // ============================================================
