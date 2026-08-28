@@ -1,7 +1,6 @@
 // src/components/PatternView.tsx
 // INKSIDE DIGITAL - PATTERN VIEW v3.2
 // FIX: Error Boundary, Logging, Theme Support, Performance
-// 100% REAL DATA - NO DUMMY
 
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { 
@@ -165,7 +164,7 @@ class PatternErrorBoundary extends React.Component<
 // PATTERN SERVICE
 // ============================================================
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://45.41.204.21';
 
 class PatternService {
   private static instance: PatternService;

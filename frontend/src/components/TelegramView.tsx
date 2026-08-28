@@ -103,7 +103,7 @@ interface TelegramViewProps {
 // API SERVICE
 // ============================================================
 
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://45.41.204.21';
 
 const api = {
   async getStatus(): Promise<{ configured: boolean; status: string; bot_name: string }> {

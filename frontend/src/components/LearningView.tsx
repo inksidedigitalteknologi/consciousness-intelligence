@@ -181,7 +181,7 @@ export const LearningView: React.FC = () => {
   // ===== REFS =====
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const apiKey = localStorage.getItem('apiKey') || '';
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://45.41.204.21:5001';
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://45.41.204.21';
 
   // ===== API HELPER =====
   const fetchWithAuth = useCallback(async (endpoint: string) => {

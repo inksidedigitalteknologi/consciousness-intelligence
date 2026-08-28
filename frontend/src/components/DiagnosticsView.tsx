@@ -1,4 +1,7 @@
 // frontend/src/components/DiagnosticsView.tsx
+// INKSIDE DIGITAL - DIAGNOSTICS VIEW v5.0
+// ✅ FIX: Hardcode API_BASE ke http://45.41.204.21
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -87,7 +90,10 @@ const DiagnosticsView: React.FC = () => {
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
   const [watchdogError, setWatchdogError] = useState<string | null>(null);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://45.41.204.21:5001';
+  // ============================================================
+  // ✅ HARDCODE API_BASE - TANPA PORT!
+  // ============================================================
+  const API_BASE = 'http://45.41.204.21';
 
   // ============================================================
   // FETCH SYSTEM DIAGNOSTICS

@@ -1,15 +1,16 @@
 // src/api/inkside.ts
 // INKSIDE DIGITAL - API SERVICE v2.0
-// FIX: Base URL sekarang tanpa /api di akhir
+// ✅ FIX: Hardcoded API_BASE_URL & API_KEY
+// ✅ FIX: Semua endpoint pakai /api/ prefix
 
 import axios from 'axios';
 
 // ============================================================
-// ✅ FIX: BASE URL TANPA /api di akhir
+// ✅ HARDCODED - TANPA ENV
 // ============================================================
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://45.41.204.21';
-const API_KEY = import.meta.env.VITE_API_KEY || '';
+const API_BASE_URL = 'http://45.41.204.21';
+const API_KEY = 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ';
 
 // ============================================================
 // TYPES & INTERFACES
@@ -347,63 +348,64 @@ class InksideAPI {
   // ============================================================
 
   async getStatus(): Promise<StatusResponse> {
-    return this.get<StatusResponse>('/status');
+    return this.get<StatusResponse>('/api/status');
   }
 
   async getHealth(): Promise<{ status: string; uptime: number; version: string; timestamp: string }> {
-    return this.get<{ status: string; uptime: number; version: string; timestamp: string }>('/health');
+    return this.get<{ status: string; uptime: number; version: string; timestamp: string }>('/api/health');
   }
 
   async getSignals(): Promise<SignalsResponse> {
-    return this.get<SignalsResponse>('/signals');
+    return this.get<SignalsResponse>('/api/signals');
   }
 
   async getMarketData(pair: string = 'BTC/USDT'): Promise<MarketDataResponse> {
-    return this.get<MarketDataResponse>(`/market?pair=${encodeURIComponent(pair)}`);
+    return this.get<MarketDataResponse>(`/api/market?pair=${encodeURIComponent(pair)}`);
   }
 
   async analyzePair(pair: string): Promise<any> {
-    return this.get(`/analyze/${encodeURIComponent(pair)}`);
+    return this.get(`/api/analyze/${encodeURIComponent(pair)}`);
   }
 
   async getBrainState(): Promise<BrainStateResponse> {
-    return this.get<BrainStateResponse>('/brain/state');
+    return this.get<BrainStateResponse>('/api/brain/state');
   }
 
   async getBrainReflection(): Promise<ReflectionResponse> {
-    return this.get<ReflectionResponse>('/brain/reflection');
+    return this.get<ReflectionResponse>('/api/brain/reflection');
   }
 
   async getPerformance(): Promise<PerformanceResponse> {
-    return this.get<PerformanceResponse>('/performance');
+    return this.get<PerformanceResponse>('/api/performance');
   }
 
   async getPositions(): Promise<PositionsResponse> {
-    return this.get<PositionsResponse>('/positions');
+    return this.get<PositionsResponse>('/api/positions');
   }
 
   async getLogs(limit: number = 50): Promise<LogsResponse> {
-    return this.get<LogsResponse>(`/logs?limit=${limit}`);
+    return this.get<LogsResponse>(`/api/logs?limit=${limit}`);
   }
 
+  // ✅ FIX: getDiagnostics pakai /api/diagnostics
   async getDiagnostics(): Promise<DiagnosticsResponse> {
-    return this.get<DiagnosticsResponse>('/diagnostics');
+    return this.get<DiagnosticsResponse>('/api/diagnostics');
   }
 
   async getTelegramStatus(): Promise<TelegramStatusResponse> {
-    return this.get<TelegramStatusResponse>('/telegram/status');
+    return this.get<TelegramStatusResponse>('/api/telegram/status');
   }
 
   async startEngine(): Promise<{ status: string; success: boolean; timestamp: string }> {
-    return this.post<{ status: string; success: boolean; timestamp: string }>('/engine/start');
+    return this.post<{ status: string; success: boolean; timestamp: string }>('/api/engine/start');
   }
 
   async stopEngine(): Promise<{ status: string; success: boolean; timestamp: string }> {
-    return this.post<{ status: string; success: boolean; timestamp: string }>('/engine/stop');
+    return this.post<{ status: string; success: boolean; timestamp: string }>('/api/engine/stop');
   }
 
   async getLearningStatus(): Promise<{ learning: { active: boolean; cycles: number; status: string }; timestamp: string }> {
-    return this.get<{ learning: { active: boolean; cycles: number; status: string }; timestamp: string }>('/learning/status');
+    return this.get<{ learning: { active: boolean; cycles: number; status: string }; timestamp: string }>('/api/learning/status');
   }
 
   // ============================================================
@@ -411,19 +413,19 @@ class InksideAPI {
   // ============================================================
 
   async getPredictions(params?: { pair?: string; horizon?: string; method?: string }): Promise<Prediction[]> {
-    return this.get<Prediction[]>('/predictions', params);
+    return this.get<Prediction[]>('/api/predictions', params);
   }
 
   async getPredictionMetrics(): Promise<PredictionMetricsResponse> {
-    return this.get<PredictionMetricsResponse>('/predictions/metrics');
+    return this.get<PredictionMetricsResponse>('/api/predictions/metrics');
   }
 
   async runMonteCarlo(data: MonteCarloRequest): Promise<MonteCarloResponse> {
-    return this.post<MonteCarloResponse>('/predictions/monte_carlo', data);
+    return this.post<MonteCarloResponse>('/api/predictions/monte_carlo', data);
   }
 
   async getMonteCarlo(pair: string): Promise<MonteCarloResponse> {
-    return this.get<MonteCarloResponse>(`/predictions/monte_carlo?pair=${encodeURIComponent(pair)}`);
+    return this.get<MonteCarloResponse>(`/api/predictions/monte_carlo?pair=${encodeURIComponent(pair)}`);
   }
 
   // ============================================================
@@ -431,31 +433,32 @@ class InksideAPI {
   // ============================================================
 
   async getSystemMetrics(): Promise<SystemMetricsResponse> {
-    return this.get<SystemMetricsResponse>('/system/metrics');
+    return this.get<SystemMetricsResponse>('/api/system/metrics');
   }
 
   // ============================================================
-  // WATCHDOG API
+  // WATCHDOG API - FIXED
   // ============================================================
 
   async getWatchdogStatus(): Promise<WatchdogStatusResponse> {
-    return this.get<WatchdogStatusResponse>('/watchdog/status');
+    return this.get<WatchdogStatusResponse>('/api/watchdog/status');
   }
 
   async getWatchdogSnapshot(): Promise<any> {
-    return this.get<any>('/watchdog/snapshot');
+    return this.get<any>('/api/watchdog/snapshot');
   }
 
+  // ✅ FIX: Watchdog Data → Status (karena /watchdog/data tidak ada)
   async getWatchdogData(): Promise<any> {
-    return this.get<any>('/watchdog/data');
+    return this.get<any>('/api/watchdog/status');
   }
 
   async getWatchdogComponent(name: string): Promise<any> {
-    return this.get<any>(`/watchdog/component/${name}`);
+    return this.get<any>(`/api/watchdog/component/${name}`);
   }
 
   async resetCircuitBreaker(component: string): Promise<{ status: string; message: string }> {
-    return this.post<{ status: string; message: string }>(`/watchdog/circuit/${component}/reset`);
+    return this.post<{ status: string; message: string }>(`/api/watchdog/circuit/${component}/reset`);
   }
 
   // ============================================================
@@ -463,15 +466,15 @@ class InksideAPI {
   // ============================================================
 
   async getPatterns(params?: { pair?: string; bias?: string; type?: string }): Promise<any> {
-    return this.get<any>('/patterns', params);
+    return this.get<any>('/api/patterns', params);
   }
 
   async getPatternStats(): Promise<any> {
-    return this.get<any>('/patterns/stats');
+    return this.get<any>('/api/patterns/stats');
   }
 
   async detectPatterns(text: string): Promise<any> {
-    return this.post<any>('/patterns/detect', { text });
+    return this.post<any>('/api/patterns/detect', { text });
   }
 
   // ============================================================
@@ -479,19 +482,19 @@ class InksideAPI {
   // ============================================================
 
   async setTelegramWebhook(url: string): Promise<{ status: string; message: string }> {
-    return this.post<{ status: string; message: string }>('/telegram/set_webhook', { webhook_url: url });
+    return this.post<{ status: string; message: string }>('/api/telegram/set_webhook', { webhook_url: url });
   }
 
   async getTelegramWebhook(): Promise<any> {
-    return this.get<any>('/telegram/get_webhook');
+    return this.get<any>('/api/telegram/get_webhook');
   }
 
   async sendTelegramMessage(chatId: string, text: string): Promise<{ success: boolean; message: string }> {
-    return this.post<{ success: boolean; message: string }>('/telegram/send', { chat_id: chatId, text });
+    return this.post<{ success: boolean; message: string }>('/api/telegram/send', { chat_id: chatId, text });
   }
 
   async testTelegram(): Promise<{ success: boolean; message: string }> {
-    return this.post<{ success: boolean; message: string }>('/telegram/test');
+    return this.post<{ success: boolean; message: string }>('/api/telegram/test');
   }
 
   // ============================================================
@@ -499,16 +502,16 @@ class InksideAPI {
   // ============================================================
 
   async getWatchlist(userId?: string): Promise<any> {
-    const url = userId ? `/watchlist?user_id=${userId}` : '/watchlist';
+    const url = userId ? `/api/watchlist?user_id=${userId}` : '/api/watchlist';
     return this.get(url);
   }
 
   async addToWatchlist(pair: string, userId?: string): Promise<any> {
-    return this.post('/watchlist', { pair, user_id: userId });
+    return this.post('/api/watchlist', { pair, user_id: userId });
   }
 
   async removeFromWatchlist(pair: string, userId?: string): Promise<any> {
-    const url = userId ? `/watchlist/${pair}?user_id=${userId}` : `/watchlist/${pair}`;
+    const url = userId ? `/api/watchlist/${pair}?user_id=${userId}` : `/api/watchlist/${pair}`;
     return this.delete(url);
   }
 
@@ -517,23 +520,23 @@ class InksideAPI {
   // ============================================================
 
   async getKnowledgeStats(): Promise<any> {
-    return this.get('/knowledge/stats');
+    return this.get('/api/knowledge/stats');
   }
 
   async searchKnowledge(query: string): Promise<any> {
-    return this.get(`/knowledge/search?q=${encodeURIComponent(query)}`);
+    return this.get(`/api/knowledge/search?q=${encodeURIComponent(query)}`);
   }
 
   async addKnowledge(data: any): Promise<any> {
-    return this.post('/knowledge/add', data);
+    return this.post('/api/knowledge/add', data);
   }
 
   async askQuestion(question: string): Promise<any> {
-    return this.post('/knowledge/ask', { question });
+    return this.post('/api/knowledge/ask', { question });
   }
 
   async fetchUrl(url: string): Promise<any> {
-    return this.post('/knowledge/fetch-url', { url });
+    return this.post('/api/knowledge/fetch-url', { url });
   }
 
   // ============================================================
@@ -541,35 +544,35 @@ class InksideAPI {
   // ============================================================
 
   async getLearningStats(): Promise<any> {
-    return this.get('/learning/stats');
+    return this.get('/api/learning/stats');
   }
 
   async getAdaptiveWeights(): Promise<any> {
-    return this.get('/learning/adaptive');
+    return this.get('/api/learning/adaptive');
   }
 
   async getCuriosityQuestions(): Promise<any> {
-    return this.get('/learning/curiosity');
+    return this.get('/api/learning/curiosity');
   }
 
   async addCuriosityQuestion(question: string, domain?: string, area?: string): Promise<any> {
-    return this.post('/learning/curiosity', { question, domain, area });
+    return this.post('/api/learning/curiosity', { question, domain, area });
   }
 
   async getGoals(): Promise<any> {
-    return this.get('/learning/goals');
+    return this.get('/api/learning/goals');
   }
 
   async getExperienceStats(): Promise<any> {
-    return this.get('/learning/experience');
+    return this.get('/api/learning/experience');
   }
 
   async getKnowledgeGraph(): Promise<any> {
-    return this.get('/learning/graph');
+    return this.get('/api/learning/graph');
   }
 
   async getEvaluatorStats(): Promise<any> {
-    return this.get('/learning/evaluator');
+    return this.get('/api/learning/evaluator');
   }
 
   // ============================================================
@@ -577,7 +580,7 @@ class InksideAPI {
   // ============================================================
 
   async getModules(): Promise<any> {
-    return this.get('/modules/list');
+    return this.get('/api/modules/list');
   }
 
   // ============================================================
@@ -585,11 +588,11 @@ class InksideAPI {
   // ============================================================
 
   async runSimulation(params: any): Promise<any> {
-    return this.post('/learning/simulate', params);
+    return this.post('/api/learning/simulate', params);
   }
 
   async stressTest(params: any): Promise<any> {
-    return this.post('/learning/stress_test', params);
+    return this.post('/api/learning/stress_test', params);
   }
 }
 
