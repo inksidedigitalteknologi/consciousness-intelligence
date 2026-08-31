@@ -164,7 +164,7 @@ class PatternErrorBoundary extends React.Component<
 // PATTERN SERVICE
 // ============================================================
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://45.41.204.21';
+const API_BASE = "";
 
 class PatternService {
   private static instance: PatternService;

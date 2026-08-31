@@ -365,7 +365,7 @@ export const HealthView: React.FC<HealthViewProps> = ({
   const [metricHistory, setMetricHistory] = useState<any[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://45.41.204.21';
+  const API_BASE = "";
   const apiKey = localStorage.getItem('apiKey') || '';
 
   const refreshTimeout = useRef<NodeJS.Timeout | null>(null);

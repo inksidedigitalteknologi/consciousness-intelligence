@@ -3,7 +3,7 @@
  * Real-time data integration for PredictionView
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://45.41.204.21';
+const API_BASE = "";
 const API_KEY = import.meta.env.VITE_API_KEY || '';
 
 // ============================================================

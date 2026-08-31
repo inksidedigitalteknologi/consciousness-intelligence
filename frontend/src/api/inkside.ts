@@ -9,7 +9,7 @@ import axios from 'axios';
 // ✅ HARDCODED - TANPA ENV
 // ============================================================
 
-const API_BASE_URL = 'http://45.41.204.21';
+const API_BASE_URL = '';
 const API_KEY = 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ';
 
 // ============================================================
