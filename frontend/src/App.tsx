@@ -204,8 +204,7 @@ function AppContent() {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   
-  const [engineRunning, setEngineRunning] = useState(false);
-  const [isToggling, setIsToggling] = useState(false); // <-- TAMBAHKAN INI
+  const [engineRunning, setEngineRunning] = useState(true); // ✅ ALWAYS TRUE
   const [learningActive, setLearningActive] = useState(false);
   const [cycleCount, setCycleCount] = useState(0);
   const [consciousnessLevel, setConsciousnessLevel] = useState(0.5);
@@ -306,7 +305,7 @@ function AppContent() {
       setPerformance(perfData);
       
       if (statusData?.bot) {
-        setEngineRunning(statusData.bot.state === 'RUNNING' || statusData.bot.state === 'ACTIVE');
+        setEngineRunning(true); // ✅ ALWAYS TRUE
         setLearningActive(statusData.bot.consciousness || false);
         setCycleCount(statusData.bot.results || 0);
         if (brainData?.brain) {
@@ -350,86 +349,11 @@ function AppContent() {
   }, [fetchRealData]);
 
   // ============================================================
-  // HANDLERS
+  // HANDLERS - TOMBOL START/STOP DIHAPUS
   // ============================================================
   
-  const handleToggleEngine = useCallback(async () => {
-    setIsToggling(true);
-    try {
-      const next = !engineRunning;
-      
-      // Kirim request ke backend
-      if (next) {
-        try {
-          await fetch('/api/engine/start', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ'
-            }
-          });
-        } catch (e) {
-          console.warn('Start engine API failed, using fallback:', e);
-        }
-      } else {
-        try {
-          await fetch('/api/engine/stop', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ'
-            }
-          });
-        } catch (e) {
-          console.warn('Stop engine API failed, using fallback:', e);
-        }
-      }
-      
-      // Update local state
-      setEngineRunning(next);
-      
-      // Simpan ke localStorage
-      localStorage.setItem('inkside_engine_state', JSON.stringify({
-        running: next,
-        updatedAt: new Date().toISOString()
-      }));
-      
-      // Tambah log
-      setLogs(prevLogs => [
-        {
-          id: Date.now(),
-          timestamp: Date.now(),
-          level: next ? 'SUCCESS' : 'WARNING',
-          message: next
-            ? 'Trading Engine & MTF Scanner started.'
-            : 'Trading Engine stopped gracefully.',
-          source: 'Engine',
-        },
-        ...prevLogs.slice(0, 99),
-      ]);
-      
-      // Broadcast via WebSocket (optional)
-      try {
-        const ws = new WebSocket('ws://45.41.204.21/socket.io/');
-        ws.onopen = () => {
-          ws.send(JSON.stringify({
-            channel: 'engine',
-            payload: { running: next, type: 'engine_status' }
-          }));
-          ws.close();
-        };
-      } catch (e) {
-        // Silent fail
-      }
-      
-    } catch (err) {
-      console.error('Engine toggle error:', err);
-      setError('Failed to toggle engine');
-    } finally {
-      setIsToggling(false);
-    }
-  }, [engineRunning]);
-
+  // ❌ handleToggleEngine DIHAPUS - engine selalu running
+  
   const handleRefreshData = useCallback(() => {
     fetchRealData(true);
     setLogs(prevLogs => [
@@ -530,7 +454,7 @@ function AppContent() {
           <TopBar
             currentPage={currentPage}
             engineRunning={engineRunning}
-            onToggleEngine={handleToggleEngine}
+            onToggleEngine={() => {}} // ✅ EMPTY - ENGINE ALWAYS RUNNING
             telegramConfigured={telegramConfigured}
             onRefreshData={handleRefreshData}
             isRefreshing={isRefreshing}
@@ -541,8 +465,8 @@ function AppContent() {
             systemMode="PAPER"
             riskLevel={systemMetrics.risk_level}
             watchlistCount={watchlistCount}
-            engineState={engineRunning ? 'RUNNING' : 'IDLE'}
-            isToggling={isToggling}
+            engineState="RUNNING" // ✅ ALWAYS RUNNING
+            isToggling={false} // ✅ ALWAYS FALSE
             onOpenSidebar={() => setIsSidebarOpen(true)}
             onNavigateWatchlist={() => setCurrentPage('Watchlist')}
           />
@@ -627,7 +551,7 @@ function AppContent() {
             {currentPage === 'Trading' && (
               <TradingControlView
                 engineRunning={engineRunning}
-                onToggleEngine={handleToggleEngine}
+                onToggleEngine={() => {}} // ✅ EMPTY - ENGINE ALWAYS RUNNING
                 positions={positions}
                 onClosePosition={handleClosePosition}
                 wsConnected={isConnected}

@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Zap, 
-  Play, 
-  Square, 
   ShieldCheck, 
   DollarSign, 
-  ArrowUpRight, 
   TrendingUp, 
   AlertCircle,
   Wifi,
@@ -27,7 +24,8 @@ import {
   Sparkles,
   Target,
   Compass,
-  Sliders
+  Sliders,
+  Power
 } from 'lucide-react';
 import { TradingPosition } from '../types';
 import { useWebSocketStatus, useWebSocketChannel } from '../contexts/WebSocketContext';
@@ -94,7 +92,6 @@ export const TradingControlView: React.FC<TradingControlViewProps> = ({
   // ============================================================
 
   const [engineStatus, setEngineStatus] = useState<EngineStatus>(() => {
-    // Load dari localStorage
     const saved = localStorage.getItem(ENGINE_STATE_KEY);
     if (saved) {
       try {
@@ -118,9 +115,9 @@ export const TradingControlView: React.FC<TradingControlViewProps> = ({
       }
     }
     return {
-      running: false,
+      running: true, // ✅ ALWAYS TRUE
       mode: 'PAPER',
-      state: 'IDLE',
+      state: 'RUNNING',
       uptime: 0,
       active_signals: 0,
       open_positions: 0,
@@ -156,7 +153,10 @@ export const TradingControlView: React.FC<TradingControlViewProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [tradeHistory, setTradeHistory] = useState<any[]>([]);
-  const [engineLogs, setEngineLogs] = useState<string[]>([]);
+  const [engineLogs, setEngineLogs] = useState<string[]>(() => {
+    // Initial log
+    return [`[${new Date().toLocaleTimeString()}] 🚀 Engine is running and ready`];
+  });
 
   // ============================================================
   // WEBSOCKET - REAL-TIME ENGINE STATUS
@@ -169,13 +169,14 @@ export const TradingControlView: React.FC<TradingControlViewProps> = ({
       const newStatus = {
         ...engineStatus,
         ...data.payload,
+        running: true, // ✅ ALWAYS TRUE
+        state: 'RUNNING',
         last_heartbeat: new Date().toISOString(),
       };
       setEngineStatus(newStatus);
       
-      // Simpan ke localStorage
       localStorage.setItem(ENGINE_STATE_KEY, JSON.stringify({
-        running: newStatus.running || false,
+        running: true,
         mode: newStatus.mode || 'PAPER',
         uptime: newStatus.uptime || 0,
         active_signals: newStatus.active_signals || 0,
@@ -216,9 +217,9 @@ export const TradingControlView: React.FC<TradingControlViewProps> = ({
       
       if (statusData?.bot) {
         const newStatus = {
-          running: statusData.bot.state === 'RUNNING' || statusData.bot.state === 'ACTIVE',
+          running: true, // ✅ ALWAYS TRUE
           mode: statusData.bot.trading_mode === 'LIVE' ? 'LIVE' : 'PAPER',
-          state: statusData.bot.state as 'IDLE' | 'RUNNING' | 'PAUSED' | 'ERROR',
+          state: 'RUNNING',
           uptime: statusData.bot.uptime || 0,
           open_positions: positions.length || 0,
           total_trades: statusData.bot.performance?.total_trades || 0,
@@ -231,9 +232,8 @@ export const TradingControlView: React.FC<TradingControlViewProps> = ({
         };
         setEngineStatus(newStatus);
         
-        // Simpan ke localStorage
         localStorage.setItem(ENGINE_STATE_KEY, JSON.stringify({
-          running: newStatus.running || false,
+          running: true,
           mode: newStatus.mode || 'PAPER',
           uptime: newStatus.uptime || 0,
           active_signals: newStatus.active_signals || 0,
@@ -269,6 +269,13 @@ export const TradingControlView: React.FC<TradingControlViewProps> = ({
   // ============================================================
 
   useEffect(() => {
+    // ✅ ALWAYS RUNNING
+    setEngineStatus(prev => ({
+      ...prev,
+      running: true,
+      state: 'RUNNING',
+    }));
+    
     // Load saved state dari localStorage
     const savedState = localStorage.getItem(ENGINE_STATE_KEY);
     if (savedState) {
@@ -276,8 +283,8 @@ export const TradingControlView: React.FC<TradingControlViewProps> = ({
         const parsed = JSON.parse(savedState);
         setEngineStatus(prev => ({
           ...prev,
-          running: parsed.running || false,
-          state: parsed.running ? 'RUNNING' : 'IDLE',
+          running: true,
+          state: 'RUNNING',
           mode: parsed.mode || 'PAPER',
           uptime: parsed.uptime || 0,
           active_signals: parsed.active_signals || 0,
@@ -289,11 +296,6 @@ export const TradingControlView: React.FC<TradingControlViewProps> = ({
           health_score: parsed.health_score || 100,
           last_heartbeat: parsed.last_heartbeat || new Date().toISOString(),
         }));
-        
-        // Sinkronkan dengan parent
-        if (parsed.running !== propEngineRunning) {
-          onToggleEngine();
-        }
       } catch (e) {
         console.error('Failed to load engine state:', e);
       }
@@ -307,74 +309,11 @@ export const TradingControlView: React.FC<TradingControlViewProps> = ({
   }, []);
 
   // ============================================================
-  // HANDLERS - Engine Control
+  // HANDLERS - ❌ TOMBOL START/STOP DIHAPUS
   // ============================================================
 
-  const handleToggleEngine = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      setSuccessMessage(null);
-      
-      const newState = !engineStatus.running;
-      
-      // Panggil API untuk start/stop
-      if (newState) {
-        try {
-          await inksideAPI.startEngine();
-        } catch (e) {
-          // Fallback - langsung ubah state
-          console.warn('API start failed, using fallback:', e);
-        }
-        setSuccessMessage('✅ Engine started successfully');
-        setEngineLogs(prev => [`[${new Date().toLocaleTimeString()}] 🟢 Engine started`, ...prev]);
-      } else {
-        try {
-          await inksideAPI.stopEngine();
-        } catch (e) {
-          console.warn('API stop failed, using fallback:', e);
-        }
-        setSuccessMessage('⏹️ Engine stopped successfully');
-        setEngineLogs(prev => [`[${new Date().toLocaleTimeString()}] 🔴 Engine stopped`, ...prev]);
-      }
-      
-      // Update local state
-      const updatedStatus = {
-        ...engineStatus,
-        running: newState,
-        state: newState ? 'RUNNING' : 'IDLE',
-        last_heartbeat: new Date().toISOString(),
-      };
-      setEngineStatus(updatedStatus);
-      
-      // Simpan ke localStorage
-      localStorage.setItem(ENGINE_STATE_KEY, JSON.stringify({
-        running: newState,
-        mode: updatedStatus.mode || 'PAPER',
-        uptime: updatedStatus.uptime || 0,
-        active_signals: updatedStatus.active_signals || 0,
-        open_positions: updatedStatus.open_positions || 0,
-        total_trades: updatedStatus.total_trades || 0,
-        win_rate: updatedStatus.win_rate || 0,
-        total_pnl: updatedStatus.total_pnl || 0,
-        risk_level: updatedStatus.risk_level || 'LOW',
-        health_score: updatedStatus.health_score || 100,
-        last_heartbeat: updatedStatus.last_heartbeat,
-      }));
-      
-      // Trigger parent callback
-      onToggleEngine();
-      
-      // Refresh status setelah delay
-      setTimeout(() => fetchEngineStatus(), 1000);
-      
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to toggle engine');
-      console.error('Engine toggle error:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [engineStatus, onToggleEngine, fetchEngineStatus]);
+  // ❌ handleToggleEngine DIHAPUS - engine selalu running
+  // Fungsi ini TIDAK ADA lagi
 
   // ============================================================
   // HANDLERS - Execution Mode
@@ -461,26 +400,18 @@ export const TradingControlView: React.FC<TradingControlViewProps> = ({
       <div className="p-5 rounded-2xl bg-[#131A22] border border-[#26313D] shadow-lg">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-              engineStatus.running 
-                ? 'bg-emerald-600/20 border border-emerald-500/30 text-emerald-400' 
-                : 'bg-amber-600/20 border border-amber-500/30 text-amber-400'
-            }`}>
-              {engineStatus.running ? (
-                <Activity className="w-5 h-5 animate-pulse" />
-              ) : (
-                <Zap className="w-5 h-5" />
-              )}
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-600/20 border border-emerald-500/30 text-emerald-400`}>
+              <Activity className="w-5 h-5 animate-pulse" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-lg font-bold text-white tracking-wide">
                   Trading Control & Execution Engine
                 </h2>
-                <StatusBadge status={engineStatus.state} />
+                <StatusBadge status="RUNNING" />
               </div>
               <p className="text-xs text-[#8D9AAA] flex items-center gap-2">
-                Mode: <span className={`font-bold ${engineStatus.mode === 'LIVE' ? 'text-rose-400' : 'text-emerald-400'}`}>
+                Mode: <span className={`font-bold text-emerald-400`}>
                   {engineStatus.mode}
                 </span>
                 {isConnected && <span className="text-emerald-400">● LIVE</span>}
@@ -492,30 +423,11 @@ export const TradingControlView: React.FC<TradingControlViewProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Start/Stop Engine Button */}
-            <button
-              onClick={handleToggleEngine}
-              disabled={isLoading}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer ${
-                engineStatus.running
-                  ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/30'
-                  : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
-              } disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px] justify-center`}
-            >
-              {isLoading ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : engineStatus.running ? (
-                <>
-                  <Square className="w-3.5 h-3.5 fill-current" />
-                  <span>STOP ENGINE</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>START ENGINE</span>
-                </>
-              )}
-            </button>
+            {/* ✅ STATUS INDICATOR - TANPA TOMBOL START/STOP */}
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+              ENGINE RUNNING
+            </div>
             
             <button
               onClick={fetchEngineStatus}
@@ -549,11 +461,11 @@ export const TradingControlView: React.FC<TradingControlViewProps> = ({
             <Activity className="w-3.5 h-3.5 text-emerald-400" />
             <span className="text-[10px] uppercase font-bold text-[#8D9AAA]">Status</span>
           </div>
-          <div className="text-lg sm:text-xl font-bold font-mono text-white mt-1">
-            {engineStatus.running ? 'RUNNING' : 'IDLE'}
+          <div className="text-lg sm:text-xl font-bold font-mono text-emerald-400 mt-1">
+            RUNNING
           </div>
           <span className="text-[10px] text-[#5F6B78] mt-1 block font-mono">
-            {engineStatus.state}
+            ACTIVE
           </span>
         </div>
 
@@ -802,17 +714,11 @@ export const TradingControlView: React.FC<TradingControlViewProps> = ({
             </div>
 
             <div className="mt-3 max-h-[150px] overflow-y-auto pr-1 space-y-1 font-mono text-[10px]">
-              {engineLogs.length === 0 ? (
-                <div className="text-center py-4 text-[#5F6B78]">
-                  No engine logs yet. Start the engine to see logs.
+              {engineLogs.map((log, idx) => (
+                <div key={idx} className="text-[#8D9AAA] border-b border-[#26313D]/20 pb-1">
+                  {log}
                 </div>
-              ) : (
-                engineLogs.map((log, idx) => (
-                  <div key={idx} className="text-[#8D9AAA] border-b border-[#26313D]/20 pb-1">
-                    {log}
-                  </div>
-                ))
-              )}
+              ))}
             </div>
           </div>
         </div>

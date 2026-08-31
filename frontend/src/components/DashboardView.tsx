@@ -375,7 +375,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   tickers = [],
   signals = [],
   insights = [],
-  engineRunning = false,
+  engineRunning = true,
   learningActive = false,
   cycleCount = 0,
   brainState = 'IDLE',
@@ -790,7 +790,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <p className="text-xs text-[#8D9AAA]">
               {engineRunning 
                 ? 'Kraken live streaming exchange bridge with autonomous cognitive reflection and risk management.'
-                : 'System is idle. Start the engine to begin trading.'}
+                : 'System is running and ready.'}
             </p>
           </div>
 
