@@ -1,8 +1,9 @@
 // frontend/src/components/DiagnosticsView.tsx
-// INKSIDE DIGITAL - DIAGNOSTICS VIEW v5.0
+// INKSIDE DIGITAL - DIAGNOSTICS VIEW v6.0
+// REAL DATA - TANPA DUMMY
+// FIX: API_BASE_URL, Error Handling, Auto-Refresh
 
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 
 // ============================================================
@@ -20,6 +21,8 @@ interface DiagnosticsStatus {
 interface SystemMetrics {
   cpu: number;
   ram: number;
+  ram_percent?: number;
+  disk_percent?: number;
   uptime: number;
   memory_count: number;
   knowledge_count: number;
@@ -30,6 +33,7 @@ interface SystemMetrics {
   open_positions: number;
   risk_level: string;
   health_score: number;
+  last_update?: string;
 }
 
 interface WatchdogStatus {
@@ -39,8 +43,14 @@ interface WatchdogStatus {
   alerts: number;
   restarts: number;
   uptime_seconds: number;
-  timestamp: string;
+  health_score: number;
+  components_healthy: number;
+  components_degraded: number;
+  components_critical: number;
+  components_offline: number;
   pid?: number;
+  version?: string;
+  timestamp?: string;
 }
 
 interface HeartbeatData {
@@ -50,12 +60,15 @@ interface HeartbeatData {
   last_beat: string | null;
   restart_count: number;
   last_error?: string | null;
+  is_alive?: boolean;
+  health_score?: number;
 }
 
 interface WatchdogSnapshot {
   status: WatchdogStatus;
   components: string[];
   heartbeats: Record<string, HeartbeatData>;
+  component_health?: Record<string, number>;
   timestamp: string;
 }
 
@@ -64,7 +77,72 @@ interface ComponentDetail {
   registered: boolean;
   heartbeat: HeartbeatData;
   dependencies: string[];
+  health_score?: number;
+  methods?: Record<string, string>;
 }
+
+// ============================================================
+// API CONFIG
+// ============================================================
+
+// ✅ GUNakan PATH RELATIF - Nginx akan proxy ke backend
+const API_BASE = '';
+
+// ============================================================
+// HELPER FUNCTIONS
+// ============================================================
+
+const formatUptime = (seconds: number): string => {
+  if (!seconds || seconds < 0) return '0s';
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  const parts = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (secs > 0 && days === 0) parts.push(`${secs}s`);
+
+  return parts.join(' ') || '0s';
+};
+
+const getStatusColor = (status: string): string => {
+  const s = status?.toLowerCase() || '';
+  if (['alive', 'healthy', 'online', 'ok', 'running'].includes(s)) {
+    return 'text-green-500 bg-green-500/10 border-green-500/20';
+  }
+  if (['error', 'dead', 'offline', 'critical', 'stopped'].includes(s)) {
+    return 'text-red-500 bg-red-500/10 border-red-500/20';
+  }
+  if (['warning', 'degraded', 'idle', 'unknown'].includes(s)) {
+    return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
+  }
+  return 'text-gray-500 bg-gray-500/10 border-gray-500/20';
+};
+
+const getStatusIcon = (status: string): string => {
+  const s = status?.toLowerCase() || '';
+  if (['alive', 'healthy', 'online', 'ok', 'running'].includes(s)) return '🟢';
+  if (['error', 'dead', 'offline', 'critical', 'stopped'].includes(s)) return '🔴';
+  if (['warning', 'degraded', 'idle', 'unknown'].includes(s)) return '🟡';
+  return '⚪';
+};
+
+const getHealthScoreColor = (score: number): string => {
+  if (score >= 80) return 'text-green-500';
+  if (score >= 60) return 'text-yellow-500';
+  if (score >= 40) return 'text-orange-500';
+  return 'text-red-500';
+};
+
+const getHealthBarColor = (score: number): string => {
+  if (score >= 80) return 'bg-green-500';
+  if (score >= 60) return 'bg-yellow-500';
+  if (score >= 40) return 'bg-orange-500';
+  return 'bg-red-500';
+};
 
 // ============================================================
 // MAIN COMPONENT
@@ -72,34 +150,30 @@ interface ComponentDetail {
 
 const DiagnosticsView: React.FC = () => {
   // ============================================================
-  // STATE - SYSTEM DIAGNOSTICS
+  // STATE
   // ============================================================
+  
   const [diagnostics, setDiagnostics] = useState<DiagnosticsStatus | null>(null);
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<string>('');
 
-  // ============================================================
-  // STATE - WATCHDOG
-  // ============================================================
   const [watchdogStatus, setWatchdogStatus] = useState<WatchdogStatus | null>(null);
   const [watchdogSnapshot, setWatchdogSnapshot] = useState<WatchdogSnapshot | null>(null);
   const [selectedComponent, setSelectedComponent] = useState<string>('');
   const [componentDetail, setComponentDetail] = useState<ComponentDetail | null>(null);
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
   const [watchdogError, setWatchdogError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState<number>(0);
+
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // ============================================================
-  // ✅ HARDCODE API_BASE - TANPA PORT!
-  // ============================================================
-  const API_BASE = "";
-
-  // ============================================================
-  // FETCH SYSTEM DIAGNOSTICS
+  // FETCH FUNCTIONS
   // ============================================================
 
-  const fetchDiagnostics = async () => {
+  const fetchDiagnostics = useCallback(async () => {
     try {
       const [diagRes, metricsRes] = await Promise.all([
         axios.get(`${API_BASE}/api/diagnostics`),
@@ -113,13 +187,9 @@ const DiagnosticsView: React.FC = () => {
       console.error('Failed to fetch diagnostics:', err);
       setError(err.message || 'Failed to connect to API');
     }
-  };
+  }, []);
 
-  // ============================================================
-  // FETCH WATCHDOG DATA
-  // ============================================================
-
-  const fetchWatchdogData = async () => {
+  const fetchWatchdogData = useCallback(async () => {
     try {
       setWatchdogError(null);
       
@@ -141,27 +211,33 @@ const DiagnosticsView: React.FC = () => {
       console.error('Failed to fetch watchdog data:', err);
       setWatchdogError(err.message || 'Watchdog API not available');
     }
-  };
+  }, [selectedComponent]);
 
-  const fetchComponentDetail = async (name: string) => {
+  const fetchComponentDetail = useCallback(async (name: string) => {
     try {
       const res = await axios.get(`${API_BASE}/api/watchdog/component/${name}`);
       setComponentDetail(res.data);
     } catch (err: any) {
       console.error('Failed to fetch component detail:', err);
     }
-  };
+  }, []);
+
+  const fetchAllData = useCallback(async () => {
+    setLoading(true);
+    await Promise.all([fetchDiagnostics(), fetchWatchdogData()]);
+    setLoading(false);
+  }, [fetchDiagnostics, fetchWatchdogData]);
 
   // ============================================================
   // HANDLERS
   // ============================================================
 
-  const handleComponentSelect = async (name: string) => {
+  const handleComponentSelect = useCallback(async (name: string) => {
     setSelectedComponent(name);
     await fetchComponentDetail(name);
-  };
+  }, [fetchComponentDetail]);
 
-  const handleResetCircuit = async (name: string) => {
+  const handleResetCircuit = useCallback(async (name: string) => {
     try {
       await axios.post(`${API_BASE}/api/watchdog/circuit/${name}/reset`);
       await fetchWatchdogData();
@@ -169,93 +245,53 @@ const DiagnosticsView: React.FC = () => {
     } catch (err) {
       console.error('Failed to reset circuit:', err);
     }
-  };
+  }, [fetchWatchdogData, fetchComponentDetail]);
 
-  const handleRefreshAll = async () => {
-    setLoading(true);
-    await Promise.all([fetchDiagnostics(), fetchWatchdogData()]);
-    setLoading(false);
-  };
+  const handleRefreshAll = useCallback(async () => {
+    setRefreshKey(prev => prev + 1);
+    await fetchAllData();
+  }, [fetchAllData]);
+
+  const toggleAutoRefresh = useCallback(() => {
+    setAutoRefresh(prev => !prev);
+  }, []);
 
   // ============================================================
   // EFFECTS
   // ============================================================
 
+  // Initial load
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      await Promise.all([fetchDiagnostics(), fetchWatchdogData()]);
-      setLoading(false);
-    };
-    loadData();
+    fetchAllData();
+  }, [fetchAllData]);
 
-    let interval: NodeJS.Timeout;
+  // Auto-refresh
+  useEffect(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
     if (autoRefresh) {
-      interval = setInterval(() => {
+      intervalRef.current = setInterval(() => {
         fetchDiagnostics();
         fetchWatchdogData();
       }, 5000);
     }
 
     return () => {
-      if (interval) clearInterval(interval);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
-  }, [autoRefresh]);
-
-  // ============================================================
-  // UTILITY FUNCTIONS
-  // ============================================================
-
-  const formatUptime = (seconds: number): string => {
-    if (!seconds || seconds < 0) return '0s';
-    const days = Math.floor(seconds / 86400);
-    const hours = Math.floor((seconds % 86400) / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    const parts = [];
-    if (days > 0) parts.push(`${days}d`);
-    if (hours > 0) parts.push(`${hours}h`);
-    if (minutes > 0) parts.push(`${minutes}m`);
-    if (secs > 0 && days === 0) parts.push(`${secs}s`);
-
-    return parts.join(' ') || '0s';
-  };
-
-  const getStatusColor = (status: string): string => {
-    const s = status?.toLowerCase() || '';
-    if (['alive', 'healthy', 'online', 'ok'].includes(s)) {
-      return 'text-green-500 bg-green-500/10';
-    }
-    if (['error', 'dead', 'offline', 'critical'].includes(s)) {
-      return 'text-red-500 bg-red-500/10';
-    }
-    if (['warning', 'degraded', 'idle'].includes(s)) {
-      return 'text-yellow-500 bg-yellow-500/10';
-    }
-    return 'text-gray-500 bg-gray-500/10';
-  };
-
-  const getStatusIcon = (status: string): string => {
-    const s = status?.toLowerCase() || '';
-    if (['alive', 'healthy', 'online', 'ok'].includes(s)) return '🟢';
-    if (['error', 'dead', 'offline', 'critical'].includes(s)) return '🔴';
-    if (['warning', 'degraded', 'idle'].includes(s)) return '🟡';
-    return '⚪';
-  };
-
-  const getHealthScoreColor = (score: number): string => {
-    if (score >= 80) return 'text-green-500';
-    if (score >= 60) return 'text-yellow-500';
-    if (score >= 40) return 'text-orange-500';
-    return 'text-red-500';
-  };
+  }, [autoRefresh, fetchDiagnostics, fetchWatchdogData]);
 
   // ============================================================
   // LOADING STATE
   // ============================================================
 
-  if (loading) {
+  if (loading && !diagnostics && !watchdogStatus) {
     return (
       <div className="flex items-center justify-center h-64 bg-gray-900">
         <div className="text-center">
@@ -272,26 +308,34 @@ const DiagnosticsView: React.FC = () => {
 
   const components = watchdogSnapshot?.components || [];
   const heartbeats = watchdogSnapshot?.heartbeats || {};
+  const componentHealth = watchdogSnapshot?.component_health || {};
 
   return (
     <div className="p-6 bg-gray-900 min-h-screen text-white">
       <div className="max-w-7xl mx-auto">
-        {/* HEADER */}
+        {/* ============================================================
+        HEADER
+        ============================================================ */}
         <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
               🧠 System Diagnostics
               <span className="text-xs font-normal text-gray-400 bg-gray-800 px-3 py-1 rounded-full">
-                v5.0
+                v6.0
               </span>
+              {watchdogStatus?.running && (
+                <span className="text-xs bg-green-500/20 text-green-500 px-3 py-1 rounded-full border border-green-500/30 animate-pulse">
+                  ● LIVE
+                </span>
+              )}
             </h1>
             <p className="text-gray-400 text-sm mt-1">
-              Complete system health, performance & watchdog monitoring • Last update: {lastUpdate}
+              Complete system health, performance & watchdog monitoring • Last update: {lastUpdate || '--'}
             </p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <button
-              onClick={() => setAutoRefresh(!autoRefresh)}
+              onClick={toggleAutoRefresh}
               className={`px-4 py-2 rounded-lg text-sm transition ${
                 autoRefresh
                   ? 'bg-blue-600 hover:bg-blue-700'
@@ -309,7 +353,9 @@ const DiagnosticsView: React.FC = () => {
           </div>
         </div>
 
-        {/* ERROR DISPLAY */}
+        {/* ============================================================
+        ERROR DISPLAY
+        ============================================================ */}
         {error && (
           <div className="bg-red-900/30 border border-red-500 rounded-lg p-4 mb-6">
             <p className="text-red-400">⚠️ {error}</p>
@@ -317,8 +363,8 @@ const DiagnosticsView: React.FC = () => {
         )}
 
         {/* ============================================================
-            SECTION 1: SYSTEM METRICS
-            ============================================================ */}
+        SECTION 1: SYSTEM METRICS
+        ============================================================ */}
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           📊 System Metrics
           <span className="text-xs font-normal text-gray-400">
@@ -349,7 +395,23 @@ const DiagnosticsView: React.FC = () => {
               {metrics?.ram?.toFixed(1) || '0'} GB
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              Total: {((metrics?.ram || 0) * 2).toFixed(1)} GB
+              {metrics?.ram_percent?.toFixed(0) || '0'}% used
+            </div>
+          </div>
+
+          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
+            <div className="text-xs text-gray-400 uppercase">Disk Usage</div>
+            <div className="text-2xl font-bold">
+              {metrics?.disk_percent?.toFixed(1) || '0'}%
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-1.5 mt-2">
+              <div
+                className={`h-1.5 rounded-full transition-all ${
+                  (metrics?.disk_percent || 0) > 80 ? 'bg-red-500' :
+                  (metrics?.disk_percent || 0) > 60 ? 'bg-yellow-500' : 'bg-green-500'
+                }`}
+                style={{ width: `${Math.min(metrics?.disk_percent || 0, 100)}%` }}
+              />
             </div>
           </div>
 
@@ -367,34 +429,24 @@ const DiagnosticsView: React.FC = () => {
             </div>
             <div className="w-full bg-gray-700 rounded-full h-1.5 mt-2">
               <div
-                className="h-1.5 rounded-full bg-blue-500 transition-all"
+                className={`h-1.5 rounded-full transition-all ${getHealthBarColor(metrics?.health_score || 0)}`}
                 style={{ width: `${Math.min(metrics?.health_score || 0, 100)}%` }}
               />
             </div>
           </div>
 
           <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <div className="text-xs text-gray-400 uppercase">Risk Level</div>
-            <div className={`text-2xl font-bold ${
-              metrics?.risk_level === 'LOW' ? 'text-green-500' :
-              metrics?.risk_level === 'MODERATE' ? 'text-yellow-500' :
-              'text-red-500'
-            }`}>
-              {metrics?.risk_level || '--'}
-            </div>
-          </div>
-
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <div className="text-xs text-gray-400 uppercase">Open Positions</div>
+            <div className="text-xs text-gray-400 uppercase">Knowledge</div>
             <div className="text-2xl font-bold">
-              {metrics?.open_positions || 0}
+              {metrics?.knowledge_count || 0}
             </div>
+            <div className="text-xs text-gray-500 mt-1">items stored</div>
           </div>
         </div>
 
         {/* ============================================================
-            SECTION 2: TRADING PERFORMANCE
-            ============================================================ */}
+        SECTION 2: TRADING PERFORMANCE
+        ============================================================ */}
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           📈 Trading Performance
         </h2>
@@ -436,8 +488,8 @@ const DiagnosticsView: React.FC = () => {
         </div>
 
         {/* ============================================================
-            SECTION 3: WATCHDOG DIAGNOSTICS
-            ============================================================ */}
+        SECTION 3: WATCHDOG DIAGNOSTICS
+        ============================================================ */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold flex items-center gap-2">
             🛡️ Watchdog Diagnostics
@@ -469,7 +521,22 @@ const DiagnosticsView: React.FC = () => {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
               <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
                 <div className="text-xs text-gray-400 uppercase">Components</div>
-                <div className="text-2xl font-bold">{watchdogStatus?.components || 0}</div>
+                <div className="text-2xl font-bold text-blue-500">{watchdogStatus?.components || 0}</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {watchdogStatus?.components_healthy || 0} healthy
+                </div>
+              </div>
+              <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <div className="text-xs text-gray-400 uppercase">Health Score</div>
+                <div className={`text-2xl font-bold ${getHealthScoreColor(watchdogStatus?.health_score || 0)}`}>
+                  {watchdogStatus?.health_score || 0}%
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-1.5 mt-2">
+                  <div
+                    className={`h-1.5 rounded-full transition-all ${getHealthBarColor(watchdogStatus?.health_score || 0)}`}
+                    style={{ width: `${Math.min(watchdogStatus?.health_score || 0, 100)}%` }}
+                  />
+                </div>
               </div>
               <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
                 <div className="text-xs text-gray-400 uppercase">Checks</div>
@@ -479,12 +546,6 @@ const DiagnosticsView: React.FC = () => {
                 <div className="text-xs text-gray-400 uppercase">Alerts</div>
                 <div className={`text-2xl font-bold ${(watchdogStatus?.alerts || 0) > 0 ? 'text-red-500' : 'text-green-500'}`}>
                   {watchdogStatus?.alerts || 0}
-                </div>
-              </div>
-              <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <div className="text-xs text-gray-400 uppercase">Restarts</div>
-                <div className={`text-2xl font-bold ${(watchdogStatus?.restarts || 0) > 0 ? 'text-orange-500' : 'text-gray-400'}`}>
-                  {watchdogStatus?.restarts || 0}
                 </div>
               </div>
               <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
@@ -509,9 +570,10 @@ const DiagnosticsView: React.FC = () => {
                       {components.map((name) => {
                         const hb = heartbeats[name];
                         const status = hb?.status || 'unknown';
+                        const health = componentHealth[name] || 0;
                         return (
                           <option key={name} value={name}>
-                            {getStatusIcon(status)} {name} - {status}
+                            {getStatusIcon(status)} {name} - {status} ({health}%)
                           </option>
                         );
                       })}
@@ -534,7 +596,7 @@ const DiagnosticsView: React.FC = () => {
                       <h4 className="text-xs font-semibold text-gray-400 uppercase mb-3 flex items-center gap-2">
                         💓 Heartbeat
                         <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(componentDetail.heartbeat?.status)}`}>
-                          {componentDetail.heartbeat?.status || 'UNKNOWN'}
+                          {componentDetail.heartbeat?.status?.toUpperCase() || 'UNKNOWN'}
                         </span>
                       </h4>
                       <div className="space-y-2 text-sm">
@@ -552,6 +614,12 @@ const DiagnosticsView: React.FC = () => {
                           <span className="text-gray-400">Restarts</span>
                           <span className={`font-mono ${componentDetail.heartbeat?.restart_count > 0 ? 'text-orange-500' : ''}`}>
                             {componentDetail.heartbeat?.restart_count || 0}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Health Score</span>
+                          <span className={`font-mono ${getHealthScoreColor(componentDetail.heartbeat?.health_score || 0)}`}>
+                            {componentDetail.heartbeat?.health_score || 0}%
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -583,6 +651,12 @@ const DiagnosticsView: React.FC = () => {
                           <span className="text-gray-400">Registered</span>
                           <span className={componentDetail.registered ? 'text-green-500' : 'text-red-500'}>
                             {componentDetail.registered ? '✅ Yes' : '❌ No'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Health Score</span>
+                          <span className={`font-mono ${getHealthScoreColor(componentDetail.health_score || 0)}`}>
+                            {componentDetail.health_score || 0}%
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -635,6 +709,7 @@ const DiagnosticsView: React.FC = () => {
                         <tr>
                           <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Component</th>
                           <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
+                          <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Health</th>
                           <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Beats</th>
                           <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Missed</th>
                           <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Restarts</th>
@@ -644,7 +719,14 @@ const DiagnosticsView: React.FC = () => {
                       </thead>
                       <tbody>
                         {components.map((name) => {
-                          const hb = heartbeats[name] || { status: 'unknown', beat_count: 0, missed_beats: 0, restart_count: 0, last_beat: null };
+                          const hb = heartbeats[name] || { 
+                            status: 'unknown', 
+                            beat_count: 0, 
+                            missed_beats: 0, 
+                            restart_count: 0, 
+                            last_beat: null 
+                          };
+                          const health = componentHealth[name] || 0;
                           const isSelected = name === selectedComponent;
                           return (
                             <tr
@@ -662,6 +744,17 @@ const DiagnosticsView: React.FC = () => {
                                 <span className={`px-2 py-1 rounded text-xs ${getStatusColor(hb.status)}`}>
                                   {hb.status?.toUpperCase() || 'UNKNOWN'}
                                 </span>
+                              </td>
+                              <td className="px-5 py-3">
+                                <span className={`font-mono ${getHealthScoreColor(health)}`}>
+                                  {health}%
+                                </span>
+                                <div className="w-16 bg-gray-700 rounded-full h-1 mt-1">
+                                  <div
+                                    className={`h-1 rounded-full transition-all ${getHealthBarColor(health)}`}
+                                    style={{ width: `${Math.min(health, 100)}%` }}
+                                  />
+                                </div>
                               </td>
                               <td className="px-5 py-3 font-mono">{hb.beat_count}</td>
                               <td className={`px-5 py-3 font-mono ${hb.missed_beats > 0 ? 'text-red-500' : ''}`}>
@@ -689,8 +782,8 @@ const DiagnosticsView: React.FC = () => {
                         })}
                         {components.length === 0 && (
                           <tr>
-                            <td colSpan={7} className="px-5 py-8 text-center text-gray-500">
-                              No components registered yet.
+                            <td colSpan={8} className="px-5 py-8 text-center text-gray-500">
+                              No components registered yet. Watchdog may be initializing.
                             </td>
                           </tr>
                         )}
@@ -704,17 +797,18 @@ const DiagnosticsView: React.FC = () => {
         )}
 
         {/* ============================================================
-            FOOTER
-            ============================================================ */}
+        FOOTER
+        ============================================================ */}
         <div className="mt-8 text-center text-xs text-gray-600 border-t border-gray-800 pt-4">
           <p>
-            Inkside Digital v5.0 • Diagnostics & Watchdog v3.0 REAL • 
+            Inkside Digital v6.0 • Diagnostics & Watchdog v3.1 REAL • 
             {watchdogStatus?.running ? ' 🟢 All systems operational' : ' 🔴 Monitoring inactive'}
           </p>
           <p className="mt-1">
             PID: {watchdogStatus?.pid || 'N/A'} • 
             Components: {watchdogStatus?.components || 0} • 
-            Uptime: {formatUptime(watchdogStatus?.uptime_seconds || 0)}
+            Uptime: {formatUptime(watchdogStatus?.uptime_seconds || 0)} •
+            Version: {watchdogStatus?.version || '--'}
           </p>
         </div>
       </div>
@@ -723,3 +817,4 @@ const DiagnosticsView: React.FC = () => {
 };
 
 export { DiagnosticsView };
+export default DiagnosticsView;
