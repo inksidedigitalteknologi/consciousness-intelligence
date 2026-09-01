@@ -126,3 +126,5 @@ zlib-ng==1.0.0
 # torch
 # tensorflow
 # scikit-learn
+psutil
+psutil>=5.9.0
