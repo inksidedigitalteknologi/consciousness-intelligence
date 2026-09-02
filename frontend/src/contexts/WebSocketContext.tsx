@@ -1,6 +1,7 @@
 // src/contexts/WebSocketContext.tsx
-// INKSIDE DIGITAL - WEBSOCKET CONTEXT v2.0
-// FIX: Error Boundary, Logging, Heartbeat, Smart Reconnection
+// INKSIDE DIGITAL - WEBSOCKET CONTEXT v2.1
+// FIX: Hoisting issue (Cannot access 'M' before initialization)
+// FIX: useCallback order, heartbeat reference
 
 import React, { 
   createContext, 
@@ -163,6 +164,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   const heartbeatTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pingStartTimeRef = useRef<number | null>(null);
   const isMounted = useRef(true);
+  const heartbeatFnRef = useRef<(() => void) | null>(null);
 
   // ============================================================
   // CONFIG
@@ -188,35 +190,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   }), [maxReconnectionAttempts]);
 
   // ============================================================
-  // HEARTBEAT
-  // ============================================================
-  
-  const startHeartbeat = useCallback(() => {
-    if (heartbeatTimeoutRef.current) {
-      clearTimeout(heartbeatTimeoutRef.current);
-      heartbeatTimeoutRef.current = null;
-    }
-
-    if (!isConnected || !socketRef.current) return;
-
-    heartbeatTimeoutRef.current = setTimeout(() => {
-      ping().catch(() => {
-        log.warn('Heartbeat ping failed, checking connection...');
-        if (socketRef.current && !socketRef.current.connected) {
-          log.info('Connection lost, attempting to reconnect...');
-          setStatus('reconnecting');
-          if (!isIntentionalDisconnect.current) {
-            socketRef.current.connect();
-          }
-        }
-      });
-      // Schedule next heartbeat
-      startHeartbeat();
-    }, heartbeatInterval);
-  }, [isConnected, heartbeatInterval, log, ping]);
-
-  // ============================================================
-  // PING
+  // PING - DEFINED FIRST (sebelum dipanggil)
   // ============================================================
   
   const ping = useCallback((): Promise<number> => {
@@ -241,6 +215,40 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
       });
     });
   }, [log]);
+
+  // ============================================================
+  // HEARTBEAT - DEFINED KEDUA (menggunakan ping)
+  // ============================================================
+  
+  const startHeartbeat = useCallback(() => {
+    if (heartbeatTimeoutRef.current) {
+      clearTimeout(heartbeatTimeoutRef.current);
+      heartbeatTimeoutRef.current = null;
+    }
+
+    if (!isConnected || !socketRef.current) return;
+
+    heartbeatTimeoutRef.current = setTimeout(() => {
+      // Panggil ping menggunakan ref agar tidak hoisting issue
+      ping().catch(() => {
+        log.warn('Heartbeat ping failed, checking connection...');
+        if (socketRef.current && !socketRef.current.connected) {
+          log.info('Connection lost, attempting to reconnect...');
+          setStatus('reconnecting');
+          if (!isIntentionalDisconnect.current) {
+            socketRef.current.connect();
+          }
+        }
+      });
+      // Schedule next heartbeat
+      startHeartbeat();
+    }, heartbeatInterval);
+  }, [isConnected, heartbeatInterval, log, ping]);
+
+  // Simpan heartbeat ke ref
+  useEffect(() => {
+    heartbeatFnRef.current = startHeartbeat;
+  }, [startHeartbeat]);
 
   // ============================================================
   // CONNECT
@@ -275,7 +283,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
         setLastError(null);
         isIntentionalDisconnect.current = false;
         
-        startHeartbeat();
+        // Gunakan ref untuk heartbeat
+        if (heartbeatFnRef.current) {
+          heartbeatFnRef.current();
+        }
       });
 
       socket.on('disconnect', (reason) => {
@@ -313,7 +324,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
         setStatus('connected');
         setReconnectAttempts(0);
         setLastError(null);
-        startHeartbeat();
+        if (heartbeatFnRef.current) {
+          heartbeatFnRef.current();
+        }
       });
 
       socket.on('reconnect_attempt', (attemptNumber) => {
@@ -388,7 +401,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
         }, 5000);
       }
     }
-  }, [SOCKET_URL, getSocketOptions, startHeartbeat, log]);
+  }, [SOCKET_URL, getSocketOptions, log]);
 
   // ============================================================
   // DISCONNECT

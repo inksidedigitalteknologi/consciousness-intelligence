@@ -816,5 +816,5 @@ const DiagnosticsView: React.FC = () => {
   );
 };
 
+
 export { DiagnosticsView };
-export default DiagnosticsView;

@@ -13,12 +13,12 @@ import { KnowledgeView } from './components/KnowledgeView';
 import { HealthView } from './components/HealthView';
 import { TradingControlView } from './components/TradingControlView';
 import { TelegramView } from './components/TelegramView';
-import { DiagnosticsView } from './components/DiagnosticsView';
 import { SettingsView } from './components/SettingsView';
 import { MemoryView } from './components/MemoryView';
 import { PatternView } from './components/PatternView';
 import { PredictionView } from './components/PredictionView';
 import { DecisionView } from './components/DecisionView';
+import { DiagnosticsView } from './components/DiagnosticsView';
 
 import {
   NavigationPage,
