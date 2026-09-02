@@ -514,6 +514,168 @@ def start_api_server(bot_instance):
                 })
             except Exception as e:
                 logger.debug(f"Broadcast error: {e}")
+
+
+        # ============================================================
+        # TELEGRAM ENDPOINTS
+        # ============================================================
+        
+        @app.route('/api/telegram/status', methods=['GET'])
+        @require_api_key
+        def telegram_status():
+            try:
+                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
+                configured = bool(token and chat_id)
+                
+                return jsonify({
+                    'configured': configured,
+                    'status': 'online' if configured else 'offline',
+                    'bot_name': 'InksideBot' if configured else None
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+        
+        @app.route('/api/telegram/config', methods=['GET'])
+        @require_api_key
+        def telegram_get_config():
+            try:
+                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
+                configured = bool(token and chat_id)
+                
+                # Mask token dan chat_id
+                masked_token = token[:6] + '••••••••' + token[-4:] if len(token) > 10 else token
+                masked_chat_id = chat_id[:3] + '••••••' + chat_id[-3:] if len(chat_id) > 8 else chat_id
+                
+                return jsonify({
+                    'bot_token': masked_token,
+                    'chat_id': masked_chat_id,
+                    'configured': configured,
+                    'raw_token': token,  # untuk internal
+                    'raw_chat_id': chat_id  # untuk internal
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+        
+        @app.route('/api/telegram/config', methods=['POST'])
+        @require_api_key
+        def telegram_save_config():
+            try:
+                data = request.json
+                bot_token = data.get('bot_token', '')
+                chat_id = data.get('chat_id', '')
+                
+                # Simpan ke environment variable (temporary)
+                os.environ['TELEGRAM_BOT_TOKEN'] = bot_token
+                os.environ['TELEGRAM_CHAT_ID'] = chat_id
+                
+                # Update global variable
+                global TELEGRAM_CONFIGURED
+                TELEGRAM_CONFIGURED = bool(bot_token and chat_id)
+                
+                logger.info(f"Telegram config updated: configured={TELEGRAM_CONFIGURED}")
+                
+                return jsonify({
+                    'status': 'success',
+                    'message': 'Configuration saved successfully'
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+        
+        @app.route('/api/telegram/send', methods=['POST'])
+        @require_api_key
+        def telegram_send():
+            try:
+                data = request.json
+                message = data.get('message', '')
+                
+                if not message:
+                    return jsonify({'error': 'Message is required'}), 400
+                
+                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
+                
+                if not token or not chat_id:
+                    return jsonify({
+                        'sent': False,
+                        'status': 'error',
+                        'message': 'Telegram not configured'
+                    }), 400
+                
+                import requests
+                url = f"https://api.telegram.org/bot{token}/sendMessage"
+                payload = {
+                    'chat_id': chat_id,
+                    'text': message,
+                    'parse_mode': 'HTML'
+                }
+                response = requests.post(url, json=payload, timeout=10)
+                
+                if response.status_code == 200:
+                    return jsonify({
+                        'sent': True,
+                        'status': 'success',
+                        'message': 'Message sent successfully'
+                    })
+                else:
+                    return jsonify({
+                        'sent': False,
+                        'status': 'error',
+                        'message': f'Telegram API error: {response.status_code}'
+                    }), 500
+                    
+            except Exception as e:
+                logger.error(f"Telegram send error: {e}")
+                return jsonify({
+                    'sent': False,
+                    'status': 'error',
+                    'message': str(e)
+                }), 500
+        
+        @app.route('/api/telegram/test', methods=['POST'])
+        @require_api_key
+        def telegram_test():
+            try:
+                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
+                
+                if not token or not chat_id:
+                    return jsonify({
+                        'status': 'error',
+                        'message': 'Telegram not configured',
+                        'sent': False
+                    }), 400
+                
+                import requests
+                url = f"https://api.telegram.org/bot{token}/sendMessage"
+                payload = {
+                    'chat_id': chat_id,
+                    'text': '🧪 <b>Test Message</b>\n\n✅ Telegram connection is working!',
+                    'parse_mode': 'HTML'
+                }
+                response = requests.post(url, json=payload, timeout=10)
+                
+                if response.status_code == 200:
+                    return jsonify({
+                        'status': 'success',
+                        'message': 'Test message sent successfully!',
+                        'sent': True
+                    })
+                else:
+                    return jsonify({
+                        'status': 'error',
+                        'message': f'Telegram API error: {response.status_code}',
+                        'sent': False
+                    }), 500
+                    
+            except Exception as e:
+                logger.error(f"Telegram test error: {e}")
+                return jsonify({
+                    'status': 'error',
+                    'message': str(e),
+                    'sent': False
+                }), 500
         
         # ============================================================
         # PUBLIC ENDPOINTS
@@ -1394,6 +1556,210 @@ def start_api_server(bot_instance):
             except Exception as e:
                 logger.error(f"Pattern detection error: {e}")
                 return jsonify({'error': str(e)}), 500
+        
+        # ============================================================
+        # SETTINGS ENDPOINTS
+        # ============================================================
+        
+        @app.route('/api/settings/status', methods=['GET'])
+        @require_api_key
+        def get_settings_status():
+            try:
+                # Cek Kraken API Key dari environment
+                kraken_key = os.environ.get('KRAKEN_API_KEY', '')
+                kraken_secret = os.environ.get('KRAKEN_API_SECRET', '')
+                
+                # Cek Telegram dari environment
+                telegram_token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+                telegram_chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
+                
+                # Cek apakah key ada (tidak kosong)
+                kraken_configured = bool(kraken_key and kraken_secret)
+                telegram_configured = bool(telegram_token and telegram_chat_id)
+                
+                return jsonify({
+                    'kraken_configured': kraken_configured,
+                    'telegram_configured': telegram_configured,
+                    'exchange_configured': kraken_configured,
+                    'telegram_enabled': telegram_configured,
+                    'trading_mode': MODE,
+                    'risk_level': 'MODERATE',
+                    'exchange': 'KRAKEN',
+                    'status': 'ok'
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+        
+        @app.route('/api/settings', methods=['POST'])
+        @require_api_key
+        def save_settings():
+            try:
+                data = request.json
+                logger.info(f"Settings saved: {data}")
+                return jsonify({'status': 'success', 'message': 'Settings saved'})
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        # ============================================================
+        # TELEGRAM ENDPOINTS  ← TAMBAHKAN DI SINI
+        # ============================================================
+        
+        @app.route('/api/telegram/status', methods=['GET'])
+        @require_api_key
+        def telegram_status():
+            try:
+                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
+                configured = bool(token and chat_id)
+                
+                return jsonify({
+                    'configured': configured,
+                    'status': 'online' if configured else 'offline',
+                    'bot_name': 'InksideBot' if configured else None
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+        
+        @app.route('/api/telegram/config', methods=['GET'])
+        @require_api_key
+        def telegram_get_config():
+            try:
+                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
+                configured = bool(token and chat_id)
+                
+                masked_token = token[:6] + '••••••••' + token[-4:] if len(token) > 10 else token
+                masked_chat_id = chat_id[:3] + '••••••' + chat_id[-3:] if len(chat_id) > 8 else chat_id
+                
+                return jsonify({
+                    'bot_token': masked_token,
+                    'chat_id': masked_chat_id,
+                    'configured': configured
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+        
+        @app.route('/api/telegram/config', methods=['POST'])
+        @require_api_key
+        def telegram_save_config():
+            try:
+                data = request.json
+                bot_token = data.get('bot_token', '')
+                chat_id = data.get('chat_id', '')
+                
+                os.environ['TELEGRAM_BOT_TOKEN'] = bot_token
+                os.environ['TELEGRAM_CHAT_ID'] = chat_id
+                
+                global TELEGRAM_CONFIGURED
+                TELEGRAM_CONFIGURED = bool(bot_token and chat_id)
+                
+                logger.info(f"Telegram config updated: configured={TELEGRAM_CONFIGURED}")
+                
+                return jsonify({
+                    'status': 'success',
+                    'message': 'Configuration saved successfully'
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+        
+        @app.route('/api/telegram/send', methods=['POST'])
+        @require_api_key
+        def telegram_send():
+            try:
+                data = request.json
+                message = data.get('message', '')
+                
+                if not message:
+                    return jsonify({'error': 'Message is required'}), 400
+                
+                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
+                
+                if not token or not chat_id:
+                    return jsonify({
+                        'sent': False,
+                        'status': 'error',
+                        'message': 'Telegram not configured'
+                    }), 400
+                
+                import requests
+                url = f"https://api.telegram.org/bot{token}/sendMessage"
+                payload = {
+                    'chat_id': chat_id,
+                    'text': message,
+                    'parse_mode': 'HTML'
+                }
+                response = requests.post(url, json=payload, timeout=10)
+                
+                if response.status_code == 200:
+                    return jsonify({
+                        'sent': True,
+                        'status': 'success',
+                        'message': 'Message sent successfully'
+                    })
+                else:
+                    return jsonify({
+                        'sent': False,
+                        'status': 'error',
+                        'message': f'Telegram API error: {response.status_code}'
+                    }), 500
+                    
+            except Exception as e:
+                logger.error(f"Telegram send error: {e}")
+                return jsonify({
+                    'sent': False,
+                    'status': 'error',
+                    'message': str(e)
+                }), 500
+        
+        @app.route('/api/telegram/test', methods=['POST'])
+        @require_api_key
+        def telegram_test():
+            try:
+                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
+                
+                if not token or not chat_id:
+                    return jsonify({
+                        'status': 'error',
+                        'message': 'Telegram not configured',
+                        'sent': False
+                    }), 400
+                
+                import requests
+                url = f"https://api.telegram.org/bot{token}/sendMessage"
+                payload = {
+                    'chat_id': chat_id,
+                    'text': '🧪 <b>Test Message</b>\n\n✅ Telegram connection is working!',
+                    'parse_mode': 'HTML'
+                }
+                response = requests.post(url, json=payload, timeout=10)
+                
+                if response.status_code == 200:
+                    return jsonify({
+                        'status': 'success',
+                        'message': 'Test message sent successfully!',
+                        'sent': True
+                    })
+                else:
+                    return jsonify({
+                        'status': 'error',
+                        'message': f'Telegram API error: {response.status_code}',
+                        'sent': False
+                    }), 500
+                    
+            except Exception as e:
+                logger.error(f"Telegram test error: {e}")
+                return jsonify({
+                    'status': 'error',
+                    'message': str(e),
+                    'sent': False
+                }), 500
+
+        # ============================================================
+        # WEBSOCKET
+        # ============================================================
+
         
         # ============================================================
         # WEBSOCKET

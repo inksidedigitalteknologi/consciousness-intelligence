@@ -1,5 +1,6 @@
 // src/components/TelegramView.tsx
-// TELEGRAM VIEW v3.1 - LAYOUT DIPERBAIKI
+// TELEGRAM VIEW v3.2 - LAYOUT DIPERBAIKI
+// FIX: API Endpoints, Error Handling, No Dummy Data
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -52,9 +53,9 @@ interface TelegramMessage {
 interface SystemMetrics {
   cpu: number;
   ram: number;
+  ram_percent?: number;
+  disk_percent?: number;
   uptime: number;
-  health_score: number;
-  risk_level: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
   memory_count: number;
   knowledge_count: number;
   pnl: number;
@@ -62,25 +63,29 @@ interface SystemMetrics {
   total_trades: number;
   prediction_accuracy: number;
   open_positions: number;
+  risk_level: string;
+  health_score: number;
 }
 
 interface ModuleStatus {
   name: string;
   title: string;
   version: string;
-  status: 'ONLINE' | 'OFFLINE' | 'DEGRADED';
-  priority: number;
-  role: string;
-  online: boolean;
+  status: string;
+  health_score: number;
 }
 
 interface LearningStats {
-  cycle_count: number;
-  learning_active: boolean;
-  learning_rate: number;
-  decay_rate: number;
-  circuit_breakers: number;
-  modules_count: number;
+  cycleCount: number;
+  learningActive: boolean;
+  learningRate: number;
+  decayRate: number;
+  circuitBreakers: number;
+  modulesCount: number;
+  knowledge_items: number;
+  database_size_mb: number;
+  active_learning_sessions: number;
+  timestamp: string;
 }
 
 interface AdaptiveWeight {
@@ -95,33 +100,39 @@ interface AdaptiveWeight {
 }
 
 interface TelegramViewProps {
-  isConfigured?: boolean;
-  onSaveConfig?: (token: string, chatId: string) => void;
+  wsConnected?: boolean;
 }
 
 // ============================================================
-// API SERVICE
+// API SERVICE - PAKAI NGINX PROXY
 // ============================================================
 
-const API_BASE = "";
+const API_BASE = '';
 
 const api = {
   async getStatus(): Promise<{ configured: boolean; status: string; bot_name: string }> {
-    const response = await fetch(`${API_BASE}/telegram/status`);
+    const response = await fetch(`${API_BASE}/api/telegram/status`, {
+      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
+    });
     if (!response.ok) throw new Error('Failed to get status');
     return response.json();
   },
 
   async getConfig(): Promise<{ bot_token: string; chat_id: string; configured: boolean }> {
-    const response = await fetch(`${API_BASE}/telegram/config`);
+    const response = await fetch(`${API_BASE}/api/telegram/config`, {
+      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
+    });
     if (!response.ok) throw new Error('Failed to get config');
     return response.json();
   },
 
   async saveConfig(botToken: string, chatId: string): Promise<{ status: string; message: string }> {
-    const response = await fetch(`${API_BASE}/telegram/config`, {
+    const response = await fetch(`${API_BASE}/api/telegram/config`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ'
+      },
       body: JSON.stringify({ bot_token: botToken, chat_id: chatId }),
     });
     if (!response.ok) throw new Error('Failed to save config');
@@ -129,9 +140,12 @@ const api = {
   },
 
   async sendMessage(message: string): Promise<{ sent: boolean; status: string; message: string }> {
-    const response = await fetch(`${API_BASE}/telegram/send`, {
+    const response = await fetch(`${API_BASE}/api/telegram/send`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ'
+      },
       body: JSON.stringify({ message }),
     });
     if (!response.ok) throw new Error('Failed to send message');
@@ -139,47 +153,60 @@ const api = {
   },
 
   async testConnection(): Promise<{ status: string; message: string; sent: boolean }> {
-    const response = await fetch(`${API_BASE}/telegram/test`, {
+    const response = await fetch(`${API_BASE}/api/telegram/test`, {
       method: 'POST',
+      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
     });
     if (!response.ok) throw new Error('Test failed');
     return response.json();
   },
 
   async getSystemMetrics(): Promise<SystemMetrics> {
-    const response = await fetch(`${API_BASE}/system/metrics`);
+    const response = await fetch(`${API_BASE}/api/system/metrics`, {
+      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
+    });
     if (!response.ok) throw new Error('Failed to get system metrics');
     return response.json();
   },
 
   async getModules(): Promise<ModuleStatus[]> {
-    const response = await fetch(`${API_BASE}/modules/list`);
+    const response = await fetch(`${API_BASE}/api/modules/list`, {
+      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
+    });
     if (!response.ok) throw new Error('Failed to get modules');
     const data = await response.json();
     return data.modules || [];
   },
 
   async getLearningStats(): Promise<LearningStats> {
-    const response = await fetch(`${API_BASE}/learning/stats`);
+    const response = await fetch(`${API_BASE}/api/learning/stats`, {
+      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
+    });
     if (!response.ok) throw new Error('Failed to get learning stats');
     return response.json();
   },
 
   async getAdaptiveWeights(): Promise<AdaptiveWeight[]> {
-    const response = await fetch(`${API_BASE}/learning/adaptive`);
+    const response = await fetch(`${API_BASE}/api/learning/adaptive`, {
+      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
+    });
     if (!response.ok) throw new Error('Failed to get adaptive weights');
     const data = await response.json();
     return data.entries || [];
   },
 
   async getEvaluatorStats(): Promise<any> {
-    const response = await fetch(`${API_BASE}/learning/evaluator`);
+    const response = await fetch(`${API_BASE}/api/learning/evaluator`, {
+      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
+    });
     if (!response.ok) throw new Error('Failed to get evaluator stats');
     return response.json();
   },
 
   async getBrainState(): Promise<any> {
-    const response = await fetch(`${API_BASE}/brain/state`);
+    const response = await fetch(`${API_BASE}/api/brain/state`, {
+      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
+    });
     if (!response.ok) throw new Error('Failed to get brain state');
     return response.json();
   },
@@ -209,7 +236,7 @@ const formatUptime = (seconds: number): string => {
 };
 
 const getRiskEmoji = (risk: string): string => {
-  switch (risk) {
+  switch (risk?.toUpperCase()) {
     case 'LOW': return '🟢';
     case 'MODERATE': return '🟡';
     case 'HIGH': return '🟠';
@@ -222,7 +249,7 @@ const getRiskEmoji = (risk: string): string => {
 // COMPONENT
 // ============================================================
 
-export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propOnSaveConfig }: TelegramViewProps) {
+export function TelegramView({ wsConnected = false }: TelegramViewProps) {
   // ============================================================
   // STATE
   // ============================================================
@@ -231,7 +258,7 @@ export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propO
   const [chatId, setChatId] = useState('');
   const [showToken, setShowToken] = useState(false);
   const [showChatId, setShowChatId] = useState(false);
-  const [isConfigured, setIsConfigured] = useState(propConfigured || false);
+  const [isConfigured, setIsConfigured] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isTestRunning, setIsTestRunning] = useState(false);
 
@@ -418,7 +445,6 @@ export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propO
       if (response.status === 'success') {
         setIsConfigured(true);
         setResult({ type: 'success', message: '✅ Configuration saved! Restart backend to apply.' });
-        if (propOnSaveConfig) propOnSaveConfig(token, chatIdValue);
         await loadStatus();
       } else {
         setResult({ type: 'error', message: `❌ Failed to save: ${response.message}` });
@@ -488,10 +514,10 @@ export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propO
         icon: <Play className="w-4 h-4" />,
         color: 'emerald',
         message: () => {
-          const onlineModules = mods.filter(mod => mod.online).length;
+          const onlineModules = mods.filter(mod => mod.status === 'ONLINE').length;
           const totalModules = mods.length;
           const topSignal = weights.length > 0 ? weights[0] : null;
-          return `🚀 <b>INKSIDE DIGITAL - SYSTEM OVERVIEW</b>\n━━━━━━━━━━━━━━━━━━━━━\n\n<b>🖥️ SYSTEM STATUS</b>\nHealth: ${m?.health_score || 0}% ${getRiskEmoji(m?.risk_level || 'UNKNOWN')}\nRisk: ${m?.risk_level || 'UNKNOWN'}\nUptime: ${formatUptime(m?.uptime || 0)}\n\n<b>📊 PERFORMANCE</b>\nTrades: ${m?.total_trades || 0}\nWin Rate: ${m?.win_rate || 0}%\nPnL: ${m?.pnl ? (m.pnl > 0 ? '+' : '') + m.pnl.toFixed(2) : '0.00'}\n\n<b>🧠 BRAIN & MEMORY</b>\nMemory: ${m?.memory_count || 0} items\nKnowledge: ${m?.knowledge_count || 0} items\nLearning: ${l?.learning_active ? '🟢 ACTIVE' : '🔴 IDLE'}\n\n<b>🔌 MODULES</b>\nOnline: ${onlineModules}/${totalModules}\nCircuit Breakers: ${l?.circuit_breakers || 0}\n\n<b>🎯 TOP SIGNAL</b>\n${topSignal ? `${topSignal.key}\nConfidence: ${topSignal.confidence}% | Success: ${topSignal.successRate}%` : 'No signals available'}\n━━━━━━━━━━━━━━━━━━━━━\n🕐 ${new Date().toLocaleString()}`;
+          return `🚀 <b>INKSIDE DIGITAL - SYSTEM OVERVIEW</b>\n━━━━━━━━━━━━━━━━━━━━━\n\n<b>🖥️ SYSTEM STATUS</b>\nHealth: ${m?.health_score || 0}% ${getRiskEmoji(m?.risk_level || 'UNKNOWN')}\nRisk: ${m?.risk_level || 'UNKNOWN'}\nUptime: ${formatUptime(m?.uptime || 0)}\n\n<b>📊 PERFORMANCE</b>\nTrades: ${m?.total_trades || 0}\nWin Rate: ${m?.win_rate || 0}%\nPnL: ${m?.pnl ? (m.pnl > 0 ? '+' : '') + m.pnl.toFixed(2) : '0.00'}\n\n<b>🧠 BRAIN & MEMORY</b>\nMemory: ${m?.memory_count || 0} items\nKnowledge: ${l?.knowledge_items || 0} items\nLearning: ${l?.learningActive ? '🟢 ACTIVE' : '🔴 IDLE'}\n\n<b>🔌 MODULES</b>\nOnline: ${onlineModules}/${totalModules}\nCircuit Breakers: ${l?.circuitBreakers || 0}\n\n<b>🎯 TOP SIGNAL</b>\n${topSignal ? `${topSignal.key}\nConfidence: ${topSignal.confidence}% | Success: ${topSignal.successRate}%` : 'No signals available'}\n━━━━━━━━━━━━━━━━━━━━━\n🕐 ${new Date().toLocaleString()}`;
         },
       },
       {
@@ -507,11 +533,11 @@ export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propO
         icon: <Activity className="w-4 h-4" />,
         color: 'green',
         message: () => {
-          const onlineModules = mods.filter(mod => mod.online).length;
+          const onlineModules = mods.filter(mod => mod.status === 'ONLINE').length;
           const totalModules = mods.length;
           const health = m?.health_score || 0;
           const status = health >= 80 ? '🟢 EXCELLENT' : health >= 60 ? '🟡 GOOD' : health >= 40 ? '🟠 WARNING' : '🔴 CRITICAL';
-          return `🩺 <b>SYSTEM HEALTH CHECK</b>\n━━━━━━━━━━━━━━━━━━━━━\n\n<b>📊 OVERALL HEALTH</b>\nScore: ${health}%\nStatus: ${status}\nRisk Level: ${getRiskEmoji(m?.risk_level || 'UNKNOWN')} ${m?.risk_level || 'UNKNOWN'}\nUptime: ${formatUptime(m?.uptime || 0)}\n\n<b>💻 RESOURCES</b>\nCPU: ${m?.cpu || 0}%\nRAM: ${m?.ram || 0} GB\n\n<b>🔌 MODULES</b>\nOnline: ${onlineModules}/${totalModules}\nLearning: ${l?.learning_active ? '🟢 ACTIVE' : '🔴 IDLE'}\n━━━━━━━━━━━━━━━━━━━━━\n🕐 ${new Date().toLocaleString()}`;
+          return `🩺 <b>SYSTEM HEALTH CHECK</b>\n━━━━━━━━━━━━━━━━━━━━━\n\n<b>📊 OVERALL HEALTH</b>\nScore: ${health}%\nStatus: ${status}\nRisk Level: ${getRiskEmoji(m?.risk_level || 'UNKNOWN')} ${m?.risk_level || 'UNKNOWN'}\nUptime: ${formatUptime(m?.uptime || 0)}\n\n<b>💻 RESOURCES</b>\nCPU: ${m?.cpu || 0}%\nRAM: ${m?.ram || 0} GB\n\n<b>🔌 MODULES</b>\nOnline: ${onlineModules}/${totalModules}\nLearning: ${l?.learningActive ? '🟢 ACTIVE' : '🔴 IDLE'}\n━━━━━━━━━━━━━━━━━━━━━\n🕐 ${new Date().toLocaleString()}`;
         },
       },
       {
@@ -548,7 +574,7 @@ export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propO
         label: '🧠 Brain',
         icon: <Brain className="w-4 h-4" />,
         color: 'purple',
-        message: () => `🧠 <b>COGNITIVE BRAIN STATUS</b>\n━━━━━━━━━━━━━━━━━━━━━\n\n<b>🧠 BRAIN STATE</b>\nState: ${brain?.brain?.state || 'UNKNOWN'}\nLearning: ${l?.learning_active ? '🟢 ACTIVE' : '🔴 IDLE'}\nCycles: ${l?.cycle_count || 0}\n\n<b>📊 METRICS</b>\nMemory: ${m?.memory_count || 0} items\nKnowledge: ${m?.knowledge_count || 0} items\nAccuracy: ${e?.accuracy || 0}%\n\n<b>📋 MODULES</b>\nTotal: ${modules.length}\nOnline: ${modules.filter(m => m.online).length}\n━━━━━━━━━━━━━━━━━━━━━\n🕐 ${new Date().toLocaleString()}`,
+        message: () => `🧠 <b>COGNITIVE BRAIN STATUS</b>\n━━━━━━━━━━━━━━━━━━━━━\n\n<b>🧠 BRAIN STATE</b>\nState: ${brain?.brain?.state || 'UNKNOWN'}\nLearning: ${l?.learningActive ? '🟢 ACTIVE' : '🔴 IDLE'}\nCycles: ${l?.cycleCount || 0}\n\n<b>📊 METRICS</b>\nMemory: ${m?.memory_count || 0} items\nKnowledge: ${l?.knowledge_items || 0} items\nAccuracy: ${e?.accuracy || 0}%\n\n<b>📋 MODULES</b>\nTotal: ${modules.length}\nOnline: ${modules.filter(m => m.status === 'ONLINE').length}\n━━━━━━━━━━━━━━━━━━━━━\n🕐 ${new Date().toLocaleString()}`,
       },
       {
         id: 'modules',
@@ -556,8 +582,8 @@ export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propO
         icon: <Layers className="w-4 h-4" />,
         color: 'cyan',
         message: () => {
-          const online = mods.filter(mod => mod.online);
-          const offline = mods.filter(mod => !mod.online);
+          const online = mods.filter(mod => mod.status === 'ONLINE');
+          const offline = mods.filter(mod => mod.status !== 'ONLINE');
           let msg = `🔌 <b>MODULE STATUS</b>\n━━━━━━━━━━━━━━━━━━━━━\n\nTotal: ${mods.length}\nOnline: ${online.length} 🟢\nOffline: ${offline.length} 🔴\n\n<b>✅ ONLINE MODULES</b>\n`;
           online.slice(0, 8).forEach(mod => {
             msg += `🟢 ${mod.title} v${mod.version}\n`;
@@ -579,14 +605,14 @@ export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propO
         label: '📅 Daily',
         icon: <Clock className="w-4 h-4" />,
         color: 'yellow',
-        message: () => `📅 <b>DAILY REPORT</b>\n━━━━━━━━━━━━━━━━━━━━━\n\n<b>📊 TODAY'S SUMMARY</b>\nDate: ${new Date().toLocaleDateString()}\nTrades: ${m?.total_trades || 0}\nWin Rate: ${m?.win_rate || 0}%\nPnL: ${m?.pnl ? (m.pnl > 0 ? '+' : '') + m.pnl.toFixed(2) : '0.00'}\n\n<b>🖥️ SYSTEM</b>\nHealth: ${m?.health_score || 0}%\nRisk: ${m?.risk_level || 'UNKNOWN'}\nModules Online: ${modules.filter(m => m.online).length}/${modules.length}\n━━━━━━━━━━━━━━━━━━━━━\n🕐 ${new Date().toLocaleString()}`,
+        message: () => `📅 <b>DAILY REPORT</b>\n━━━━━━━━━━━━━━━━━━━━━\n\n<b>📊 TODAY'S SUMMARY</b>\nDate: ${new Date().toLocaleDateString()}\nTrades: ${m?.total_trades || 0}\nWin Rate: ${m?.win_rate || 0}%\nPnL: ${m?.pnl ? (m.pnl > 0 ? '+' : '') + m.pnl.toFixed(2) : '0.00'}\n\n<b>🖥️ SYSTEM</b>\nHealth: ${m?.health_score || 0}%\nRisk: ${m?.risk_level || 'UNKNOWN'}\nModules Online: ${modules.filter(m => m.status === 'ONLINE').length}/${modules.length}\n━━━━━━━━━━━━━━━━━━━━━\n🕐 ${new Date().toLocaleString()}`,
       },
       {
         id: 'risk',
         label: '🛡️ Risk',
         icon: <Shield className="w-4 h-4" />,
         color: 'orange',
-        message: () => `🛡️ <b>RISK ASSESSMENT</b>\n━━━━━━━━━━━━━━━━━━━━━\n\n<b>📊 RISK METRICS</b>\nRisk Level: ${getRiskEmoji(m?.risk_level || 'UNKNOWN')} ${m?.risk_level || 'UNKNOWN'}\nHealth Score: ${m?.health_score || 0}%\nCircuit Breakers: ${l?.circuit_breakers || 0}\nOpen Positions: ${m?.open_positions || 0}\n\n<b>💻 RESOURCES</b>\nCPU: ${m?.cpu || 0}%\nRAM: ${m?.ram || 0} GB\n\n<b>⚠️ STATUS</b>\n${m?.risk_level === 'LOW' ? '✅ System is safe' :
+        message: () => `🛡️ <b>RISK ASSESSMENT</b>\n━━━━━━━━━━━━━━━━━━━━━\n\n<b>📊 RISK METRICS</b>\nRisk Level: ${getRiskEmoji(m?.risk_level || 'UNKNOWN')} ${m?.risk_level || 'UNKNOWN'}\nHealth Score: ${m?.health_score || 0}%\nCircuit Breakers: ${l?.circuitBreakers || 0}\nOpen Positions: ${m?.open_positions || 0}\n\n<b>💻 RESOURCES</b>\nCPU: ${m?.cpu || 0}%\nRAM: ${m?.ram || 0} GB\n\n<b>⚠️ STATUS</b>\n${m?.risk_level === 'LOW' ? '✅ System is safe' :
   m?.risk_level === 'MODERATE' ? '⚠️ Monitor closely' :
   m?.risk_level === 'HIGH' ? '🔴 High risk - Take action!' :
   '🚨 CRITICAL - Immediate action required!'}\n━━━━━━━━━━━━━━━━━━━━━\n🕐 ${new Date().toLocaleString()}`,
@@ -606,7 +632,7 @@ export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propO
         label: '🔄 Refresh',
         icon: <RefreshCw className="w-4 h-4" />,
         color: 'blue',
-        message: () => `🔄 <b>DATA REFRESHED</b>\n━━━━━━━━━━━━━━━━━━━━━\n\n✅ All data has been refreshed.\n\n<b>📊 LATEST METRICS</b>\nHealth: ${m?.health_score || 0}%\nRisk: ${m?.risk_level || 'UNKNOWN'}\nTrades: ${m?.total_trades || 0}\nWin Rate: ${m?.win_rate || 0}%\nPnL: ${m?.pnl ? (m.pnl > 0 ? '+' : '') + m.pnl.toFixed(2) : '0.00'}\n\n<b>🔌 MODULES</b>\nOnline: ${modules.filter(m => m.online).length}/${modules.length}\n━━━━━━━━━━━━━━━━━━━━━\n🕐 ${new Date().toLocaleString()}`,
+        message: () => `🔄 <b>DATA REFRESHED</b>\n━━━━━━━━━━━━━━━━━━━━━\n\n✅ All data has been refreshed.\n\n<b>📊 LATEST METRICS</b>\nHealth: ${m?.health_score || 0}%\nRisk: ${m?.risk_level || 'UNKNOWN'}\nTrades: ${m?.total_trades || 0}\nWin Rate: ${m?.win_rate || 0}%\nPnL: ${m?.pnl ? (m.pnl > 0 ? '+' : '') + m.pnl.toFixed(2) : '0.00'}\n\n<b>🔌 MODULES</b>\nOnline: ${modules.filter(m => m.status === 'ONLINE').length}/${modules.length}\n━━━━━━━━━━━━━━━━━━━━━\n🕐 ${new Date().toLocaleString()}`,
       },
     ];
   };
@@ -627,7 +653,7 @@ export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propO
           </div>
           <div>
             <h2 className="text-lg font-bold text-white tracking-wide">
-              Telegram Bridge v3.1
+              Telegram Bridge v3.2
             </h2>
             <p className="text-xs text-[#8D9AAA]">
               {templates.length} Commands • Real-time data • {isConfigured ? '✅ Connected' : '⚠️ Not Configured'}
@@ -649,7 +675,7 @@ export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propO
         </div>
       </div>
 
-      {/* SYSTEM STATUS BAR - DIPERBAIKI */}
+      {/* SYSTEM STATUS BAR */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className="p-3 rounded-xl bg-[#131A22] border border-[#26313D]">
           <div className="text-[10px] text-[#5F6B78]">Health</div>
@@ -670,13 +696,13 @@ export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propO
         </div>
         <div className="p-3 rounded-xl bg-[#131A22] border border-[#26313D]">
           <div className="text-[10px] text-[#5F6B78]">Modules</div>
-          <div className="text-lg font-bold text-emerald-400">{modules.filter(m => m.online).length}/{modules.length}</div>
+          <div className="text-lg font-bold text-emerald-400">{modules.filter(m => m.status === 'ONLINE').length}/{modules.length}</div>
           <div className="text-[10px] text-[#8D9AAA]">Online / Total</div>
         </div>
         <div className="p-3 rounded-xl bg-[#131A22] border border-[#26313D]">
           <div className="text-[10px] text-[#5F6B78]">Uptime</div>
           <div className="text-lg font-bold text-white">{formatUptime(metrics?.uptime || 0)}</div>
-          <div className="text-[10px] text-[#8D9AAA]">{learningStats?.learning_active ? '🟢 Learning Active' : '🔴 Idle'}</div>
+          <div className="text-[10px] text-[#8D9AAA]">{learningStats?.learningActive ? '🟢 Learning Active' : '🔴 Idle'}</div>
         </div>
       </div>
 
@@ -684,7 +710,7 @@ export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propO
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* LEFT COLUMN */}
         <div className="space-y-6">
-          {/* Config Card - DIPERBAIKI (Engine Status dihapus dari sini) */}
+          {/* Config Card */}
           <div className="p-5 rounded-2xl bg-[#131A22] border border-[#26313D] shadow-lg">
             <h3 className="text-sm font-bold text-white tracking-wider uppercase pb-3 border-b border-[#26313D]/70 flex items-center gap-2">
               <Key className="w-4 h-4 text-sky-400" />
@@ -830,7 +856,7 @@ export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propO
           </div>
         </div>
 
-        {/* RIGHT COLUMN - MESSAGE HISTORY - DIPERBAIKI */}
+        {/* RIGHT COLUMN - MESSAGE HISTORY */}
         <div className="p-5 rounded-2xl bg-[#131A22] border border-[#26313D] shadow-lg flex flex-col">
           <div className="flex items-center justify-between pb-3 border-b border-[#26313D]/70">
             <h3 className="text-sm font-bold text-white tracking-wider uppercase flex items-center gap-2">
@@ -918,7 +944,7 @@ export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propO
             <div ref={messagesEndRef} />
           </div>
 
-          {/* FOOTER STATS - DIPERBAIKI (tetap di bawah) */}
+          {/* FOOTER STATS */}
           <div className="pt-3 mt-3 border-t border-[#26313D]/70 flex items-center justify-between text-[10px] text-[#5F6B78]">
             <span>
               Sent: <span className="text-emerald-400">{messages.filter((m) => m.status === 'sent').length}</span>
@@ -930,7 +956,7 @@ export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propO
             <span>{messages.length > 0 ? `${messages.length} total` : 'No messages'}</span>
           </div>
 
-          {/* EXTRA SPACE & USEFUL FEATURE - BOTTOM */}
+          {/* BOTTOM INFO */}
           <div className="mt-4 pt-4 border-t border-[#26313D]/40">
             <div className="flex items-center justify-between text-[10px] text-[#5F6B78]">
               <div className="flex items-center gap-2">
@@ -938,12 +964,12 @@ export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propO
                 <span className="text-[9px]">• Use commands for instant reports</span>
               </div>
               <span className="text-[9px]">
-                {learningStats?.learning_active ? '🟢 Learning active' : '🔴 Idle'}
+                {learningStats?.learningActive ? '🟢 Learning active' : '🔴 Idle'}
               </span>
             </div>
             <div className="flex items-center gap-4 mt-1 text-[9px] text-[#5F6B78]">
               <span>🔄 Auto-refresh: 30s</span>
-              <span>📊 {modules.filter(m => m.online).length}/{modules.length} modules</span>
+              <span>📊 {modules.filter(m => m.status === 'ONLINE').length}/{modules.length} modules</span>
               <span className="text-[#3B82F6] cursor-pointer hover:underline" onClick={() => { loadAllData(); loadStatus(); }}>
                 ↻ Refresh now
               </span>
@@ -958,9 +984,11 @@ export function TelegramView({ isConfigured: propConfigured, onSaveConfig: propO
         <span>
           {isConfigured ? '✅ Connected' : '⚠️ Not Configured'}
           {' · '}
-          {modules.filter(m => m.online).length}/{modules.length} modules online
+          {modules.filter(m => m.status === 'ONLINE').length}/{modules.length} modules online
           {' · '}
           {templates.length} commands
+          {' · '}
+          {wsConnected ? '🟢 WebSocket LIVE' : '🔴 WebSocket off'}
         </span>
       </div>
     </div>

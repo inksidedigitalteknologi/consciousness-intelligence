@@ -365,7 +365,7 @@ METRICS_TRACKED = [
 # SYSTEM - PRODUCTION READY
 # ============================================================
 
-DEBUG_MODE = False              # 🔴False = disable mock data | 🟢True = disable mock data
+DEBUG_MODE = False              # 🔴 False = disable mock data
 ENABLE_PROFILING = False        
 ENABLE_TRACING = False
 ENABLE_METRICS = True
@@ -670,6 +670,7 @@ __all__ = [
     'get_config_summary', 'load_config_from_file',
     'save_config_to_file', 'apply_env_overrides',
 ]
+
 # ============================================================
 # AUTONOMOUS LEARNING ENGINE CONFIGURATION
 # ============================================================

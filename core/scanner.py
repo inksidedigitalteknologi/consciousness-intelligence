@@ -404,7 +404,7 @@ class CognitiveMarketScanner:
                 
                 candles = self.market_data.get_ohlc(
                     pair,
-                    interval  # This is int, but market_data handles it
+                    valid_tf  # ✅ FIX: Use string directly
                 )
                 
                 if not candles:
@@ -527,7 +527,8 @@ class CognitiveMarketScanner:
             valid_tf = self._validate_timeframe(timeframe)
             interval = self._get_interval(valid_tf)
             
-            candles = self.market_data.get_ohlc(pair, interval)
+            # ✅ FIX: Use string timeframe directly
+            candles = self.market_data.get_ohlc(pair, valid_tf)
             
             if not candles:
                 return {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
-  Play, Square, RefreshCw, Radio, Send, Activity, Brain, Menu, Star, 
+  RefreshCw, Radio, Send, Activity, Brain, Menu, Star, 
   Wifi, WifiOff, AlertTriangle, Clock, Zap, Shield, Server, 
   ChevronDown, ChevronUp, Cpu, HardDrive, Database, TrendingUp,
   Power, PowerOff, Signal, Bell, Loader2, CheckCircle2, XCircle
@@ -84,7 +84,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   uptime = 0,
   systemMode = 'PAPER',
   riskLevel = 'LOW',
-  engineState = 'IDLE',
+  engineState = 'RUNNING',
   isToggling = false,
 }) => {
   // ============================================================
@@ -97,7 +97,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   const [isHovering, setIsHovering] = useState(false);
 
   // ============================================================
-  // WEBSOCKET - REAL-TIME ENGINE STATUS
+  // WEBSOCKET
   // ============================================================
   
   const { isConnected, status } = useWebSocketStatus();
@@ -173,41 +173,14 @@ export const TopBar: React.FC<TopBarProps> = ({
   // RENDER FUNCTIONS
   // ============================================================
 
+  // ✅ TANPA TOMBOL START/STOP - ENGINE ALWAYS RUNNING
   const renderEngineButton = () => {
-    if (isToggling) {
-      return (
-        <button
-          disabled
-          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#1A2530] border border-[#26313D] text-[#8D9AAA] text-xs font-bold cursor-not-allowed min-w-[80px] justify-center"
-        >
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          <span className="hidden sm:inline">LOADING...</span>
-        </button>
-      );
-    }
-
-    if (engineRunning) {
-      return (
-        <button
-          id="stop-engine-btn"
-          onClick={onToggleEngine}
-          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600 hover:text-white border border-rose-500/40 text-rose-300 text-xs font-bold transition-all duration-200 shadow-sm cursor-pointer hover:shadow-rose-600/20 min-w-[80px] justify-center"
-        >
-          <Square className="w-3.5 h-3.5 fill-current shrink-0" />
-          <span className="hidden sm:inline">STOP</span>
-        </button>
-      );
-    }
-
     return (
-      <button
-        id="start-engine-btn"
-        onClick={onToggleEngine}
-        className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all duration-200 shadow-md shadow-emerald-600/30 cursor-pointer hover:scale-105 min-w-[80px] justify-center"
-      >
-        <Play className="w-3.5 h-3.5 fill-current shrink-0" />
-        <span className="hidden sm:inline">START</span>
-      </button>
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
+        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+        <span className="hidden sm:inline">ENGINE RUNNING</span>
+        <span className="sm:hidden">RUN</span>
+      </div>
     );
   };
 
@@ -238,7 +211,6 @@ export const TopBar: React.FC<TopBarProps> = ({
             {pageTitle}
           </h1>
           
-          {/* Live Indicator */}
           <span className={`hidden sm:inline-block text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold shrink-0 transition-all duration-300 ${
             wsConnected 
               ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 animate-pulse' 
@@ -247,7 +219,6 @@ export const TopBar: React.FC<TopBarProps> = ({
             {wsConnected ? '● LIVE' : '○ RECONNECTING'}
           </span>
 
-          {/* Engine State Badge */}
           <span className={`hidden md:inline-block text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
             engineState === 'RUNNING' 
               ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse'
@@ -364,7 +335,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           </button>
         )}
 
-        {/* ENGINE CONTROL */}
+        {/* ENGINE CONTROL - TANPA TOMBOL START/STOP */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           {renderEngineButton()}
 
