@@ -1,10 +1,40 @@
 // frontend/src/components/DiagnosticsView.tsx
-// INKSIDE DIGITAL - DIAGNOSTICS VIEW v6.0
-// REAL DATA - TANPA DUMMY
-// FIX: API_BASE_URL, Error Handling, Auto-Refresh
+// INKSIDE DIGITAL - DIAGNOSTICS VIEW v7.0
+// REAL DATA - SMOOTH UI - NO DUMMY
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
+import {
+  Activity,
+  AlertCircle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  Cpu,
+  Database,
+  HardDrive,
+  Heart,
+  LayoutGrid,
+  Loader2,
+  RefreshCw,
+  Server,
+  Shield,
+  TrendingUp,
+  Wifi,
+  WifiOff,
+  Zap,
+  Clock,
+  DollarSign,
+  Target,
+  Layers,
+  GitBranch,
+  Workflow,
+  Eye,
+  EyeOff,
+  Copy,
+  Check,
+  Info,
+} from 'lucide-react';
 
 // ============================================================
 // TYPES
@@ -85,7 +115,6 @@ interface ComponentDetail {
 // API CONFIG
 // ============================================================
 
-// ✅ GUNakan PATH RELATIF - Nginx akan proxy ke backend
 const API_BASE = '';
 
 // ============================================================
@@ -144,6 +173,69 @@ const getHealthBarColor = (score: number): string => {
   return 'bg-red-500';
 };
 
+const getRiskColor = (risk: string): string => {
+  const r = risk?.toUpperCase() || '';
+  if (r === 'LOW') return 'text-green-500';
+  if (r === 'MODERATE') return 'text-yellow-500';
+  if (r === 'HIGH') return 'text-orange-500';
+  if (r === 'CRITICAL') return 'text-red-500';
+  return 'text-gray-500';
+};
+
+const getRiskEmoji = (risk: string): string => {
+  const r = risk?.toUpperCase() || '';
+  if (r === 'LOW') return '🟢';
+  if (r === 'MODERATE') return '🟡';
+  if (r === 'HIGH') return '🟠';
+  if (r === 'CRITICAL') return '🔴';
+  return '⚪';
+};
+
+// ============================================================
+// SUB-COMPONENTS
+// ============================================================
+
+const MetricCard = ({ icon, label, value, subtitle, color = 'blue' }: any) => {
+  const colorMap: any = {
+    blue: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+    green: 'text-green-400 bg-green-500/10 border-green-500/20',
+    yellow: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
+    red: 'text-red-400 bg-red-500/10 border-red-500/20',
+    purple: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
+    cyan: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
+    emerald: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+    amber: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+  };
+
+  return (
+    <div className="p-4 rounded-xl bg-[#131A22] border border-[#26313D] hover:border-[#3A4A5A] transition-all duration-300 group">
+      <div className="flex items-center gap-2.5 mb-2">
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colorMap[color]}`}>
+          {icon}
+        </div>
+        <span className="text-[10px] uppercase font-bold text-[#8D9AAA] tracking-wider">{label}</span>
+      </div>
+      <div className="text-2xl font-bold font-mono text-white">{value}</div>
+      {subtitle && <div className="text-[10px] text-[#5F6B78] mt-0.5">{subtitle}</div>}
+    </div>
+  );
+};
+
+const HealthBar = ({ score }: { score: number }) => (
+  <div className="w-full bg-[#1A2530] rounded-full h-2 overflow-hidden">
+    <div
+      className={`h-full rounded-full transition-all duration-700 ease-out ${getHealthBarColor(score)}`}
+      style={{ width: `${Math.min(Math.max(score, 0), 100)}%` }}
+    />
+  </div>
+);
+
+const StatusBadge = ({ status }: { status: string }) => (
+  <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${getStatusColor(status)}`}>
+    {status?.toUpperCase() || 'UNKNOWN'}
+  </span>
+);
+
 // ============================================================
 // MAIN COMPONENT
 // ============================================================
@@ -163,9 +255,7 @@ const DiagnosticsView: React.FC = () => {
   const [watchdogSnapshot, setWatchdogSnapshot] = useState<WatchdogSnapshot | null>(null);
   const [selectedComponent, setSelectedComponent] = useState<string>('');
   const [componentDetail, setComponentDetail] = useState<ComponentDetail | null>(null);
-  const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
-  const [watchdogError, setWatchdogError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState<number>(0);
+  const [expandedComponents, setExpandedComponents] = useState<Set<string>>(new Set());
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -191,8 +281,6 @@ const DiagnosticsView: React.FC = () => {
 
   const fetchWatchdogData = useCallback(async () => {
     try {
-      setWatchdogError(null);
-      
       const [statusRes, snapshotRes] = await Promise.all([
         axios.get(`${API_BASE}/api/watchdog/status`),
         axios.get(`${API_BASE}/api/watchdog/snapshot`)
@@ -209,7 +297,6 @@ const DiagnosticsView: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Failed to fetch watchdog data:', err);
-      setWatchdogError(err.message || 'Watchdog API not available');
     }
   }, [selectedComponent]);
 
@@ -247,37 +334,36 @@ const DiagnosticsView: React.FC = () => {
     }
   }, [fetchWatchdogData, fetchComponentDetail]);
 
-  const handleRefreshAll = useCallback(async () => {
-    setRefreshKey(prev => prev + 1);
-    await fetchAllData();
-  }, [fetchAllData]);
-
-  const toggleAutoRefresh = useCallback(() => {
-    setAutoRefresh(prev => !prev);
-  }, []);
+  const toggleComponentExpand = (name: string) => {
+    setExpandedComponents(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(name)) {
+        newSet.delete(name);
+      } else {
+        newSet.add(name);
+      }
+      return newSet;
+    });
+  };
 
   // ============================================================
   // EFFECTS
   // ============================================================
 
-  // Initial load
   useEffect(() => {
     fetchAllData();
   }, [fetchAllData]);
 
-  // Auto-refresh
   useEffect(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
 
-    if (autoRefresh) {
-      intervalRef.current = setInterval(() => {
-        fetchDiagnostics();
-        fetchWatchdogData();
-      }, 5000);
-    }
+    intervalRef.current = setInterval(() => {
+      fetchDiagnostics();
+      fetchWatchdogData();
+    }, 5000);
 
     return () => {
       if (intervalRef.current) {
@@ -285,7 +371,7 @@ const DiagnosticsView: React.FC = () => {
         intervalRef.current = null;
       }
     };
-  }, [autoRefresh, fetchDiagnostics, fetchWatchdogData]);
+  }, [fetchDiagnostics, fetchWatchdogData]);
 
   // ============================================================
   // LOADING STATE
@@ -293,10 +379,10 @@ const DiagnosticsView: React.FC = () => {
 
   if (loading && !diagnostics && !watchdogStatus) {
     return (
-      <div className="flex items-center justify-center h-64 bg-gray-900">
+      <div className="flex items-center justify-center h-96 bg-gray-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading diagnostics...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4" />
+          <p className="text-gray-400 text-sm">Loading diagnostics...</p>
         </div>
       </div>
     );
@@ -309,512 +395,401 @@ const DiagnosticsView: React.FC = () => {
   const components = watchdogSnapshot?.components || [];
   const heartbeats = watchdogSnapshot?.heartbeats || {};
   const componentHealth = watchdogSnapshot?.component_health || {};
+  const health = metrics?.health_score || 0;
 
   return (
-    <div className="p-6 bg-gray-900 min-h-screen text-white">
+    <div className="p-4 md:p-6 bg-gray-900 min-h-screen text-white">
       <div className="max-w-7xl mx-auto">
         {/* ============================================================
-        HEADER
+        HEADER - SMOOTH
         ============================================================ */}
-        <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              🧠 System Diagnostics
-              <span className="text-xs font-normal text-gray-400 bg-gray-800 px-3 py-1 rounded-full">
-                v6.0
-              </span>
-              {watchdogStatus?.running && (
-                <span className="text-xs bg-green-500/20 text-green-500 px-3 py-1 rounded-full border border-green-500/30 animate-pulse">
-                  ● LIVE
-                </span>
+        <div className="mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600/20 to-purple-600/20 border border-blue-500/30 flex items-center justify-center">
+                <Shield className="w-6 h-6 text-blue-400" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white tracking-tight">
+                  System Diagnostics
+                  <span className="ml-2 text-xs font-normal text-gray-400 bg-gray-800 px-2.5 py-1 rounded-full">
+                    v7.0
+                  </span>
+                </h1>
+                <p className="text-sm text-gray-400">
+                  Real-time system health & component monitoring • Last update: {lastUpdate || '--'}
+                  {watchdogStatus?.running && (
+                    <span className="ml-2 text-xs text-green-500 animate-pulse">● LIVE</span>
+                  )}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {watchdogStatus && (
+                <div className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 ${
+                  watchdogStatus.running
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                    : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                }`}>
+                  <div className={`w-2 h-2 rounded-full ${watchdogStatus.running ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`} />
+                  {watchdogStatus.running ? 'ACTIVE' : 'INACTIVE'}
+                </div>
               )}
-            </h1>
-            <p className="text-gray-400 text-sm mt-1">
-              Complete system health, performance & watchdog monitoring • Last update: {lastUpdate || '--'}
-            </p>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <Clock className="w-4 h-4" />
+                <span>{formatUptime(metrics?.uptime || 0)}</span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <button
-              onClick={toggleAutoRefresh}
-              className={`px-4 py-2 rounded-lg text-sm transition ${
-                autoRefresh
-                  ? 'bg-blue-600 hover:bg-blue-700'
-                  : 'bg-gray-700 hover:bg-gray-600'
-              }`}
-            >
-              {autoRefresh ? '⏸️ Auto Refresh' : '▶️ Manual'}
-            </button>
-            <button
-              onClick={handleRefreshAll}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition text-sm"
-            >
-              🔄 Refresh All
-            </button>
-          </div>
+
+          {/* Quick Stats Bar */}
+          {metrics && (
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-3">
+              <div className="p-3 rounded-xl bg-[#131A22] border border-[#26313D]">
+                <div className="text-[10px] text-gray-400 uppercase tracking-wider">Health</div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`text-xl font-bold font-mono ${getHealthScoreColor(metrics.health_score)}`}>
+                    {metrics.health_score}%
+                  </span>
+                </div>
+                <HealthBar score={metrics.health_score} />
+              </div>
+              <div className="p-3 rounded-xl bg-[#131A22] border border-[#26313D]">
+                <div className="text-[10px] text-gray-400 uppercase tracking-wider">CPU</div>
+                <div className="text-xl font-bold font-mono text-white">{metrics.cpu?.toFixed(1) || 0}%</div>
+                <div className="w-full bg-[#1A2530] rounded-full h-1.5 mt-1">
+                  <div className={`h-1.5 rounded-full transition-all ${metrics.cpu > 80 ? 'bg-red-500' : metrics.cpu > 60 ? 'bg-yellow-500' : 'bg-green-500'}`} style={{ width: `${Math.min(metrics.cpu || 0, 100)}%` }} />
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-[#131A22] border border-[#26313D]">
+                <div className="text-[10px] text-gray-400 uppercase tracking-wider">RAM</div>
+                <div className="text-xl font-bold font-mono text-white">{metrics.ram?.toFixed(1) || 0} GB</div>
+                <div className="text-[10px] text-gray-500">{metrics.ram_percent?.toFixed(0) || 0}% used</div>
+              </div>
+              <div className="p-3 rounded-xl bg-[#131A22] border border-[#26313D]">
+                <div className="text-[10px] text-gray-400 uppercase tracking-wider">Risk</div>
+                <div className="text-xl font-bold font-mono flex items-center gap-1.5">
+                  <span>{getRiskEmoji(metrics.risk_level)}</span>
+                  <span className={getRiskColor(metrics.risk_level)}>{metrics.risk_level || '--'}</span>
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-[#131A22] border border-[#26313D]">
+                <div className="text-[10px] text-gray-400 uppercase tracking-wider">Knowledge</div>
+                <div className="text-xl font-bold font-mono text-white">{metrics.knowledge_count || 0}</div>
+                <div className="text-[10px] text-gray-500">items stored</div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ============================================================
         ERROR DISPLAY
         ============================================================ */}
         {error && (
-          <div className="bg-red-900/30 border border-red-500 rounded-lg p-4 mb-6">
-            <p className="text-red-400">⚠️ {error}</p>
+          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+            <p className="text-red-400 text-sm">{error}</p>
+            <button
+              onClick={() => { setError(null); fetchAllData(); }}
+              className="ml-auto px-3 py-1 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-xs text-red-400 transition-colors"
+            >
+              Retry
+            </button>
           </div>
         )}
 
         {/* ============================================================
-        SECTION 1: SYSTEM METRICS
+        TWO COLUMN LAYOUT
         ============================================================ */}
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          📊 System Metrics
-          <span className="text-xs font-normal text-gray-400">
-            Real-time performance data
-          </span>
-        </h2>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <div className="text-xs text-gray-400 uppercase">CPU Usage</div>
-            <div className="text-2xl font-bold">
-              {metrics?.cpu?.toFixed(1) || '0'}%
-            </div>
-            <div className="w-full bg-gray-700 rounded-full h-1.5 mt-2">
-              <div
-                className={`h-1.5 rounded-full transition-all ${
-                  (metrics?.cpu || 0) > 80 ? 'bg-red-500' :
-                  (metrics?.cpu || 0) > 60 ? 'bg-yellow-500' : 'bg-green-500'
-                }`}
-                style={{ width: `${Math.min(metrics?.cpu || 0, 100)}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <div className="text-xs text-gray-400 uppercase">RAM Usage</div>
-            <div className="text-2xl font-bold">
-              {metrics?.ram?.toFixed(1) || '0'} GB
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
-              {metrics?.ram_percent?.toFixed(0) || '0'}% used
-            </div>
-          </div>
-
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <div className="text-xs text-gray-400 uppercase">Disk Usage</div>
-            <div className="text-2xl font-bold">
-              {metrics?.disk_percent?.toFixed(1) || '0'}%
-            </div>
-            <div className="w-full bg-gray-700 rounded-full h-1.5 mt-2">
-              <div
-                className={`h-1.5 rounded-full transition-all ${
-                  (metrics?.disk_percent || 0) > 80 ? 'bg-red-500' :
-                  (metrics?.disk_percent || 0) > 60 ? 'bg-yellow-500' : 'bg-green-500'
-                }`}
-                style={{ width: `${Math.min(metrics?.disk_percent || 0, 100)}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <div className="text-xs text-gray-400 uppercase">Uptime</div>
-            <div className="text-2xl font-bold text-green-500">
-              {formatUptime(metrics?.uptime || 0)}
-            </div>
-          </div>
-
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <div className="text-xs text-gray-400 uppercase">Health Score</div>
-            <div className={`text-2xl font-bold ${getHealthScoreColor(metrics?.health_score || 0)}`}>
-              {metrics?.health_score || 0}%
-            </div>
-            <div className="w-full bg-gray-700 rounded-full h-1.5 mt-2">
-              <div
-                className={`h-1.5 rounded-full transition-all ${getHealthBarColor(metrics?.health_score || 0)}`}
-                style={{ width: `${Math.min(metrics?.health_score || 0, 100)}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <div className="text-xs text-gray-400 uppercase">Knowledge</div>
-            <div className="text-2xl font-bold">
-              {metrics?.knowledge_count || 0}
-            </div>
-            <div className="text-xs text-gray-500 mt-1">items stored</div>
-          </div>
-        </div>
-
-        {/* ============================================================
-        SECTION 2: TRADING PERFORMANCE
-        ============================================================ */}
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          📈 Trading Performance
-        </h2>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <div className="text-xs text-gray-400 uppercase">Total PnL</div>
-            <div className={`text-2xl font-bold ${(metrics?.pnl || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              ${metrics?.pnl?.toFixed(2) || '0.00'}
-            </div>
-          </div>
-
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <div className="text-xs text-gray-400 uppercase">Win Rate</div>
-            <div className="text-2xl font-bold text-blue-500">
-              {metrics?.win_rate?.toFixed(1) || '0'}%
-            </div>
-            <div className="w-full bg-gray-700 rounded-full h-1.5 mt-2">
-              <div
-                className="h-1.5 rounded-full bg-blue-500 transition-all"
-                style={{ width: `${Math.min(metrics?.win_rate || 0, 100)}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <div className="text-xs text-gray-400 uppercase">Total Trades</div>
-            <div className="text-2xl font-bold">
-              {metrics?.total_trades || 0}
-            </div>
-          </div>
-
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <div className="text-xs text-gray-400 uppercase">Prediction Accuracy</div>
-            <div className="text-2xl font-bold text-purple-500">
-              {metrics?.prediction_accuracy?.toFixed(1) || '0'}%
-            </div>
-          </div>
-        </div>
-
-        {/* ============================================================
-        SECTION 3: WATCHDOG DIAGNOSTICS
-        ============================================================ */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            🛡️ Watchdog Diagnostics
-            <span className="text-xs font-normal text-gray-400">
-              Real-time component health monitoring
-            </span>
-          </h2>
-          {watchdogStatus && (
-            <span className={`px-3 py-1 rounded-lg text-sm ${
-              watchdogStatus.running
-                ? 'bg-green-500/20 text-green-500 border border-green-500/30'
-                : 'bg-red-500/20 text-red-500 border border-red-500/30'
-            }`}>
-              {watchdogStatus.running ? '🟢 Active' : '🔴 Inactive'}
-            </span>
-          )}
-        </div>
-
-        {watchdogError ? (
-          <div className="bg-yellow-900/30 border border-yellow-500 rounded-lg p-4 mb-6">
-            <p className="text-yellow-400">⚠️ Watchdog: {watchdogError}</p>
-            <p className="text-gray-400 text-sm mt-1">
-              Make sure backend is running and components are registered.
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Watchdog Summary Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-              <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <div className="text-xs text-gray-400 uppercase">Components</div>
-                <div className="text-2xl font-bold text-blue-500">{watchdogStatus?.components || 0}</div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {watchdogStatus?.components_healthy || 0} healthy
-                </div>
-              </div>
-              <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <div className="text-xs text-gray-400 uppercase">Health Score</div>
-                <div className={`text-2xl font-bold ${getHealthScoreColor(watchdogStatus?.health_score || 0)}`}>
-                  {watchdogStatus?.health_score || 0}%
-                </div>
-                <div className="w-full bg-gray-700 rounded-full h-1.5 mt-2">
-                  <div
-                    className={`h-1.5 rounded-full transition-all ${getHealthBarColor(watchdogStatus?.health_score || 0)}`}
-                    style={{ width: `${Math.min(watchdogStatus?.health_score || 0, 100)}%` }}
-                  />
-                </div>
-              </div>
-              <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <div className="text-xs text-gray-400 uppercase">Checks</div>
-                <div className="text-2xl font-bold text-yellow-500">{watchdogStatus?.checks || 0}</div>
-              </div>
-              <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <div className="text-xs text-gray-400 uppercase">Alerts</div>
-                <div className={`text-2xl font-bold ${(watchdogStatus?.alerts || 0) > 0 ? 'text-red-500' : 'text-green-500'}`}>
-                  {watchdogStatus?.alerts || 0}
-                </div>
-              </div>
-              <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <div className="text-xs text-gray-400 uppercase">Uptime</div>
-                <div className="text-2xl font-bold text-green-500">
-                  {formatUptime(watchdogStatus?.uptime_seconds || 0)}
-                </div>
-              </div>
-            </div>
-
-            {/* Component Selector & Detail */}
-            {components.length > 0 && (
-              <>
-                <div className="flex flex-wrap gap-4 mb-6">
-                  <div className="flex-1 min-w-[200px]">
-                    <select
-                      className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg border border-gray-700 focus:border-blue-500 focus:outline-none transition"
-                      value={selectedComponent}
-                      onChange={(e) => handleComponentSelect(e.target.value)}
-                    >
-                      <option value="">Select Component</option>
-                      {components.map((name) => {
-                        const hb = heartbeats[name];
-                        const status = hb?.status || 'unknown';
-                        const health = componentHealth[name] || 0;
-                        return (
-                          <option key={name} value={name}>
-                            {getStatusIcon(status)} {name} - {status} ({health}%)
-                          </option>
-                        );
-                      })}
-                    </select>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* LEFT COLUMN - Watchdog Status & Components List */}
+          <div className="lg:col-span-1 space-y-4">
+            {/* Watchdog Status Card */}
+            <div className="p-5 rounded-2xl bg-[#131A22] border border-[#26313D]">
+              <h3 className="text-sm font-bold text-white tracking-wider uppercase flex items-center gap-2 mb-4">
+                <Heart className="w-4 h-4 text-rose-400" />
+                Watchdog Status
+              </h3>
+              
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 rounded-xl bg-[#1A2530] border border-[#26313D]/50">
+                  <span className="text-xs text-gray-400">Status</span>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${watchdogStatus?.running ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`} />
+                    <span className={`text-xs font-bold ${watchdogStatus?.running ? 'text-green-400' : 'text-red-400'}`}>
+                      {watchdogStatus?.running ? 'RUNNING' : 'STOPPED'}
+                    </span>
                   </div>
-                  {componentDetail && (
+                </div>
+                
+                <div className="flex justify-between items-center p-3 rounded-xl bg-[#1A2530] border border-[#26313D]/50">
+                  <span className="text-xs text-gray-400">Health Score</span>
+                  <span className={`text-sm font-bold font-mono ${getHealthScoreColor(watchdogStatus?.health_score || 0)}`}>
+                    {watchdogStatus?.health_score || 0}%
+                  </span>
+                </div>
+                
+                <div className="flex justify-between items-center p-3 rounded-xl bg-[#1A2530] border border-[#26313D]/50">
+                  <span className="text-xs text-gray-400">Components</span>
+                  <span className="text-sm font-bold font-mono text-white">
+                    {watchdogStatus?.components_healthy || 0}/{watchdogStatus?.components || 0}
+                    <span className="text-xs text-gray-500 ml-1">healthy</span>
+                  </span>
+                </div>
+                
+                <div className="flex justify-between items-center p-3 rounded-xl bg-[#1A2530] border border-[#26313D]/50">
+                  <span className="text-xs text-gray-400">Uptime</span>
+                  <span className="text-sm font-bold font-mono text-green-400">
+                    {formatUptime(watchdogStatus?.uptime_seconds || 0)}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between items-center p-3 rounded-xl bg-[#1A2530] border border-[#26313D]/50">
+                  <span className="text-xs text-gray-400">Checks</span>
+                  <span className="text-sm font-bold font-mono text-yellow-400">
+                    {watchdogStatus?.checks || 0}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between items-center p-3 rounded-xl bg-[#1A2530] border border-[#26313D]/50">
+                  <span className="text-xs text-gray-400">Alerts</span>
+                  <span className={`text-sm font-bold font-mono ${(watchdogStatus?.alerts || 0) > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                    {watchdogStatus?.alerts || 0}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Components List */}
+            <div className="p-5 rounded-2xl bg-[#131A22] border border-[#26313D]">
+              <h3 className="text-sm font-bold text-white tracking-wider uppercase flex items-center gap-2 mb-4">
+                <LayoutGrid className="w-4 h-4 text-blue-400" />
+                Components ({components.length})
+              </h3>
+              
+              <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+                {components.map((name) => {
+                  const hb = heartbeats[name] || { status: 'unknown', beat_count: 0, missed_beats: 0, restart_count: 0, last_beat: null };
+                  const health = componentHealth[name] || 0;
+                  const isSelected = name === selectedComponent;
+                  const isExpanded = expandedComponents.has(name);
+                  
+                  return (
+                    <div
+                      key={name}
+                      className={`rounded-xl border transition-all duration-300 cursor-pointer ${
+                        isSelected
+                          ? 'bg-blue-900/20 border-blue-500/40'
+                          : 'bg-[#1A2530] border-[#26313D] hover:border-[#3A4A5A]'
+                      }`}
+                    >
+                      <div
+                        className="p-3 flex items-center justify-between"
+                        onClick={() => {
+                          handleComponentSelect(name);
+                          toggleComponentExpand(name);
+                        }}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="flex-shrink-0">{getStatusIcon(hb.status)}</span>
+                          <span className="text-sm font-medium text-white truncate">{name}</span>
+                          <StatusBadge status={hb.status || 'unknown'} />
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <span className={`text-xs font-mono font-bold ${getHealthScoreColor(health)}`}>
+                            {health}%
+                          </span>
+                          {isExpanded ? (
+                            <ChevronDown className="w-4 h-4 text-gray-500" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-gray-500" />
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Expanded Detail */}
+                      {isExpanded && isSelected && componentDetail && componentDetail.name === name && (
+                        <div className="px-3 pb-3 pt-1 border-t border-[#26313D]/50 space-y-2">
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="p-2 rounded-lg bg-[#0B0F14]">
+                              <span className="text-gray-400">Beats</span>
+                              <div className="font-mono text-white">{componentDetail.heartbeat?.beat_count || 0}</div>
+                            </div>
+                            <div className="p-2 rounded-lg bg-[#0B0F14]">
+                              <span className="text-gray-400">Missed</span>
+                              <div className={`font-mono ${componentDetail.heartbeat?.missed_beats > 0 ? 'text-red-400' : 'text-white'}`}>
+                                {componentDetail.heartbeat?.missed_beats || 0}
+                              </div>
+                            </div>
+                            <div className="p-2 rounded-lg bg-[#0B0F14]">
+                              <span className="text-gray-400">Restarts</span>
+                              <div className={`font-mono ${componentDetail.heartbeat?.restart_count > 0 ? 'text-orange-400' : 'text-white'}`}>
+                                {componentDetail.heartbeat?.restart_count || 0}
+                              </div>
+                            </div>
+                            <div className="p-2 rounded-lg bg-[#0B0F14]">
+                              <span className="text-gray-400">Health</span>
+                              <div className={`font-mono font-bold ${getHealthScoreColor(componentDetail.health_score || 0)}`}>
+                                {componentDetail.health_score || 0}%
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleResetCircuit(name); }}
+                            className="w-full py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 text-xs font-medium transition-colors"
+                          >
+                            🔄 Reset Circuit
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN - Component Detail */}
+          <div className="lg:col-span-2 space-y-4">
+            {componentDetail ? (
+              <>
+                {/* Component Header */}
+                <div className="p-5 rounded-2xl bg-gradient-to-r from-[#131A22] to-[#1A2530] border border-[#26313D]">
+                  <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center">
+                        <Server className="w-5 h-5 text-blue-400" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-bold text-white">{componentDetail.name}</h2>
+                        <p className="text-xs text-gray-400">
+                          {componentDetail.registered ? '✅ Registered' : '❌ Not Registered'}
+                          {componentDetail.dependencies?.length > 0 && ` • ${componentDetail.dependencies.length} dependencies`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <StatusBadge status={componentDetail.heartbeat?.status || 'unknown'} />
+                      <span className={`text-sm font-bold font-mono ${getHealthScoreColor(componentDetail.health_score || 0)}`}>
+                        {componentDetail.health_score || 0}% Health
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Component Metrics */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 rounded-xl bg-[#131A22] border border-[#26313D]">
+                    <div className="text-[10px] text-gray-400 uppercase tracking-wider">Beats</div>
+                    <div className="text-xl font-bold font-mono text-white mt-1">{componentDetail.heartbeat?.beat_count || 0}</div>
+                  </div>
+                  <div className="p-4 rounded-xl bg-[#131A22] border border-[#26313D]">
+                    <div className="text-[10px] text-gray-400 uppercase tracking-wider">Missed</div>
+                    <div className={`text-xl font-bold font-mono mt-1 ${componentDetail.heartbeat?.missed_beats > 0 ? 'text-red-400' : 'text-white'}`}>
+                      {componentDetail.heartbeat?.missed_beats || 0}
+                    </div>
+                  </div>
+                  <div className="p-4 rounded-xl bg-[#131A22] border border-[#26313D]">
+                    <div className="text-[10px] text-gray-400 uppercase tracking-wider">Restarts</div>
+                    <div className={`text-xl font-bold font-mono mt-1 ${componentDetail.heartbeat?.restart_count > 0 ? 'text-orange-400' : 'text-white'}`}>
+                      {componentDetail.heartbeat?.restart_count || 0}
+                    </div>
+                  </div>
+                  <div className="p-4 rounded-xl bg-[#131A22] border border-[#26313D]">
+                    <div className="text-[10px] text-gray-400 uppercase tracking-wider">Health</div>
+                    <div className={`text-xl font-bold font-mono mt-1 ${getHealthScoreColor(componentDetail.health_score || 0)}`}>
+                      {componentDetail.health_score || 0}%
+                    </div>
+                  </div>
+                </div>
+
+                {/* Heartbeat Detail */}
+                <div className="p-5 rounded-2xl bg-[#131A22] border border-[#26313D]">
+                  <h3 className="text-sm font-bold text-white tracking-wider uppercase flex items-center gap-2 mb-4">
+                    <Heart className="w-4 h-4 text-rose-400" />
+                    Heartbeat Details
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                    <div className="p-3 rounded-xl bg-[#1A2530] border border-[#26313D]/50">
+                      <span className="text-xs text-gray-400 block">Status</span>
+                      <span className="font-bold text-white">{componentDetail.heartbeat?.status?.toUpperCase() || 'UNKNOWN'}</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-[#1A2530] border border-[#26313D]/50">
+                      <span className="text-xs text-gray-400 block">Last Beat</span>
+                      <span className="font-mono text-white text-xs">
+                        {componentDetail.heartbeat?.last_beat
+                          ? new Date(componentDetail.heartbeat.last_beat).toLocaleTimeString()
+                          : 'Never'}
+                      </span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-[#1A2530] border border-[#26313D]/50">
+                      <span className="text-xs text-gray-400 block">Is Alive</span>
+                      <span className={`font-bold ${componentDetail.heartbeat?.is_alive ? 'text-green-400' : 'text-red-400'}`}>
+                        {componentDetail.heartbeat?.is_alive ? '✅ Yes' : '❌ No'}
+                      </span>
+                    </div>
+                    {componentDetail.heartbeat?.last_error && (
+                      <div className="col-span-full p-3 rounded-xl bg-red-500/10 border border-red-500/30">
+                        <span className="text-xs text-gray-400 block">Last Error</span>
+                        <span className="text-xs text-red-400 font-mono">{componentDetail.heartbeat.last_error}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="p-5 rounded-2xl bg-[#131A22] border border-[#26313D]">
+                  <h3 className="text-sm font-bold text-white tracking-wider uppercase flex items-center gap-2 mb-4">
+                    <Zap className="w-4 h-4 text-yellow-400" />
+                    Actions
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
                     <button
                       onClick={() => handleResetCircuit(selectedComponent)}
-                      className="px-4 py-3 bg-red-600 hover:bg-red-700 rounded-lg transition text-sm font-medium"
+                      className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-all shadow-md shadow-red-600/30"
                     >
                       🔄 Reset Circuit Breaker
                     </button>
-                  )}
-                </div>
-
-                {/* Component Detail Cards */}
-                {componentDetail && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div className="bg-gray-800 p-5 rounded-lg border border-gray-700">
-                      <h4 className="text-xs font-semibold text-gray-400 uppercase mb-3 flex items-center gap-2">
-                        💓 Heartbeat
-                        <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(componentDetail.heartbeat?.status)}`}>
-                          {componentDetail.heartbeat?.status?.toUpperCase() || 'UNKNOWN'}
-                        </span>
-                      </h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Beats</span>
-                          <span className="font-mono">{componentDetail.heartbeat?.beat_count || 0}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Missed</span>
-                          <span className={`font-mono ${componentDetail.heartbeat?.missed_beats > 0 ? 'text-red-500' : ''}`}>
-                            {componentDetail.heartbeat?.missed_beats || 0}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Restarts</span>
-                          <span className={`font-mono ${componentDetail.heartbeat?.restart_count > 0 ? 'text-orange-500' : ''}`}>
-                            {componentDetail.heartbeat?.restart_count || 0}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Health Score</span>
-                          <span className={`font-mono ${getHealthScoreColor(componentDetail.heartbeat?.health_score || 0)}`}>
-                            {componentDetail.heartbeat?.health_score || 0}%
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Last Beat</span>
-                          <span className="font-mono text-xs">
-                            {componentDetail.heartbeat?.last_beat
-                              ? new Date(componentDetail.heartbeat.last_beat).toLocaleTimeString()
-                              : 'Never'}
-                          </span>
-                        </div>
-                        {componentDetail.heartbeat?.last_error && (
-                          <div className="bg-red-900/20 p-2 rounded text-xs text-red-400 truncate">
-                            Error: {componentDetail.heartbeat.last_error}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="bg-gray-800 p-5 rounded-lg border border-gray-700">
-                      <h4 className="text-xs font-semibold text-gray-400 uppercase mb-3 flex items-center gap-2">
-                        📦 Component Info
-                      </h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Name</span>
-                          <span className="font-mono">{componentDetail.name}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Registered</span>
-                          <span className={componentDetail.registered ? 'text-green-500' : 'text-red-500'}>
-                            {componentDetail.registered ? '✅ Yes' : '❌ No'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Health Score</span>
-                          <span className={`font-mono ${getHealthScoreColor(componentDetail.health_score || 0)}`}>
-                            {componentDetail.health_score || 0}%
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Dependencies</span>
-                          <span className="font-mono text-xs">
-                            {componentDetail.dependencies?.length > 0
-                              ? componentDetail.dependencies.join(', ')
-                              : 'None'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-gray-800 p-5 rounded-lg border border-gray-700">
-                      <h4 className="text-xs font-semibold text-gray-400 uppercase mb-3 flex items-center gap-2">
-                        ⚡ Actions
-                      </h4>
-                      <div className="space-y-3">
-                        <button
-                          onClick={() => handleResetCircuit(selectedComponent)}
-                          className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition text-sm"
-                        >
-                          🔄 Reset Circuit Breaker
-                        </button>
-                        <button
-                          onClick={() => {
-                            fetchWatchdogData();
-                            fetchComponentDetail(selectedComponent);
-                          }}
-                          className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition text-sm"
-                        >
-                          🔍 Refresh Component
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Components Table */}
-                <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-                  <div className="px-5 py-4 border-b border-gray-700 flex justify-between items-center">
-                    <h4 className="text-sm font-semibold text-gray-400 uppercase">
-                      📊 All Components
-                    </h4>
-                    <span className="text-xs text-gray-500">{components.length} total</span>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-900/50">
-                        <tr>
-                          <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Component</th>
-                          <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
-                          <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Health</th>
-                          <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Beats</th>
-                          <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Missed</th>
-                          <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Restarts</th>
-                          <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Last Beat</th>
-                          <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {components.map((name) => {
-                          const hb = heartbeats[name] || { 
-                            status: 'unknown', 
-                            beat_count: 0, 
-                            missed_beats: 0, 
-                            restart_count: 0, 
-                            last_beat: null 
-                          };
-                          const health = componentHealth[name] || 0;
-                          const isSelected = name === selectedComponent;
-                          return (
-                            <tr
-                              key={name}
-                              className={`border-t border-gray-700/50 cursor-pointer transition hover:bg-gray-700/30 ${
-                                isSelected ? 'bg-blue-900/20' : ''
-                              }`}
-                              onClick={() => handleComponentSelect(name)}
-                            >
-                              <td className="px-5 py-3 font-medium flex items-center gap-2">
-                                {getStatusIcon(hb.status)}
-                                {name}
-                              </td>
-                              <td className="px-5 py-3">
-                                <span className={`px-2 py-1 rounded text-xs ${getStatusColor(hb.status)}`}>
-                                  {hb.status?.toUpperCase() || 'UNKNOWN'}
-                                </span>
-                              </td>
-                              <td className="px-5 py-3">
-                                <span className={`font-mono ${getHealthScoreColor(health)}`}>
-                                  {health}%
-                                </span>
-                                <div className="w-16 bg-gray-700 rounded-full h-1 mt-1">
-                                  <div
-                                    className={`h-1 rounded-full transition-all ${getHealthBarColor(health)}`}
-                                    style={{ width: `${Math.min(health, 100)}%` }}
-                                  />
-                                </div>
-                              </td>
-                              <td className="px-5 py-3 font-mono">{hb.beat_count}</td>
-                              <td className={`px-5 py-3 font-mono ${hb.missed_beats > 0 ? 'text-red-500' : ''}`}>
-                                {hb.missed_beats}
-                              </td>
-                              <td className={`px-5 py-3 font-mono ${hb.restart_count > 0 ? 'text-orange-500' : ''}`}>
-                                {hb.restart_count}
-                              </td>
-                              <td className="px-5 py-3 font-mono text-xs text-gray-400">
-                                {hb.last_beat ? new Date(hb.last_beat).toLocaleTimeString() : 'Never'}
-                              </td>
-                              <td className="px-5 py-3">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleResetCircuit(name);
-                                  }}
-                                  className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-xs transition"
-                                >
-                                  Reset
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                        {components.length === 0 && (
-                          <tr>
-                            <td colSpan={8} className="px-5 py-8 text-center text-gray-500">
-                              No components registered yet. Watchdog may be initializing.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
+                    <button
+                      onClick={() => {
+                        fetchWatchdogData();
+                        fetchComponentDetail(selectedComponent);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all shadow-md shadow-blue-600/30"
+                    >
+                      🔍 Refresh Component
+                    </button>
                   </div>
                 </div>
               </>
+            ) : (
+              <div className="p-12 text-center text-gray-500 bg-[#131A22] rounded-2xl border border-[#26313D]">
+                <Server className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p className="text-sm font-medium">Select a component from the list</p>
+                <p className="text-xs mt-1">Click any component to view its details</p>
+              </div>
             )}
-          </>
-        )}
+          </div>
+        </div>
 
         {/* ============================================================
         FOOTER
         ============================================================ */}
-        <div className="mt-8 text-center text-xs text-gray-600 border-t border-gray-800 pt-4">
-          <p>
-            Inkside Digital v6.0 • Diagnostics & Watchdog v3.1 REAL • 
+        <div className="mt-8 pt-4 border-t border-[#26313D]/40 flex flex-wrap items-center justify-between text-[10px] text-gray-600 gap-2">
+          <span>
+            Inkside Digital v7.0 • Diagnostics & Watchdog v3.1 REAL
             {watchdogStatus?.running ? ' 🟢 All systems operational' : ' 🔴 Monitoring inactive'}
-          </p>
-          <p className="mt-1">
+          </span>
+          <span>
             PID: {watchdogStatus?.pid || 'N/A'} • 
             Components: {watchdogStatus?.components || 0} • 
-            Uptime: {formatUptime(watchdogStatus?.uptime_seconds || 0)} •
-            Version: {watchdogStatus?.version || '--'}
-          </p>
+            Uptime: {formatUptime(watchdogStatus?.uptime_seconds || 0)}
+          </span>
         </div>
       </div>
     </div>
   );
 };
-
 
 export { DiagnosticsView };

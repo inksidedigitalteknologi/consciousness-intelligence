@@ -86,37 +86,38 @@ interface SystemMetrics {
 }
 
 // ============================================================
+// API SERVICE - PAKAI NGINX PROXY
+// ============================================================
+
+const API_BASE = '';
+
+// ============================================================
 // MAIN COMPONENT
 // ============================================================
 
 export const PredictionView: React.FC = () => {
-  // State untuk filter
   const [selectedPair, setSelectedPair] = useState('BTC/USDT');
   const [selectedHorizon, setSelectedHorizon] = useState('1h');
   const [selectedMethod, setSelectedMethod] = useState('ensemble_all');
   
-  // State untuk simulasi
   const [isSimulating, setIsSimulating] = useState(false);
   const [simulationRan, setSimulationRan] = useState(false);
   
-  // State untuk data
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [monteCarlo, setMonteCarlo] = useState<MonteCarloResult | null>(null);
   
-  // State UI
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   // ============================================================
-  // WEBSOCKET - MENGGUNAKAN SOCKET.IO (BUKAN RAW WEBSOCKET)
+  // WEBSOCKET - SOCKET.IO
   // ============================================================
   
   const { isConnected, status } = useWebSocketStatus();
 
-  // Subscribe ke channel predictions via Socket.IO
   useWebSocketChannel('predictions', (data) => {
     if (data?.type === 'prediction_update') {
       const payload = data.payload || data.data;
@@ -158,7 +159,7 @@ export const PredictionView: React.FC = () => {
   });
 
   // ============================================================
-  // FETCH DATA FUNCTION
+  // FETCH DATA - TANPA new URL()
   // ============================================================
   
   const fetchData = useCallback(async () => {
@@ -166,7 +167,7 @@ export const PredictionView: React.FC = () => {
       setRefreshing(true);
       setError(null);
       
-      // 1. Fetch predictions
+      // 1. Fetch predictions - langsung pakai path relatif
       const predResponse = await predictionService.getPredictions({
         pair: selectedPair,
         horizon: selectedHorizon,
@@ -203,11 +204,6 @@ export const PredictionView: React.FC = () => {
     }
   }, [selectedPair, selectedHorizon, selectedMethod, simulationRan]);
 
-  // ============================================================
-  // EFFECTS
-  // ============================================================
-  
-  // Fetch on mount and when filters change
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -254,7 +250,7 @@ export const PredictionView: React.FC = () => {
   };
 
   // ============================================================
-  // RENDER FUNCTIONS
+  // RENDER HELPERS
   // ============================================================
   
   const getDirectionIcon = (direction: string) => {
@@ -280,9 +276,11 @@ export const PredictionView: React.FC = () => {
   };
 
   const getRegimeColor = (regime: string) => {
-    if (regime.includes('BULL') || regime.includes('HIGH_MOMENTUM')) return 'text-emerald-400';
-    if (regime.includes('BEAR')) return 'text-rose-400';
-    if (regime.includes('RANGE') || regime.includes('CONSOLIDATION')) return 'text-amber-400';
+    if (!regime) return 'text-cyan-400';
+    const r = regime.toUpperCase();
+    if (r.includes('BULL') || r.includes('HIGH_MOMENTUM')) return 'text-emerald-400';
+    if (r.includes('BEAR')) return 'text-rose-400';
+    if (r.includes('RANGE') || r.includes('CONSOLIDATION')) return 'text-amber-400';
     return 'text-cyan-400';
   };
 
@@ -348,12 +346,9 @@ export const PredictionView: React.FC = () => {
   return (
     <div id="prediction-view" className="space-y-6 pb-12">
       
-      {/* ==========================================================
-          HEADER BAR - Status & Controls
-          ========================================================== */}
+      {/* HEADER BAR */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          {/* WebSocket Status - Menggunakan Socket.IO */}
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#131A22] border border-[#26313D]">
             {isConnected ? (
               <Wifi className="w-3.5 h-3.5 text-emerald-400" />
@@ -366,7 +361,6 @@ export const PredictionView: React.FC = () => {
             <span className="text-[8px] text-[#5F6B78]">({status})</span>
           </div>
           
-          {/* Last Updated */}
           {lastUpdated && (
             <span className="text-[10px] text-[#5F6B78] font-mono">
               Updated: {lastUpdated.toLocaleTimeString()}
@@ -386,9 +380,7 @@ export const PredictionView: React.FC = () => {
         </div>
       </div>
 
-      {/* ==========================================================
-          BANNER - Prediction Engine Header
-          ========================================================== */}
+      {/* BANNER */}
       <div className="p-5 rounded-2xl bg-gradient-to-r from-[#131A22] to-[#1A2530] border border-[#26313D] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
@@ -407,7 +399,6 @@ export const PredictionView: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {/* Pair Selector */}
           <select
             value={selectedPair}
             onChange={handlePairChange}
@@ -422,7 +413,6 @@ export const PredictionView: React.FC = () => {
             )}
           </select>
 
-          {/* Horizon Selector */}
           <select
             value={selectedHorizon}
             onChange={handleHorizonChange}
@@ -436,7 +426,6 @@ export const PredictionView: React.FC = () => {
             <option value="1w">1w</option>
           </select>
 
-          {/* Monte Carlo Button */}
           <button
             onClick={handleRunMonteCarlo}
             disabled={isSimulating}
@@ -452,9 +441,7 @@ export const PredictionView: React.FC = () => {
         </div>
       </div>
 
-      {/* ==========================================================
-          METRICS GRID - Quick Stats
-          ========================================================== */}
+      {/* METRICS GRID */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         <div className="p-4 rounded-xl bg-[#131A22] border border-[#26313D] hover:border-[#3A4A5A] transition-colors">
           <div className="flex items-center gap-2">
@@ -505,9 +492,7 @@ export const PredictionView: React.FC = () => {
         </div>
       </div>
 
-      {/* ==========================================================
-          MONTE CARLO RESULTS
-          ========================================================== */}
+      {/* MONTE CARLO RESULTS */}
       {monteCarlo && (
         <div className="p-5 rounded-2xl bg-[#131A22] border border-[#26313D] space-y-4 shadow-lg animate-in fade-in duration-300">
           <div className="flex items-center justify-between pb-3 border-b border-[#26313D]/70">
@@ -523,7 +508,6 @@ export const PredictionView: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 font-mono text-xs">
-            {/* Bullish */}
             <div className="p-4 rounded-xl bg-[#1A2530] border border-emerald-500/30 space-y-1">
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
@@ -542,7 +526,6 @@ export const PredictionView: React.FC = () => {
               </div>
             </div>
 
-            {/* Base */}
             <div className="p-4 rounded-xl bg-[#1A2530] border border-blue-500/30 space-y-1">
               <div className="flex items-center gap-2">
                 <Minus className="w-3.5 h-3.5 text-blue-400" />
@@ -561,7 +544,6 @@ export const PredictionView: React.FC = () => {
               </div>
             </div>
 
-            {/* Bearish */}
             <div className="p-4 rounded-xl bg-[#1A2530] border border-rose-500/30 space-y-1">
               <div className="flex items-center gap-2">
                 <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
@@ -581,7 +563,6 @@ export const PredictionView: React.FC = () => {
             </div>
           </div>
 
-          {/* Confidence Interval Bar */}
           <div className="p-4 rounded-xl bg-[#0B0F14] border border-[#26313D] space-y-2">
             <div className="flex items-center justify-between text-xs font-mono">
               <span className="text-[#8D9AAA]">95% Prediction Interval:</span>
@@ -606,9 +587,7 @@ export const PredictionView: React.FC = () => {
         </div>
       )}
 
-      {/* ==========================================================
-          PREDICTIONS GRID - Real-Time Forecast Matrix
-          ========================================================== */}
+      {/* PREDICTIONS GRID */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-white tracking-wider uppercase flex items-center gap-2">
@@ -635,7 +614,6 @@ export const PredictionView: React.FC = () => {
                     : 'border-[#26313D] hover:border-[#3A4A5A]'
                 } space-y-3 shadow-lg transition-all duration-300 hover:shadow-xl`}
               >
-                {/* Header - Pair & Price */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="font-mono font-bold text-base text-white">
@@ -656,7 +634,6 @@ export const PredictionView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Metrics Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono text-xs pt-1">
                   <div className="p-2 bg-[#1A2530] rounded-lg">
                     <span className="text-[9px] text-[#5F6B78] block">Confidence</span>
@@ -674,7 +651,6 @@ export const PredictionView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Details - Fibonacci & S/R */}
                 <div className="p-2.5 rounded-xl bg-[#0B0F14] border border-[#26313D]/60 space-y-1 font-mono text-[11px]">
                   <div className="flex justify-between">
                     <span className="text-[#8D9AAA]">Fibonacci:</span>
