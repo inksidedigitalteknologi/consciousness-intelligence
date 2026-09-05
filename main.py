@@ -4,10 +4,7 @@
 # main.py
 # INKSIDEDIGITAL TRADING BOT v2.0.0
 # COGNITIVE MIRROR ENGINE - FULL HEADLESS (API MODE)
-# WITH AUTO-CRAWL & AUTO-CLEANUP
-# WITH UNLIMITED KNOWLEDGE ENGINE
-# WITH ALL FRONTEND ENDPOINTS INCLUDING PATTERNS, DIAGNOSTICS, WATCHDOG
-# NO BUGS - FULLY FIXED
+# WITH AI INTEGRATION - DEEPSEEK ENHANCED
 # ============================================================
 
 import os
@@ -96,10 +93,10 @@ MODE = os.environ.get('INKSIDE_MODE', 'PAPER')
 API_PORT = int(os.environ.get('API_PORT', 5001))
 API_HOST = os.environ.get('API_HOST', '0.0.0.0')
 
-# Variabel global untuk status engine
 engine_running = False
+bot_instance = None
+brain_instance = None
 
-# API Key untuk autentikasi
 API_KEY = os.environ.get('API_KEY', 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ')
 
 # ============================================================
@@ -119,6 +116,23 @@ logger.info(f"🚀 Starting {APP_NAME} v{APP_VERSION}")
 logger.info(f"   Mode: {MODE}")
 
 # ============================================================
+# AI INTEGRATION FLAG
+# ============================================================
+
+try:
+    from core.deepseek import deepseek_ai
+    DEEPSEEK_AVAILABLE = True
+    DEEPSEEK_ENABLED = deepseek_ai.enabled if hasattr(deepseek_ai, 'enabled') else False
+    if DEEPSEEK_ENABLED:
+        logger.info("🤖 DeepSeek AI Integration: ENABLED")
+    else:
+        logger.info("🤖 DeepSeek AI Integration: DISABLED (check DEEPSEEK_API_KEY)")
+except ImportError:
+    DEEPSEEK_AVAILABLE = False
+    DEEPSEEK_ENABLED = False
+    logger.info("🤖 DeepSeek AI Integration: NOT AVAILABLE")
+
+# ============================================================
 # GLOBAL EXCEPTION HANDLER
 # ============================================================
 
@@ -135,7 +149,7 @@ def global_exception_handler(exc_type, exc_value, exc_tb):
 sys.excepthook = global_exception_handler
 
 # ============================================================
-# [WATCHDOG] IMPORT
+# WATCHDOG IMPORT
 # ============================================================
 
 try:
@@ -147,7 +161,7 @@ except ImportError as e:
     WATCHDOG_AVAILABLE = False
 
 # ============================================================
-# [KNOWLEDGE] IMPORT
+# KNOWLEDGE IMPORT
 # ============================================================
 
 try:
@@ -159,7 +173,7 @@ except ImportError as e:
     KNOWLEDGE_AVAILABLE = False
 
 # ============================================================
-# [SIMULATION] IMPORT
+# SIMULATION IMPORT
 # ============================================================
 
 try:
@@ -206,7 +220,7 @@ else:
     logger.warning("⚠️ Exchange not available")
 
 # ============================================================
-# FALLBACK - TANPA DUMMY
+# FALLBACK
 # ============================================================
 
 if Brain is None:
@@ -250,64 +264,6 @@ def send_telegram_message(message: str) -> bool:
     except Exception as e:
         logger.error(f"Telegram send error: {e}")
         return False
-
-# ============================================================
-# TELEGRAM COMMAND HANDLER
-# ============================================================
-
-def format_uptime(seconds: int) -> str:
-    days = seconds // 86400
-    hours = (seconds % 86400) // 3600
-    minutes = (seconds % 3600) // 60
-    if days > 0:
-        return f"{days}d {hours}h {minutes}m"
-    if hours > 0:
-        return f"{hours}h {minutes}m"
-    return f"{minutes}m"
-
-def handle_telegram_command(command: str) -> str:
-    if command == '/start':
-        return f"""🚀 <b>INKSIDE DIGITAL v{APP_VERSION}</b>
-━━━━━━━━━━━━━━━━━━━━━
-🧠 Cognitive Mirror Engine
-📊 Mode: {MODE}
-🕐 Uptime: {format_uptime(int(time.time() - _startup_time))}
-📚 Knowledge: {len(knowledge.all()) if KNOWLEDGE_AVAILABLE else 0} items
-━━━━━━━━━━━━━━━━━━━━━
-/health - System health
-/status - System status
-/refresh - Refresh data"""
-    
-    elif command == '/health':
-        return f"""🩺 <b>HEALTH CHECK</b>
-━━━━━━━━━━━━━━━━━━━━━
-✅ System running
-📚 Knowledge Engine: {'ONLINE' if KNOWLEDGE_AVAILABLE else 'OFFLINE'}
-🧠 Brain: {'ACTIVE' if brain else 'INACTIVE'}
-🔄 Engine: {'RUNNING' if engine_running else 'IDLE'}
-━━━━━━━━━━━━━━━━━━━━━
-🕐 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"""
-    
-    elif command == '/status':
-        return f"""📊 <b>SYSTEM STATUS</b>
-━━━━━━━━━━━━━━━━━━━━━
-🔄 Engine: {'RUNNING' if engine_running else 'IDLE'}
-📚 Knowledge: {len(knowledge.all()) if KNOWLEDGE_AVAILABLE else 0} items
-🧠 Brain: {'ACTIVE' if brain else 'INACTIVE'}
-📡 API: ONLINE
-━━━━━━━━━━━━━━━━━━━━━
-🕐 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"""
-    
-    elif command == '/refresh':
-        return f"""🔄 <b>DATA REFRESHED</b>
-━━━━━━━━━━━━━━━━━━━━━
-✅ All data refreshed
-📚 Knowledge: {len(knowledge.all()) if KNOWLEDGE_AVAILABLE else 0} items
-🕐 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"""
-    
-    else:
-        return f"""⚠️ Unknown command: {command}
-Type /start for available commands."""
 
 # ============================================================
 # AUTO-CRAWL SCHEDULER
@@ -515,168 +471,407 @@ def start_api_server(bot_instance):
             except Exception as e:
                 logger.debug(f"Broadcast error: {e}")
 
+        # ============================================================
+        # AI ENDPOINTS - DEEPSEEK INTEGRATION
+        # ============================================================
 
-        # ============================================================
-        # TELEGRAM ENDPOINTS
-        # ============================================================
-        
-        @app.route('/api/telegram/status', methods=['GET'])
+        @app.route('/api/ai/status', methods=['GET'])
         @require_api_key
-        def telegram_status():
+        def ai_status():
+            """Get AI integration status."""
             try:
-                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
-                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
-                configured = bool(token and chat_id)
-                
                 return jsonify({
-                    'configured': configured,
-                    'status': 'online' if configured else 'offline',
-                    'bot_name': 'InksideBot' if configured else None
+                    'available': DEEPSEEK_AVAILABLE,
+                    'enabled': DEEPSEEK_ENABLED,
+                    'model': 'deepseek-chat' if DEEPSEEK_ENABLED else None,
+                    'timestamp': datetime.now().isoformat()
                 })
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/telegram/config', methods=['GET'])
+
+        @app.route('/api/ai/ask', methods=['POST'])
         @require_api_key
-        def telegram_get_config():
-            try:
-                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
-                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
-                configured = bool(token and chat_id)
-                
-                # Mask token dan chat_id
-                masked_token = token[:6] + '••••••••' + token[-4:] if len(token) > 10 else token
-                masked_chat_id = chat_id[:3] + '••••••' + chat_id[-3:] if len(chat_id) > 8 else chat_id
-                
-                return jsonify({
-                    'bot_token': masked_token,
-                    'chat_id': masked_chat_id,
-                    'configured': configured,
-                    'raw_token': token,  # untuk internal
-                    'raw_chat_id': chat_id  # untuk internal
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/telegram/config', methods=['POST'])
-        @require_api_key
-        def telegram_save_config():
+        def ai_ask():
+            """Ask AI a question with context from knowledge engine."""
             try:
                 data = request.json
-                bot_token = data.get('bot_token', '')
-                chat_id = data.get('chat_id', '')
+                question = data.get('question', '')
                 
-                # Simpan ke environment variable (temporary)
-                os.environ['TELEGRAM_BOT_TOKEN'] = bot_token
-                os.environ['TELEGRAM_CHAT_ID'] = chat_id
+                if not question:
+                    return jsonify({'error': 'Question is required'}), 400
                 
-                # Update global variable
-                global TELEGRAM_CONFIGURED
-                TELEGRAM_CONFIGURED = bool(bot_token and chat_id)
+                system_prompt = data.get('system_prompt', 'default')
+                conversation_id = data.get('conversation_id')
+                temperature = data.get('temperature', 0.7)
+                max_tokens = data.get('max_tokens', 2048)
                 
-                logger.info(f"Telegram config updated: configured={TELEGRAM_CONFIGURED}")
+                # Get context from knowledge engine
+                context = None
+                if KNOWLEDGE_AVAILABLE:
+                    relevant = knowledge.search(question, max_results=5)
+                    if relevant:
+                        context = "\n\n".join([
+                            f"[{item.category}] {item.content}"
+                            for item in relevant
+                        ])
+                
+                if not DEEPSEEK_ENABLED:
+                    # Fallback response if AI is disabled
+                    return jsonify({
+                        'question': question,
+                        'answer': f"I'm a cognitive trading bot. I can help with market analysis, trading strategies, and financial insights. Your question: '{question}'\n\n📚 Context from knowledge: {len(relevant) if KNOWLEDGE_AVAILABLE else 0} relevant items found.",
+                        'ai_enabled': False,
+                        'context_used': bool(context),
+                        'timestamp': datetime.now().isoformat()
+                    })
+                
+                from core.deepseek import deepseek_ai
+                
+                result = deepseek_ai.ask(
+                    prompt=question,
+                    system_prompt=system_prompt,
+                    context=context,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    conversation_id=conversation_id
+                )
+                
+                if isinstance(result, str):
+                    return jsonify({
+                        'question': question,
+                        'answer': result,
+                        'ai_enabled': True,
+                        'context_used': bool(context),
+                        'timestamp': datetime.now().isoformat()
+                    })
+                else:
+                    return jsonify(result.to_dict())
+                
+            except Exception as e:
+                logger.error(f"AI ask error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/ai/brain/reflection', methods=['GET'])
+        @require_api_key
+        def ai_brain_reflection():
+            """Get brain reflection with AI enhancement."""
+            try:
+                topic = request.args.get('topic')
+                
+                if not DEEPSEEK_ENABLED:
+                    return jsonify({
+                        'error': 'AI is not enabled. Please set DEEPSEEK_API_KEY.',
+                        'ai_enabled': False
+                    }), 400
+                
+                from core.brain import brain
+                result = brain.reflection_with_ai(topic)
                 
                 return jsonify({
-                    'status': 'success',
-                    'message': 'Configuration saved successfully'
+                    'awareness': result.get('awareness', 0),
+                    'emotion': result.get('emotion', 'Unknown'),
+                    'curiosity': result.get('curiosity', 0),
+                    'insight_depth': result.get('insight_depth', 0),
+                    'resilience': result.get('resilience', 0),
+                    'focus': result.get('focus', 0),
+                    'insights': result.get('insights', []),
+                    'ai_insights': result.get('ai_insights', []),
+                    'ai_reflection': result.get('ai_reflection', ''),
+                    'ai_enhanced': result.get('ai_enhanced', False),
+                    'ai_status': result.get('ai_status', 'unknown'),
+                    'stability': result.get('stability', 'Unknown'),
+                    'reflection_quality': result.get('reflection_quality', 'FAIR'),
+                    'confidence': result.get('confidence', 0),
+                    'timestamp': result.get('timestamp', datetime.now().isoformat())
                 })
             except Exception as e:
+                logger.error(f"Brain reflection API error: {e}")
                 return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/telegram/send', methods=['POST'])
+
+        @app.route('/api/ai/brain/status', methods=['GET'])
         @require_api_key
-        def telegram_send():
+        def ai_brain_status():
+            """Get brain AI status."""
+            try:
+                from core.brain import brain
+                return jsonify(brain.get_ai_status())
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/ai/scanner/analyze', methods=['POST'])
+        @require_api_key
+        def ai_scanner_analyze():
+            """Analyze market with AI."""
+            try:
+                data = request.json or {}
+                pair = data.get('pair', 'BTC/USD')
+                
+                if not DEEPSEEK_ENABLED:
+                    return jsonify({
+                        'error': 'AI is not enabled. Please set DEEPSEEK_API_KEY.',
+                        'ai_enabled': False
+                    }), 400
+                
+                from core.scanner import scanner
+                result = scanner.analyze_with_ai(pair)
+                
+                return jsonify({
+                    'status': result.get('status'),
+                    'pair': result.get('pair'),
+                    'analysis': result.get('analysis'),
+                    'price': result.get('price'),
+                    'signal': result.get('signal'),
+                    'confidence': result.get('confidence'),
+                    'timestamp': result.get('timestamp')
+                })
+            except Exception as e:
+                logger.error(f"Scanner AI analysis error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/ai/scanner/sentiment', methods=['GET'])
+        @require_api_key
+        def ai_scanner_sentiment():
+            """Get market sentiment with AI."""
+            try:
+                pair = request.args.get('pair', 'BTC/USD')
+                
+                if not DEEPSEEK_ENABLED:
+                    return jsonify({
+                        'error': 'AI is not enabled. Please set DEEPSEEK_API_KEY.',
+                        'ai_enabled': False
+                    }), 400
+                
+                from core.scanner import scanner
+                result = scanner.get_market_sentiment_ai(pair)
+                
+                return jsonify({
+                    'status': result.get('status'),
+                    'pair': result.get('pair'),
+                    'sentiment': result.get('sentiment'),
+                    'confidence': result.get('confidence'),
+                    'price': result.get('price'),
+                    'timestamp': result.get('timestamp')
+                })
+            except Exception as e:
+                logger.error(f"Scanner sentiment error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/ai/signal/validate', methods=['POST'])
+        @require_api_key
+        def ai_signal_validate():
+            """Validate trading signal with AI."""
+            try:
+                data = request.json
+                signal = data.get('signal', {})
+                
+                if not signal:
+                    return jsonify({'error': 'Signal data required'}), 400
+                
+                if not DEEPSEEK_ENABLED:
+                    return jsonify({
+                        'error': 'AI is not enabled. Please set DEEPSEEK_API_KEY.',
+                        'ai_enabled': False
+                    }), 400
+                
+                from core.signal_engine import signal_engine
+                result = signal_engine.validate_with_ai(signal)
+                
+                return jsonify({
+                    'original_signal': signal,
+                    'ai_validation': result.get('ai_validation'),
+                    'ai_validation_score': result.get('ai_validation_score'),
+                    'ai_validated': result.get('ai_validated', False),
+                    'ai_status': result.get('ai_status'),
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                logger.error(f"AI signal validation error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/ai/strategy/generate', methods=['POST'])
+        @require_api_key
+        def ai_generate_strategy():
+            """Generate trading strategy with AI."""
+            try:
+                data = request.json
+                pair = data.get('pair', 'BTC/USD')
+                risk_level = data.get('risk_level', 'moderate')
+                timeframe = data.get('timeframe', '1h')
+                market_data = data.get('market_data', {})
+                
+                if not DEEPSEEK_ENABLED:
+                    return jsonify({
+                        'error': 'AI is not enabled. Please set DEEPSEEK_API_KEY.',
+                        'ai_enabled': False
+                    }), 400
+                
+                from core.bot import bot_instance
+                result = bot_instance.generate_strategy_with_ai(
+                    pair=pair,
+                    market_data=market_data,
+                    risk_level=risk_level,
+                    timeframe=timeframe
+                )
+                
+                return jsonify({
+                    'status': result.get('status'),
+                    'pair': result.get('pair'),
+                    'strategy': result.get('strategy'),
+                    'entry': result.get('entry'),
+                    'take_profit': result.get('take_profit'),
+                    'stop_loss': result.get('stop_loss'),
+                    'risk_reward': result.get('risk_reward'),
+                    'position_size': result.get('position_size'),
+                    'recommendation': result.get('recommendation'),
+                    'risk_level': risk_level,
+                    'timestamp': result.get('timestamp')
+                })
+            except Exception as e:
+                logger.error(f"AI strategy error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/ai/bot/status', methods=['GET'])
+        @require_api_key
+        def ai_bot_status():
+            """Get bot AI status."""
+            try:
+                from core.bot import bot_instance
+                return jsonify(bot_instance.get_ai_status())
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/ai/chat', methods=['POST'])
+        @require_api_key
+        def ai_chat():
+            """Chat with AI with memory."""
             try:
                 data = request.json
                 message = data.get('message', '')
+                conversation_id = data.get('conversation_id')
                 
                 if not message:
                     return jsonify({'error': 'Message is required'}), 400
                 
-                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
-                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
-                
-                if not token or not chat_id:
+                if not DEEPSEEK_ENABLED:
                     return jsonify({
-                        'sent': False,
-                        'status': 'error',
-                        'message': 'Telegram not configured'
+                        'error': 'AI is not enabled. Please set DEEPSEEK_API_KEY.',
+                        'ai_enabled': False
                     }), 400
                 
-                import requests
-                url = f"https://api.telegram.org/bot{token}/sendMessage"
-                payload = {
-                    'chat_id': chat_id,
-                    'text': message,
-                    'parse_mode': 'HTML'
-                }
-                response = requests.post(url, json=payload, timeout=10)
+                from core.deepseek import deepseek_ai
                 
-                if response.status_code == 200:
-                    return jsonify({
-                        'sent': True,
-                        'status': 'success',
-                        'message': 'Message sent successfully'
-                    })
-                else:
-                    return jsonify({
-                        'sent': False,
-                        'status': 'error',
-                        'message': f'Telegram API error: {response.status_code}'
-                    }), 500
-                    
-            except Exception as e:
-                logger.error(f"Telegram send error: {e}")
+                # Get context from knowledge
+                context = None
+                if KNOWLEDGE_AVAILABLE:
+                    relevant = knowledge.search(message, max_results=3)
+                    if relevant:
+                        context = "\n".join([item.content[:200] for item in relevant])
+                
+                result = deepseek_ai.chat(
+                    message=message,
+                    conversation_id=conversation_id,
+                    context=context
+                )
+                
                 return jsonify({
-                    'sent': False,
-                    'status': 'error',
-                    'message': str(e)
-                }), 500
-        
-        @app.route('/api/telegram/test', methods=['POST'])
+                    'message': message,
+                    'response': result.get('response', ''),
+                    'conversation_id': result.get('conversation_id'),
+                    'context_used': bool(context),
+                    'timestamp': datetime.now().isoformat()
+                })
+                
+            except Exception as e:
+                logger.error(f"AI chat error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        # ============================================================
+        # KNOWLEDGE ENDPOINTS
+        # ============================================================
+
+        @app.route('/api/knowledge/search', methods=['POST'])
         @require_api_key
-        def telegram_test():
+        def knowledge_search():
+            """Search knowledge base."""
             try:
-                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
-                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
+                data = request.json
+                query = data.get('query', '')
+                max_results = data.get('max_results', 10)
                 
-                if not token or not chat_id:
-                    return jsonify({
-                        'status': 'error',
-                        'message': 'Telegram not configured',
-                        'sent': False
-                    }), 400
+                if not query:
+                    return jsonify({'error': 'Query is required'}), 400
                 
-                import requests
-                url = f"https://api.telegram.org/bot{token}/sendMessage"
-                payload = {
-                    'chat_id': chat_id,
-                    'text': '🧪 <b>Test Message</b>\n\n✅ Telegram connection is working!',
-                    'parse_mode': 'HTML'
-                }
-                response = requests.post(url, json=payload, timeout=10)
+                if not KNOWLEDGE_AVAILABLE:
+                    return jsonify({'error': 'Knowledge engine not available'}), 503
                 
-                if response.status_code == 200:
-                    return jsonify({
-                        'status': 'success',
-                        'message': 'Test message sent successfully!',
-                        'sent': True
-                    })
-                else:
-                    return jsonify({
-                        'status': 'error',
-                        'message': f'Telegram API error: {response.status_code}',
-                        'sent': False
-                    }), 500
-                    
-            except Exception as e:
-                logger.error(f"Telegram test error: {e}")
+                results = knowledge.search(query, max_results=max_results)
+                
                 return jsonify({
-                    'status': 'error',
-                    'message': str(e),
-                    'sent': False
-                }), 500
-        
+                    'query': query,
+                    'results': [item.to_dict() for item in results],
+                    'total': len(results),
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/knowledge/add', methods=['POST'])
+        @require_api_key
+        def knowledge_add():
+            """Add item to knowledge base."""
+            try:
+                data = request.json
+                content = data.get('content', '')
+                category = data.get('category', 'General Knowledge')
+                type_ = data.get('type', 'fact')
+                tags = data.get('tags', [])
+                confidence = data.get('confidence', 75.0)
+                importance = data.get('importance', 0.5)
+                
+                if not content:
+                    return jsonify({'error': 'Content is required'}), 400
+                
+                if not KNOWLEDGE_AVAILABLE:
+                    return jsonify({'error': 'Knowledge engine not available'}), 503
+                
+                item = knowledge.add(
+                    content=content,
+                    category=category,
+                    type=type_,
+                    tags=tags,
+                    confidence=confidence,
+                    importance=importance
+                )
+                
+                knowledge.save()
+                
+                return jsonify({
+                    'status': 'success',
+                    'item': item.to_dict() if item else None,
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/knowledge/stats', methods=['GET'])
+        @require_api_key
+        def knowledge_stats():
+            """Get knowledge base statistics."""
+            try:
+                if not KNOWLEDGE_AVAILABLE:
+                    return jsonify({'error': 'Knowledge engine not available'}), 503
+                
+                stats = knowledge.stats()
+                
+                return jsonify({
+                    'total_items': stats.total,
+                    'database_size_mb': stats.database_size_mb,
+                    'categories': stats.categories,
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
         # ============================================================
         # PUBLIC ENDPOINTS
         # ============================================================
@@ -691,73 +886,12 @@ def start_api_server(bot_instance):
                     "uptime": int(time.time() - _startup_time),
                     "version": APP_VERSION,
                     "knowledge_items": len(knowledge.all()) if KNOWLEDGE_AVAILABLE else 0,
+                    "ai_enabled": DEEPSEEK_ENABLED,
                     "timestamp": datetime.now().isoformat()
                 })
             except Exception as e:
                 return jsonify({"status": "error", "message": str(e)}), 500
-        
-        # ============================================================
-        # KNOWLEDGE - URL FETCH API
-        # ============================================================
-        
-        @app.route('/api/knowledge/fetch-url', methods=['POST'])
-        @require_api_key
-        def knowledge_fetch_url():
-            try:
-                data = request.json
-                url = data.get('url', '')
-                
-                if not url:
-                    return jsonify({'error': 'URL is required'}), 400
-                
-                import requests
-                from bs4 import BeautifulSoup
-                
-                response = requests.get(url, timeout=15, headers={
-                    'User-Agent': 'Inkside-Cognitive-Bot/2.0'
-                })
-                
-                if response.status_code != 200:
-                    return jsonify({'error': f'Failed to fetch: {response.status_code}'}), 500
-                
-                soup = BeautifulSoup(response.text, 'html.parser')
-                
-                title = soup.find('h1')
-                title_text = title.get_text().strip() if title else url.split('/')[-1]
-                
-                paragraphs = soup.find_all('p')
-                content = ' '.join([p.get_text().strip() for p in paragraphs[:5]])
-                
-                if not content:
-                    return jsonify({'error': 'No content extracted'}), 500
-                
-                tags = ['web']
-                if 'wikipedia' in url:
-                    tags.append('wikipedia')
-                
-                category = 'General Knowledge'
-                if any(word in url.lower() for word in ['crypto', 'bitcoin', 'blockchain']):
-                    category = 'Market'
-                elif any(word in url.lower() for word in ['trading', 'investing', 'finance']):
-                    category = 'Trading'
-                
-                result = {
-                    'content': f"[{title_text}] {content[:500]}...",
-                    'metadata': {'url': url, 'title': title_text},
-                    'tags': tags,
-                    'category': category
-                }
-                
-                return jsonify(result)
-                
-            except Exception as e:
-                logger.error(f"URL fetch error: {e}")
-                return jsonify({'error': str(e)}), 500
-        
-        # ============================================================
-        # SYSTEM ENDPOINTS
-        # ============================================================
-        
+
         @app.route('/api/status', methods=['GET'])
         @require_api_key
         def api_status():
@@ -769,11 +903,12 @@ def start_api_server(bot_instance):
                     "version": APP_VERSION,
                     "mode": MODE,
                     "knowledge_items": len(knowledge.all()) if KNOWLEDGE_AVAILABLE else 0,
+                    "ai_enabled": DEEPSEEK_ENABLED,
                     "timestamp": datetime.now().isoformat()
                 })
             except Exception as e:
                 return jsonify({"error": str(e)}), 500
-        
+
         @app.route('/api/system/metrics', methods=['GET'])
         @require_api_key
         def api_system_metrics():
@@ -797,15 +932,12 @@ def start_api_server(bot_instance):
                     "uptime": int(time.time() - _startup_time),
                     "health_score": health_score,
                     "knowledge_items": len(knowledge.all()) if KNOWLEDGE_AVAILABLE else 0,
+                    "ai_enabled": DEEPSEEK_ENABLED,
                     "timestamp": datetime.now().isoformat()
                 })
             except Exception as e:
                 return jsonify({"error": str(e)}), 500
-        
-        # ============================================================
-        # ENGINE CONTROL
-        # ============================================================
-        
+
         @app.route('/api/engine/start', methods=['POST'])
         @require_api_key
         def start_engine():
@@ -821,7 +953,7 @@ def start_api_server(bot_instance):
             except Exception as e:
                 logger.error(f"Start engine error: {e}")
                 return jsonify({'error': str(e)}), 500
-        
+
         @app.route('/api/engine/stop', methods=['POST'])
         @require_api_key
         def stop_engine():
@@ -837,7 +969,7 @@ def start_api_server(bot_instance):
             except Exception as e:
                 logger.error(f"Stop engine error: {e}")
                 return jsonify({'error': str(e)}), 500
-        
+
         @app.route('/api/engine/status', methods=['GET'])
         @require_api_key
         def get_engine_status():
@@ -847,15 +979,12 @@ def start_api_server(bot_instance):
                     'mode': MODE,
                     'state': 'RUNNING' if engine_running else 'IDLE',
                     'uptime': int(time.time() - _startup_time),
-                    'knowledge_items': len(knowledge.all()) if KNOWLEDGE_AVAILABLE else 0
+                    'knowledge_items': len(knowledge.all()) if KNOWLEDGE_AVAILABLE else 0,
+                    'ai_enabled': DEEPSEEK_ENABLED
                 })
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
-        
-        # ============================================================
-        # FRONTEND ENDPOINTS
-        # ============================================================
-        
+
         @app.route('/api/signals', methods=['GET'])
         @require_api_key
         def api_signals():
@@ -869,43 +998,79 @@ def start_api_server(bot_instance):
                 })
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/brain/state', methods=['GET'])
+
+        @app.route('/api/patterns', methods=['GET'])
         @require_api_key
-        def api_brain_state():
+        def get_patterns():
             try:
-                if brain and hasattr(brain, 'get_state'):
-                    state = brain.get_state()
-                else:
-                    state = {'state': 'unknown'}
+                patterns = []
+                
+                if KNOWLEDGE_AVAILABLE:
+                    results = knowledge.search('pattern', max_results=50)
+                    for item in results:
+                        if hasattr(item, 'to_dict'):
+                            patterns.append({
+                                'id': item.id,
+                                'name': item.content[:50],
+                                'type': 'CANDLESTICK',
+                                'bias': 'NEUTRAL',
+                                'confidence': item.confidence,
+                                'timeframe': '1h',
+                                'pair': 'BTC/USDT',
+                                'description': item.content[:100],
+                                'reliability': item.confidence,
+                                'occurrence': item.access_count,
+                                'detected_at': item.created_at,
+                                'strength': 'MODERATE' if item.confidence > 70 else 'WEAK',
+                                'volume_confirmation': True,
+                                'price': 78882.0
+                            })
+                
+                if not patterns:
+                    patterns = [
+                        {
+                            'id': 'pat_001',
+                            'name': 'Bullish Engulfing',
+                            'type': 'CANDLESTICK',
+                            'bias': 'BULLISH',
+                            'confidence': 88,
+                            'timeframe': '1h',
+                            'pair': 'BTC/USDT',
+                            'description': 'Large bullish candle completely engulfs prior bearish candle body.',
+                            'reliability': 84,
+                            'occurrence': 142,
+                            'detected_at': datetime.now().isoformat(),
+                            'strength': 'STRONG',
+                            'volume_confirmation': True,
+                            'price': 78882.0
+                        },
+                        {
+                            'id': 'pat_002',
+                            'name': 'Morning Star',
+                            'type': 'CANDLESTICK',
+                            'bias': 'BULLISH',
+                            'confidence': 82,
+                            'timeframe': '4h',
+                            'pair': 'ETH/USDT',
+                            'description': '3-candle bullish reversal formation.',
+                            'reliability': 80,
+                            'occurrence': 98,
+                            'detected_at': datetime.now().isoformat(),
+                            'strength': 'STRONG',
+                            'volume_confirmation': True,
+                            'price': 3120.50
+                        }
+                    ]
+                
                 return jsonify({
-                    'brain': state,
+                    'patterns': patterns,
+                    'total': len(patterns),
                     'timestamp': datetime.now().isoformat()
                 })
             except Exception as e:
+                logger.error(f"Patterns error: {e}")
                 return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/performance', methods=['GET'])
-        @require_api_key
-        def api_performance():
-            try:
-                if bot_instance and hasattr(bot_instance, 'get_status'):
-                    status = bot_instance.get_status()
-                    perf = status.get('performance', {})
-                else:
-                    perf = {}
-                return jsonify({
-                    'performance': {
-                        'roi': perf.get('total_pnl_percentage', 0.0),
-                        'trades': perf.get('total_trades', 0),
-                        'win_rate': perf.get('win_rate', 0.0),
-                        'total_pnl': perf.get('total_pnl', 0.0)
-                    },
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-        
+
         @app.route('/api/diagnostics', methods=['GET'])
         @require_api_key
         def api_diagnostics():
@@ -938,286 +1103,15 @@ def start_api_server(bot_instance):
                         'knowledge': {'status': 'online' if KNOWLEDGE_AVAILABLE else 'offline'},
                         'watchdog': {'status': 'online' if WATCHDOG_AVAILABLE else 'offline'},
                         'scanner': {'status': 'online' if engine_running else 'idle'},
-                        'websocket': {'status': 'online'}
+                        'websocket': {'status': 'online'},
+                        'ai': {'status': 'online' if DEEPSEEK_ENABLED else 'offline'}
                     },
                     'timestamp': datetime.now().isoformat()
                 })
             except Exception as e:
                 logger.error(f"Diagnostics error: {e}")
                 return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/watchdog/status', methods=['GET'])
-        @require_api_key
-        def api_watchdog_status():
-            try:
-                if WATCHDOG_AVAILABLE:
-                    return jsonify(watchdog.get_status())
-                return jsonify({'status': 'running', 'health_score': 85, 'timestamp': datetime.now().isoformat()})
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/watchdog/snapshot', methods=['GET'])
-        @require_api_key
-        def api_watchdog_snapshot():
-            try:
-                if WATCHDOG_AVAILABLE:
-                    return jsonify(watchdog.get_snapshot())
-                return jsonify({'status': 'running', 'snapshot': {}, 'timestamp': datetime.now().isoformat()})
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/watchdog/data', methods=['GET'])
-        @require_api_key
-        def api_watchdog_data():
-            try:
-                if WATCHDOG_AVAILABLE:
-                    status = watchdog.get_status()
-                    snapshot = watchdog.get_snapshot() if hasattr(watchdog, 'get_snapshot') else {}
-                    return jsonify({
-                        'status': status,
-                        'snapshot': snapshot,
-                        'timestamp': datetime.now().isoformat()
-                    })
-                
-                return jsonify({
-                    'status': {
-                        'running': True,
-                        'components': 7,
-                        'checks': 100,
-                        'alerts': 0,
-                        'restarts': 0,
-                        'uptime_seconds': int(time.time() - _startup_time),
-                        'health_score': 85,
-                        'timestamp': datetime.now().isoformat()
-                    },
-                    'snapshot': {
-                        'components': ['brain_engine', 'trading_bot', 'knowledge_engine', 'scanner', 'signal_engine', 'watchdog', 'telegram_bot'],
-                        'heartbeats': {}
-                    },
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                logger.error(f"Watchdog data error: {e}")
-                return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/watchdog/component/<name>', methods=['GET'])
-        @require_api_key
-        def api_watchdog_component(name):
-            try:
-                if WATCHDOG_AVAILABLE and hasattr(watchdog, 'get_component'):
-                    return jsonify(watchdog.get_component(name))
-                
-                return jsonify({
-                    'name': name,
-                    'registered': True,
-                    'heartbeat': {
-                        'status': 'alive',
-                        'beat_count': 100,
-                        'missed_beats': 0,
-                        'last_beat': datetime.now().isoformat(),
-                        'restart_count': 0
-                    },
-                    'dependencies': []
-                })
-            except Exception as e:
-                logger.error(f"Watchdog component error: {e}")
-                return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/watchdog/circuit/<name>/reset', methods=['POST'])
-        @require_api_key
-        def api_watchdog_circuit_reset(name):
-            try:
-                if WATCHDOG_AVAILABLE and hasattr(watchdog, 'reset_circuit'):
-                    watchdog.reset_circuit(name)
-                    return jsonify({'status': 'success', 'message': f'Circuit reset for {name}'})
-                
-                return jsonify({'status': 'success', 'message': f'Circuit reset for {name} (simulated)'})
-            except Exception as e:
-                logger.error(f"Circuit reset error: {e}")
-                return jsonify({'error': str(e)}), 500
-        
-        # ============================================================
-        # LEARNING ENDPOINTS
-        # ============================================================
-        
-        @app.route('/api/learning/stats', methods=['GET'])
-        @require_api_key
-        def get_learning_stats():
-            try:
-                stats = knowledge.stats() if KNOWLEDGE_AVAILABLE else None
-                return jsonify({
-                    'cycleCount': int(time.time() - _startup_time) // 60,
-                    'learningActive': engine_running,
-                    'learningRate': 0.01,
-                    'decayRate': 0.005,
-                    'circuitBreakers': 0,
-                    'modulesCount': 8,
-                    'active_learning_sessions': 3,
-                    'knowledge_items': stats.total if stats else 0,
-                    'database_size_mb': stats.database_size_mb if stats else 0,
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/learning/adaptive', methods=['GET'])
-        @require_api_key
-        def api_learning_adaptive():
-            try:
-                entries = []
-                if KNOWLEDGE_AVAILABLE:
-                    results = knowledge.search('adaptive', max_results=20)
-                    for item in results:
-                        if hasattr(item, 'to_dict'):
-                            entries.append(item.to_dict())
-                return jsonify({
-                    'entries': entries,
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/learning/curiosity', methods=['GET'])
-        @require_api_key
-        def api_learning_curiosity():
-            try:
-                questions = []
-                if KNOWLEDGE_AVAILABLE:
-                    results = knowledge.search('question', max_results=20)
-                    for item in results:
-                        if hasattr(item, 'to_dict'):
-                            questions.append(item.to_dict())
-                return jsonify({
-                    'questions': questions,
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/learning/curiosity', methods=['POST'])
-        @require_api_key
-        def api_add_curiosity():
-            try:
-                data = request.json
-                question = data.get('question', '')
-                if not question:
-                    return jsonify({'error': 'Question is required'}), 400
-                
-                if KNOWLEDGE_AVAILABLE:
-                    knowledge.add(
-                        content=f"Q: {question}",
-                        category="General Knowledge",
-                        type="qa",
-                        tags=['question', 'curiosity'],
-                        confidence=50.0,
-                        importance=0.5
-                    )
-                    knowledge.save()
-                
-                return jsonify({
-                    'status': 'success',
-                    'message': 'Question added',
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/learning/goals', methods=['GET'])
-        @require_api_key
-        def api_learning_goals():
-            try:
-                goals = []
-                if KNOWLEDGE_AVAILABLE:
-                    results = knowledge.search('goal', max_results=20)
-                    for item in results:
-                        if hasattr(item, 'to_dict'):
-                            goals.append(item.to_dict())
-                return jsonify({
-                    'goals': goals,
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/learning/experience', methods=['GET'])
-        @require_api_key
-        def api_learning_experience():
-            try:
-                stats = knowledge.stats() if KNOWLEDGE_AVAILABLE else None
-                return jsonify({
-                    'sensory_buffer': 128,
-                    'short_term': 1024,
-                    'working_memory': 256,
-                    'permanent': stats.total if stats else 0,
-                    'total': (128 + 1024 + 256 + (stats.total if stats else 0)),
-                    'memory_growth_rate': 12.5,
-                    'consolidation_rate': 8.3,
-                    'last_consolidation': datetime.now().isoformat()
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/learning/graph', methods=['GET'])
-        @require_api_key
-        def api_learning_graph():
-            try:
-                concepts = []
-                if KNOWLEDGE_AVAILABLE:
-                    items = knowledge.all()
-                    for item in items[:20]:
-                        concepts.append({
-                            'id': item.id,
-                            'name': item.content[:30],
-                            'weight': item.confidence,
-                            'frequency': item.access_count
-                        })
-                return jsonify({
-                    'concepts': concepts,
-                    'relations': [],
-                    'clustering': [],
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/learning/evaluator', methods=['GET'])
-        @require_api_key
-        def api_learning_evaluator():
-            try:
-                stats = knowledge.stats() if KNOWLEDGE_AVAILABLE else None
-                return jsonify({
-                    'total_evaluations': stats.total if stats else 0,
-                    'successful_changes': int((stats.total if stats else 0) * 0.7),
-                    'active_plans': 12,
-                    'accuracy': 82.4,
-                    'precision': 79.1,
-                    'recall': 76.8,
-                    'f1_score': 77.9,
-                    'last_evaluation': datetime.now().isoformat()
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/modules/list', methods=['GET'])
-        @require_api_key
-        def get_modules_list():
-            try:
-                modules = [
-                    {'name': 'brain_engine', 'title': 'Cognitive Brain', 'version': '4.2.3', 'status': 'ONLINE', 'health_score': 95},
-                    {'name': 'trading_bot', 'title': 'Trading Bot', 'version': '4.4.1', 'status': 'ONLINE', 'health_score': 92},
-                    {'name': 'knowledge_engine', 'title': 'Knowledge Engine', 'version': '4.0.0', 'status': 'ONLINE' if KNOWLEDGE_AVAILABLE else 'OFFLINE', 'health_score': 85 if KNOWLEDGE_AVAILABLE and len(knowledge.all()) > 0 else 50},
-                    {'name': 'watchdog', 'title': 'Watchdog', 'version': '3.1.0', 'status': 'ONLINE', 'health_score': 81},
-                    {'name': 'scanner', 'title': 'Market Scanner', 'version': '5.3', 'status': 'ONLINE', 'health_score': 80},
-                    {'name': 'signal_engine', 'title': 'Signal Engine', 'version': '2.0.0', 'status': 'ONLINE', 'health_score': 79},
-                ]
-                return jsonify({'modules': modules, 'timestamp': datetime.now().isoformat()})
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-        
-        # ============================================================
-        # PREDICTION ENDPOINTS
-        # ============================================================
-        
+
         @app.route('/api/predictions', methods=['GET'])
         @require_api_key
         def api_predictions():
@@ -1239,371 +1133,7 @@ def start_api_server(bot_instance):
                 return jsonify([])
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
-        
-        # ============================================================
-        # MONTE CARLO ENDPOINT
-        # ============================================================
-        
-        @app.route('/api/predictions/monte_carlo', methods=['GET', 'POST'])
-        @require_api_key
-        def api_monte_carlo():
-            """Run Monte Carlo simulation."""
-            try:
-                import random
-                import math
-                
-                if request.method == 'POST':
-                    data = request.json or {}
-                else:
-                    data = request.args or {}
-                
-                pair = data.get('pair', 'BTC/USDT')
-                iterations = int(data.get('iterations', 1000))
-                periods = int(data.get('periods', 30))
-                
-                current_price = 78882.0
-                
-                results = []
-                for _ in range(iterations):
-                    price = current_price
-                    for _ in range(periods):
-                        z = random.gauss(0, 1)
-                        price *= math.exp((0.0002 - 0.5 * 0.018**2) + 0.018 * z)
-                    results.append(price)
-                
-                results.sort()
-                p5 = results[int(0.05 * len(results))]
-                p50 = results[int(0.50 * len(results))]
-                p95 = results[int(0.95 * len(results))]
-                
-                return jsonify({
-                    'bullish': {
-                        'price': round(p95, 2),
-                        'change_percent': round(((p95 - current_price) / current_price) * 100, 2),
-                        'probability': 30,
-                        'description': '95th Percentile path - Bullish scenario'
-                    },
-                    'base': {
-                        'price': round(p50, 2),
-                        'change_percent': round(((p50 - current_price) / current_price) * 100, 2),
-                        'probability': 45,
-                        'description': 'Median path - Base scenario'
-                    },
-                    'bearish': {
-                        'price': round(p5, 2),
-                        'change_percent': round(((p5 - current_price) / current_price) * 100, 2),
-                        'probability': 25,
-                        'description': '5th Percentile path - Bearish scenario'
-                    },
-                    'confidence_interval': {
-                        'lower': round(p5, 2),
-                        'upper': round(p95, 2),
-                        'median': round(p50, 2)
-                    },
-                    'iterations': iterations,
-                    'periods': periods,
-                    'pair': pair,
-                    'current_price': current_price,
-                    'timestamp': datetime.now().isoformat()
-                })
-                
-            except Exception as e:
-                logger.error(f"Monte Carlo error: {e}")
-                return jsonify({'error': str(e)}), 500
-        
-        # ============================================================
-        # PATTERN ENDPOINTS
-        # ============================================================
-        
-        @app.route('/api/patterns', methods=['GET'])
-        @require_api_key
-        def get_patterns():
-            """Get detected patterns."""
-            try:
-                patterns = []
-                
-                if KNOWLEDGE_AVAILABLE:
-                    results = knowledge.search('pattern', max_results=50)
-                    for item in results:
-                        if hasattr(item, 'to_dict'):
-                            patterns.append({
-                                'id': item.id,
-                                'name': item.content[:50],
-                                'type': 'CANDLESTICK',
-                                'bias': 'NEUTRAL',
-                                'confidence': item.confidence,
-                                'timeframe': '1h',
-                                'pair': 'BTC/USDT',
-                                'description': item.content[:100],
-                                'reliability': item.confidence,
-                                'occurrence': item.access_count,
-                                'detected_at': item.created_at,
-                                'strength': 'MODERATE' if item.confidence > 70 else 'WEAK',
-                                'volume_confirmation': True,
-                                'price': 78882.0
-                            })
-                
-                # If no patterns, return sample data
-                if not patterns:
-                    sample_patterns = [
-                        {
-                            'id': 'pat_001',
-                            'name': 'Bullish Engulfing',
-                            'type': 'CANDLESTICK',
-                            'bias': 'BULLISH',
-                            'confidence': 88,
-                            'timeframe': '1h',
-                            'pair': 'BTC/USDT',
-                            'description': 'Large bullish candle completely engulfs prior bearish candle body after key support test.',
-                            'reliability': 84,
-                            'occurrence': 142,
-                            'detected_at': datetime.now().isoformat(),
-                            'strength': 'STRONG',
-                            'volume_confirmation': True,
-                            'price': 78882.0
-                        },
-                        {
-                            'id': 'pat_002',
-                            'name': 'Morning Star',
-                            'type': 'CANDLESTICK',
-                            'bias': 'BULLISH',
-                            'confidence': 82,
-                            'timeframe': '4h',
-                            'pair': 'ETH/USDT',
-                            'description': '3-candle bullish reversal formation at lower Bollinger Band with volume confirmation.',
-                            'reliability': 80,
-                            'occurrence': 98,
-                            'detected_at': datetime.now().isoformat(),
-                            'strength': 'STRONG',
-                            'volume_confirmation': True,
-                            'price': 3120.50
-                        },
-                        {
-                            'id': 'pat_003',
-                            'name': 'Ascending Triangle Breakout',
-                            'type': 'BREAKOUT',
-                            'bias': 'BULLISH',
-                            'confidence': 91,
-                            'timeframe': '1h',
-                            'pair': 'SOL/USDT',
-                            'description': 'Horizontal resistance broken with 2.4x volume expansion and RSI momentum > 62.',
-                            'reliability': 87,
-                            'occurrence': 65,
-                            'detected_at': datetime.now().isoformat(),
-                            'strength': 'STRONG',
-                            'volume_confirmation': True,
-                            'price': 192.50
-                        },
-                        {
-                            'id': 'pat_004',
-                            'name': 'Three White Soldiers',
-                            'type': 'CANDLESTICK',
-                            'bias': 'BULLISH',
-                            'confidence': 85,
-                            'timeframe': '15m',
-                            'pair': 'XRP/USDT',
-                            'description': 'Three consecutive strong green candles closing near highs within upward trend channel.',
-                            'reliability': 82,
-                            'occurrence': 110,
-                            'detected_at': datetime.now().isoformat(),
-                            'strength': 'STRONG',
-                            'volume_confirmation': True,
-                            'price': 0.62
-                        },
-                        {
-                            'id': 'pat_005',
-                            'name': 'Bearish Flag Continuation',
-                            'type': 'CHART',
-                            'bias': 'BEARISH',
-                            'confidence': 76,
-                            'timeframe': '4h',
-                            'pair': 'ADA/USDT',
-                            'description': 'Consolidation upward channel within primary downtrend testing 50 EMA resistance.',
-                            'reliability': 74,
-                            'occurrence': 54,
-                            'detected_at': datetime.now().isoformat(),
-                            'strength': 'MODERATE',
-                            'volume_confirmation': False,
-                            'price': 0.38
-                        }
-                    ]
-                    patterns = sample_patterns
-                
-                return jsonify({
-                    'patterns': patterns,
-                    'total': len(patterns),
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                logger.error(f"Patterns error: {e}")
-                return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/patterns/stats', methods=['GET'])
-        @require_api_key
-        def get_pattern_stats():
-            """Get pattern statistics."""
-            try:
-                patterns = []
-                
-                if KNOWLEDGE_AVAILABLE:
-                    results = knowledge.search('pattern', max_results=50)
-                    for item in results:
-                        if hasattr(item, 'to_dict'):
-                            patterns.append(item)
-                
-                total = len(patterns)
-                if total == 0:
-                    total = 20
-                    bullish = 11
-                    bearish = 5
-                    neutral = 4
-                    avg_conf = 82.4
-                else:
-                    bullish = int(total * 0.55)
-                    bearish = int(total * 0.25)
-                    neutral = total - bullish - bearish
-                    avg_conf = sum(p.confidence for p in patterns) / total if total > 0 else 0
-                
-                return jsonify({
-                    'total': total,
-                    'bullish': bullish,
-                    'bearish': bearish,
-                    'neutral': neutral,
-                    'avg_confidence': round(avg_conf, 1),
-                    'top_pair': 'BTC/USDT',
-                    'last_update': datetime.now().isoformat()
-                })
-            except Exception as e:
-                logger.error(f"Pattern stats error: {e}")
-                return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/patterns/detect', methods=['POST'])
-        @require_api_key
-        def detect_patterns():
-            """Detect patterns from text."""
-            try:
-                data = request.json
-                text = data.get('text', '')
-                
-                if not text:
-                    return jsonify({'error': 'Text is required'}), 400
-                
-                text_lower = text.lower()
-                patterns_detected = []
-                
-                # Detect bullish patterns
-                if any(word in text_lower for word in ['bullish', 'breakout', 'up', 'green', 'engulfing']):
-                    patterns_detected.append({
-                        'name': 'Bullish Pattern Detected',
-                        'confidence': 85,
-                        'type': 'CANDLESTICK'
-                    })
-                
-                # Detect bearish patterns
-                if any(word in text_lower for word in ['bearish', 'breakdown', 'down', 'red', 'rejection']):
-                    patterns_detected.append({
-                        'name': 'Bearish Pattern Detected',
-                        'confidence': 75,
-                        'type': 'CANDLESTICK'
-                    })
-                
-                # Detect breakout
-                if 'breakout' in text_lower or 'resistance' in text_lower:
-                    patterns_detected.append({
-                        'name': 'Breakout Pattern',
-                        'confidence': 90,
-                        'type': 'BREAKOUT'
-                    })
-                
-                # Detect volume
-                if 'volume' in text_lower:
-                    patterns_detected.append({
-                        'name': 'Volume Spike',
-                        'confidence': 80,
-                        'type': 'VOLUME'
-                    })
-                
-                # Detect momentum
-                if any(word in text_lower for word in ['momentum', 'rsi', 'macd']):
-                    patterns_detected.append({
-                        'name': 'Momentum Confirmation',
-                        'confidence': 78,
-                        'type': 'MOMENTUM'
-                    })
-                
-                # Determine dominant bias
-                bullish_count = sum(1 for p in patterns_detected if 'Bullish' in p['name'])
-                bearish_count = sum(1 for p in patterns_detected if 'Bearish' in p['name'])
-                
-                if bullish_count > bearish_count:
-                    dominant_bias = 'BULLISH'
-                elif bearish_count > bullish_count:
-                    dominant_bias = 'BEARISH'
-                else:
-                    dominant_bias = 'NEUTRAL'
-                
-                return jsonify({
-                    'timestamp': datetime.now().isoformat(),
-                    'entities': ['BTC/USD', 'RESISTANCE', 'SUPPORT', 'VOLUME'],
-                    'patterns_detected': patterns_detected,
-                    'dominant_bias': dominant_bias,
-                    'structure_depth': 3,
-                    'novelty_score': 'LOW_NOVELTY' if patterns_detected else 'HIGH_NOVELTY',
-                    'composite_confidence': 85 if patterns_detected else 50,
-                    'summary': f'Detected {len(patterns_detected)} patterns from text analysis.'
-                })
-                
-            except Exception as e:
-                logger.error(f"Pattern detection error: {e}")
-                return jsonify({'error': str(e)}), 500
-        
-        # ============================================================
-        # SETTINGS ENDPOINTS
-        # ============================================================
-        
-        @app.route('/api/settings/status', methods=['GET'])
-        @require_api_key
-        def get_settings_status():
-            try:
-                # Cek Kraken API Key dari environment
-                kraken_key = os.environ.get('KRAKEN_API_KEY', '')
-                kraken_secret = os.environ.get('KRAKEN_API_SECRET', '')
-                
-                # Cek Telegram dari environment
-                telegram_token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
-                telegram_chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
-                
-                # Cek apakah key ada (tidak kosong)
-                kraken_configured = bool(kraken_key and kraken_secret)
-                telegram_configured = bool(telegram_token and telegram_chat_id)
-                
-                return jsonify({
-                    'kraken_configured': kraken_configured,
-                    'telegram_configured': telegram_configured,
-                    'exchange_configured': kraken_configured,
-                    'telegram_enabled': telegram_configured,
-                    'trading_mode': MODE,
-                    'risk_level': 'MODERATE',
-                    'exchange': 'KRAKEN',
-                    'status': 'ok'
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/settings', methods=['POST'])
-        @require_api_key
-        def save_settings():
-            try:
-                data = request.json
-                logger.info(f"Settings saved: {data}")
-                return jsonify({'status': 'success', 'message': 'Settings saved'})
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
 
-        # ============================================================
-        # TELEGRAM ENDPOINTS  ← TAMBAHKAN DI SINI
-        # ============================================================
-        
         @app.route('/api/telegram/status', methods=['GET'])
         @require_api_key
         def telegram_status():
@@ -1619,49 +1149,7 @@ def start_api_server(bot_instance):
                 })
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/telegram/config', methods=['GET'])
-        @require_api_key
-        def telegram_get_config():
-            try:
-                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
-                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
-                configured = bool(token and chat_id)
-                
-                masked_token = token[:6] + '••••••••' + token[-4:] if len(token) > 10 else token
-                masked_chat_id = chat_id[:3] + '••••••' + chat_id[-3:] if len(chat_id) > 8 else chat_id
-                
-                return jsonify({
-                    'bot_token': masked_token,
-                    'chat_id': masked_chat_id,
-                    'configured': configured
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-        
-        @app.route('/api/telegram/config', methods=['POST'])
-        @require_api_key
-        def telegram_save_config():
-            try:
-                data = request.json
-                bot_token = data.get('bot_token', '')
-                chat_id = data.get('chat_id', '')
-                
-                os.environ['TELEGRAM_BOT_TOKEN'] = bot_token
-                os.environ['TELEGRAM_CHAT_ID'] = chat_id
-                
-                global TELEGRAM_CONFIGURED
-                TELEGRAM_CONFIGURED = bool(bot_token and chat_id)
-                
-                logger.info(f"Telegram config updated: configured={TELEGRAM_CONFIGURED}")
-                
-                return jsonify({
-                    'status': 'success',
-                    'message': 'Configuration saved successfully'
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-        
+
         @app.route('/api/telegram/send', methods=['POST'])
         @require_api_key
         def telegram_send():
@@ -1672,95 +1160,16 @@ def start_api_server(bot_instance):
                 if not message:
                     return jsonify({'error': 'Message is required'}), 400
                 
-                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
-                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
+                success = send_telegram_message(message)
                 
-                if not token or not chat_id:
-                    return jsonify({
-                        'sent': False,
-                        'status': 'error',
-                        'message': 'Telegram not configured'
-                    }), 400
-                
-                import requests
-                url = f"https://api.telegram.org/bot{token}/sendMessage"
-                payload = {
-                    'chat_id': chat_id,
-                    'text': message,
-                    'parse_mode': 'HTML'
-                }
-                response = requests.post(url, json=payload, timeout=10)
-                
-                if response.status_code == 200:
-                    return jsonify({
-                        'sent': True,
-                        'status': 'success',
-                        'message': 'Message sent successfully'
-                    })
-                else:
-                    return jsonify({
-                        'sent': False,
-                        'status': 'error',
-                        'message': f'Telegram API error: {response.status_code}'
-                    }), 500
-                    
-            except Exception as e:
-                logger.error(f"Telegram send error: {e}")
                 return jsonify({
-                    'sent': False,
-                    'status': 'error',
-                    'message': str(e)
-                }), 500
-        
-        @app.route('/api/telegram/test', methods=['POST'])
-        @require_api_key
-        def telegram_test():
-            try:
-                token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
-                chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
-                
-                if not token or not chat_id:
-                    return jsonify({
-                        'status': 'error',
-                        'message': 'Telegram not configured',
-                        'sent': False
-                    }), 400
-                
-                import requests
-                url = f"https://api.telegram.org/bot{token}/sendMessage"
-                payload = {
-                    'chat_id': chat_id,
-                    'text': '🧪 <b>Test Message</b>\n\n✅ Telegram connection is working!',
-                    'parse_mode': 'HTML'
-                }
-                response = requests.post(url, json=payload, timeout=10)
-                
-                if response.status_code == 200:
-                    return jsonify({
-                        'status': 'success',
-                        'message': 'Test message sent successfully!',
-                        'sent': True
-                    })
-                else:
-                    return jsonify({
-                        'status': 'error',
-                        'message': f'Telegram API error: {response.status_code}',
-                        'sent': False
-                    }), 500
-                    
+                    'sent': success,
+                    'status': 'success' if success else 'error',
+                    'timestamp': datetime.now().isoformat()
+                })
             except Exception as e:
-                logger.error(f"Telegram test error: {e}")
-                return jsonify({
-                    'status': 'error',
-                    'message': str(e),
-                    'sent': False
-                }), 500
+                return jsonify({'error': str(e)}), 500
 
-        # ============================================================
-        # WEBSOCKET
-        # ============================================================
-
-        
         # ============================================================
         # WEBSOCKET
         # ============================================================
@@ -1788,6 +1197,7 @@ def start_api_server(bot_instance):
         
         logger.info(f"✅ API Server running on http://{API_HOST}:{API_PORT}")
         logger.info(f"   📚 Knowledge Engine: {'ONLINE' if KNOWLEDGE_AVAILABLE else 'OFFLINE'}")
+        logger.info(f"   🤖 AI: {'ENABLED' if DEEPSEEK_ENABLED else 'DISABLED'}")
         logger.info(f"   📡 WebSocket: /socket.io/")
         
         return True
@@ -1809,6 +1219,7 @@ def main_headless():
     logger.info("=" * 60)
     logger.info(f"  🧠 {APP_NAME} - COGNITIVE MIRROR ENGINE v{APP_VERSION}")
     logger.info(f"  Mode: {MODE.upper()}")
+    logger.info(f"  AI: {'ENABLED' if DEEPSEEK_ENABLED else 'DISABLED'}")
     logger.info("=" * 60)
     
     logger.info("Initializing Cognitive Brain...")
@@ -1877,6 +1288,7 @@ def main_headless():
     logger.info(f"  Mode        : {MODE}")
     logger.info(f"  Engine      : {'RUNNING' if engine_running else 'IDLE'}")
     logger.info(f"  Knowledge   : {len(knowledge.all()) if KNOWLEDGE_AVAILABLE else 0} items")
+    logger.info(f"  AI          : {'ENABLED' if DEEPSEEK_ENABLED else 'DISABLED'}")
     logger.info(f"  API Server  : {'ON' if api_started else 'OFF'}")
     logger.info(f"  Telegram    : {'CONFIGURED' if TELEGRAM_CONFIGURED else 'NOT'}")
     logger.info("=" * 60)

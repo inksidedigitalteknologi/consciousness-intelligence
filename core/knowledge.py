@@ -1,8 +1,8 @@
-# ============================================================
-# INKSIDE DIGITAL - KNOWLEDGE ENGINE v2.0.0
+# core/knowledge.py
+# INKSIDE DIGITAL - KNOWLEDGE ENGINE v3.0.0
 # UNLIMITED MEMORY ARCHITECTURE
 # SELF-MANAGING WITH AUTO-CLEANUP
-# ============================================================
+# WITH AI INTEGRATION
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # VERSION
 # ============================================================
 
-KNOWLEDGE_VERSION = "2.0.0"
+KNOWLEDGE_VERSION = "3.0.0"
 
 # ============================================================
 # PATHS
@@ -43,23 +43,34 @@ STATE_CACHE_FILE = DATA_DIR / "state_cache.json"
 # DEFAULTS
 # ============================================================
 
-# ❌ TIDAK ADA LIMIT ITEMS - UNLIMITED!
 DEFAULT_MAX_ITEMS = None  # Unlimited
-
-# Config untuk auto-cleanup
 DEFAULT_CONFIDENCE_DECAY = 0.01
 DEFAULT_CONFIDENCE_MIN = 0.0
 DEFAULT_CONFIDENCE_MAX = 100.0
 DEFAULT_SIMILARITY_THRESHOLD = 0.7
 DEFAULT_EXPIRATION_DAYS = 365
-DEFAULT_AUTO_BACKUP_INTERVAL = 86400  # 24 jam
+DEFAULT_AUTO_BACKUP_INTERVAL = 86400
 
-# Threshold untuk aggressive cleanup
-CLEANUP_CONFIDENCE_THRESHOLD = 30.0  # Hapus jika confidence < 30%
-CLEANUP_ACCESS_DAYS = 90  # Hapus jika tidak diakses > 90 hari
-CLEANUP_IMPORTANCE_THRESHOLD = 0.3  # Hapus jika importance < 0.3
-MAX_BACKUP_FILES = 5  # Simpan 5 backup terakhir
-MAX_DATABASE_SIZE_MB = 5000  # 5GB max
+CLEANUP_CONFIDENCE_THRESHOLD = 30.0
+CLEANUP_ACCESS_DAYS = 90
+CLEANUP_IMPORTANCE_THRESHOLD = 0.3
+MAX_BACKUP_FILES = 5
+MAX_DATABASE_SIZE_MB = 5000
+
+# ============================================================
+# AI INTEGRATION FLAG
+# ============================================================
+
+try:
+    from core.deepseek import deepseek_ai
+    DEEPSEEK_AVAILABLE = True
+    DEEPSEEK_ENABLED = deepseek_ai.enabled if hasattr(deepseek_ai, 'enabled') else False
+except ImportError:
+    DEEPSEEK_AVAILABLE = False
+    DEEPSEEK_ENABLED = False
+    deepseek_ai = None
+
+logger.info(f"🧠 AI Integration: {'ENABLED' if DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED else 'DISABLED'}")
 
 # ============================================================
 # ENUMS
@@ -124,7 +135,7 @@ class KnowledgeType(Enum):
 
 @dataclass
 class KnowledgeItem:
-    """Single knowledge item - UNLIMITED."""
+    """Single knowledge item - UNLIMITED with AI enhancement."""
     id: str
     content: str
     category: str = KnowledgeCategory.GENERAL.value
@@ -145,6 +156,13 @@ class KnowledgeItem:
     relationships: Dict[str, List[str]] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
     embedding: Optional[List[float]] = None
+    
+    # AI Enhancement Fields
+    ai_summary: Optional[str] = None
+    ai_insights: Optional[List[str]] = None
+    ai_tags: Optional[List[str]] = None
+    ai_enhanced: bool = False
+    ai_enhanced_at: Optional[str] = None
     
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -167,6 +185,11 @@ class KnowledgeItem:
             "children": self.children,
             "relationships": self.relationships,
             "metadata": self.metadata,
+            "ai_summary": self.ai_summary,
+            "ai_insights": self.ai_insights,
+            "ai_tags": self.ai_tags,
+            "ai_enhanced": self.ai_enhanced,
+            "ai_enhanced_at": self.ai_enhanced_at,
         }
 
 @dataclass
@@ -184,13 +207,13 @@ class KnowledgeStats:
     deprecated: int = 0
     state_count: int = 0
     database_size_mb: float = 0.0
+    ai_enhanced_count: int = 0
 
 # ============================================================
 # SAFE SERIALIZATION HELPERS
 # ============================================================
 
 def safe_key(obj: Any) -> str:
-    """Convert any object to safe string key."""
     if obj is None:
         return "none"
     if isinstance(obj, str):
@@ -209,7 +232,6 @@ def safe_key(obj: Any) -> str:
     return str(obj)
 
 def safe_serialize(obj: Any) -> Any:
-    """Safely serialize any object for JSON."""
     if obj is None:
         return None
     if isinstance(obj, (str, int, float, bool)):
@@ -227,48 +249,39 @@ def safe_serialize(obj: Any) -> Any:
     return str(obj)
 
 # ============================================================
-# MAIN KNOWLEDGE ENGINE - UNLIMITED
+# MAIN KNOWLEDGE ENGINE - WITH AI INTEGRATION
 # ============================================================
 
 class KnowledgeEngine:
     """
-    Knowledge Engine v4.0.0 - UNLIMITED MEMORY.
+    Knowledge Engine v3.0.0 - UNLIMITED MEMORY with AI Enhancement.
     Self-managing with aggressive auto-cleanup.
-    No limits - only smart cleanup.
     """
-
     VERSION = KNOWLEDGE_VERSION
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self.lock = threading.RLock()
         
-        # ❌ NO LIMITS - UNLIMITED
-        self.max_items = None  # Unlimited!
-        
-        # Configuration
+        self.max_items = None
         self.confidence_decay = self.config.get("confidence_decay", DEFAULT_CONFIDENCE_DECAY)
         self.similarity_threshold = self.config.get("similarity_threshold", DEFAULT_SIMILARITY_THRESHOLD)
         self.expiration_days = self.config.get("expiration_days", DEFAULT_EXPIRATION_DAYS)
         self.auto_backup_interval = self.config.get("auto_backup_interval", DEFAULT_AUTO_BACKUP_INTERVAL)
         
-        # Storage
         self._knowledge: Dict[str, KnowledgeItem] = {}
         self._categories: Dict[str, List[str]] = {}
         self._tags: Dict[str, List[str]] = {}
         self._index: Dict[str, Set[str]] = {}
         self._state_cache: Dict[str, Dict] = {}
         
-        # Stats
         self._stats = KnowledgeStats()
         self._last_backup: Optional[str] = None
         self._initialized = False
         
-        # Load data
         self.load()
         self._build_index()
         
-        # Start auto-backup
         if self.config.get("auto_backup", True):
             self._start_auto_backup()
         
@@ -280,13 +293,13 @@ class KnowledgeEngine:
         logger.info(f"   📚 Items: {len(self._knowledge)} (UNLIMITED)")
         logger.info(f"   💾 States: {len(self._state_cache)}")
         logger.info(f"   📦 Size: {self._get_database_size_mb():.2f} MB")
+        logger.info(f"   🤖 AI Enhancement: {'ENABLED' if DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED else 'DISABLED'}")
 
     # ============================================================
     # DATABASE SIZE MANAGEMENT
     # ============================================================
 
     def _get_database_size_mb(self) -> float:
-        """Get current database size in MB."""
         total_size = 0
         if KNOWLEDGE_FILE.exists():
             total_size += KNOWLEDGE_FILE.stat().st_size
@@ -295,7 +308,6 @@ class KnowledgeEngine:
         return total_size / (1024 * 1024)
 
     def auto_manage_size(self, max_size_mb: float = MAX_DATABASE_SIZE_MB) -> Dict[str, Any]:
-        """Auto-manage database size. Run aggressive cleanup if exceeded."""
         current_size = self._get_database_size_mb()
         
         result = {
@@ -314,10 +326,8 @@ class KnowledgeEngine:
             result["items_removed"] = removed
             result["action"] = "aggressive_cleanup"
             
-            # Save after cleanup
             self.save()
             
-            # Check new size
             new_size = self._get_database_size_mb()
             result["new_size_mb"] = new_size
             logger.info(f"✅ Database reduced to {new_size:.2f} MB ({removed} items removed)")
@@ -325,17 +335,10 @@ class KnowledgeEngine:
         return result
 
     # ============================================================
-    # AGGRESSIVE CLEANUP - CORE FEATURE
+    # AGGRESSIVE CLEANUP
     # ============================================================
 
     def aggressive_cleanup(self) -> int:
-        """
-        Aggressive cleanup - removes low-quality items.
-        - Confidence < 30%
-        - Not accessed > 90 days
-        - Importance < 0.3
-        - Expired items
-        """
         count = 0
         try:
             with self.lock:
@@ -346,12 +349,10 @@ class KnowledgeEngine:
                     should_delete = False
                     reasons = []
                     
-                    # 1. Confidence terlalu rendah
                     if item.confidence < CLEANUP_CONFIDENCE_THRESHOLD:
                         should_delete = True
                         reasons.append(f"confidence={item.confidence:.1f}%")
                     
-                    # 2. Tidak diakses > 90 hari
                     if item.accessed_at:
                         try:
                             accessed = datetime.fromisoformat(item.accessed_at)
@@ -361,12 +362,10 @@ class KnowledgeEngine:
                         except:
                             pass
                     
-                    # 3. Importance rendah
                     if item.importance < CLEANUP_IMPORTANCE_THRESHOLD:
                         should_delete = True
                         reasons.append(f"importance={item.importance:.2f}")
                     
-                    # 4. Sudah expired
                     if item.expires_at:
                         try:
                             expires = datetime.fromisoformat(item.expires_at)
@@ -399,7 +398,6 @@ class KnowledgeEngine:
             return 0
 
     def _delete_internal(self, item_id: str, permanent: bool = True) -> bool:
-        """Internal delete without extra save."""
         try:
             item = self._knowledge.get(item_id)
             if not item:
@@ -419,7 +417,6 @@ class KnowledgeEngine:
                     if tag in self._tags and item_id in self._tags[tag]:
                         self._tags[tag].remove(item_id)
                 
-                # Remove from index
                 for word in self._extract_keywords(item.content):
                     if word in self._index and item_id in self._index[word]:
                         self._index[word].remove(item_id)
@@ -440,7 +437,6 @@ class KnowledgeEngine:
     # ============================================================
 
     def load(self) -> bool:
-        """Load knowledge from storage."""
         try:
             if KNOWLEDGE_FILE.exists():
                 with open(KNOWLEDGE_FILE, "r", encoding="utf-8") as f:
@@ -473,10 +469,8 @@ class KnowledgeEngine:
             return False
 
     def save(self) -> bool:
-        """Save knowledge to storage with safe serialization."""
         try:
             with self.lock:
-                # Save knowledge
                 data = {}
                 for item_id, item in self._knowledge.items():
                     try:
@@ -490,7 +484,6 @@ class KnowledgeEngine:
                     json.dump(data, f, indent=2, ensure_ascii=False, default=safe_serialize)
                 temp_file.replace(KNOWLEDGE_FILE)
                 
-                # Save state cache
                 safe_state_cache = {}
                 for key, value in self._state_cache.items():
                     try:
@@ -512,13 +505,13 @@ class KnowledgeEngine:
             return False
 
     def _save_index(self) -> None:
-        """Save search index."""
         try:
             with self.lock:
                 index_data = {
                     "categories": self._categories,
                     "tags": self._tags,
                     "state_count": len(self._state_cache),
+                    "ai_enhanced_count": sum(1 for item in self._knowledge.values() if item.ai_enhanced),
                     "last_updated": datetime.now().isoformat(),
                 }
             
@@ -529,7 +522,6 @@ class KnowledgeEngine:
             logger.warning(f"Index save failed: {e}")
 
     def _build_index(self) -> None:
-        """Build search index."""
         with self.lock:
             self._categories = {}
             self._tags = {}
@@ -552,7 +544,6 @@ class KnowledgeEngine:
                     self._index[word].add(item_id)
 
     def _extract_keywords(self, text: str) -> Set[str]:
-        """Extract keywords from text."""
         stopwords = {
             "the", "a", "an", "and", "or", "of", "to", "in", "on", "for",
             "with", "is", "are", "was", "were", "this", "that", "it", "as",
@@ -566,7 +557,7 @@ class KnowledgeEngine:
         return words
 
     # ============================================================
-    # KNOWLEDGE MANAGEMENT - UNLIMITED
+    # KNOWLEDGE MANAGEMENT - WITH AI ENHANCEMENT
     # ============================================================
 
     def add(
@@ -580,10 +571,11 @@ class KnowledgeEngine:
         importance: float = 0.5,
         parent_id: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
-        expires_in_days: Optional[int] = None
+        expires_in_days: Optional[int] = None,
+        enhance_with_ai: bool = True
     ) -> Optional[str]:
         """
-        Add new knowledge item. UNLIMITED - no max limit!
+        Add new knowledge item with optional AI enhancement.
         """
         if not content:
             logger.warning("Empty knowledge content")
@@ -593,7 +585,6 @@ class KnowledgeEngine:
             with self.lock:
                 item_id = self._generate_id(content)
                 
-                # Check if exists
                 if item_id in self._knowledge:
                     item = self._knowledge[item_id]
                     item.content = content
@@ -613,7 +604,6 @@ class KnowledgeEngine:
                         item.expires_at = (datetime.now() + timedelta(days=expires_in_days)).isoformat()
                     return item_id
                 
-                # New item
                 expires_at = None
                 if expires_in_days:
                     expires_at = (datetime.now() + timedelta(days=expires_in_days)).isoformat()
@@ -650,11 +640,80 @@ class KnowledgeEngine:
             self._update_stats()
             
             logger.debug(f"📚 Added: {item_id[:8]} ({category})")
+            
+            # AI Enhancement
+            if enhance_with_ai and DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED:
+                try:
+                    self._enhance_with_ai(item_id)
+                except Exception as e:
+                    logger.error(f"AI enhancement error for {item_id}: {e}")
+            
             return item_id
             
         except Exception as e:
             logger.error(f"❌ Add failed: {e}")
             return None
+
+    def _enhance_with_ai(self, item_id: str) -> bool:
+        """Enhance knowledge item with AI."""
+        if not DEEPSEEK_AVAILABLE or not DEEPSEEK_ENABLED:
+            return False
+        
+        item = self._knowledge.get(item_id)
+        if not item:
+            return False
+        
+        try:
+            # Generate AI summary
+            if not item.ai_summary:
+                try:
+                    item.ai_summary = deepseek_ai.summarize(item.content)
+                except:
+                    item.ai_summary = item.content[:100] + "..."
+            
+            # Generate AI insights
+            if not item.ai_insights:
+                try:
+                    item.ai_insights = deepseek_ai.extract_insights(item.content)
+                except:
+                    item.ai_insights = [item.content[:50] + "..."]
+            
+            # Generate AI tags
+            if not item.ai_tags:
+                try:
+                    item.ai_tags = deepseek_ai.generate_tags(item.content)
+                except:
+                    item.ai_tags = [item.category] if item.category else ["general"]
+            
+            item.ai_enhanced = True
+            item.ai_enhanced_at = datetime.now().isoformat()
+            item.updated_at = datetime.now().isoformat()
+            
+            logger.debug(f"🤖 AI enhanced knowledge: {item_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"AI enhancement error: {e}")
+            return False
+
+    def enhance_all(self) -> int:
+        """Enhance all knowledge items with AI."""
+        if not DEEPSEEK_AVAILABLE or not DEEPSEEK_ENABLED:
+            logger.warning("AI not available for batch enhancement")
+            return 0
+        
+        count = 0
+        for item_id in list(self._knowledge.keys()):
+            try:
+                if self._enhance_with_ai(item_id):
+                    count += 1
+            except Exception as e:
+                logger.error(f"Enhance failed for {item_id}: {e}")
+        
+        self.save()
+        self._update_stats()
+        logger.info(f"🤖 Enhanced {count} items with AI")
+        return count
 
     def _generate_id(self, content: str) -> str:
         return hashlib.md5(content.encode()).hexdigest()[:16]
@@ -675,6 +734,13 @@ class KnowledgeEngine:
                     return self._state_cache.get(state_key)
             
             return item
+
+    def get_ai_enhanced(self, limit: int = 20) -> List[KnowledgeItem]:
+        """Get AI-enhanced knowledge items."""
+        with self.lock:
+            enhanced = [item for item in self._knowledge.values() if item.ai_enhanced]
+            enhanced.sort(key=lambda x: x.ai_enhanced_at or '', reverse=True)
+            return enhanced[:limit]
 
     def update(self, item_id: str, **kwargs) -> bool:
         try:
@@ -722,12 +788,16 @@ class KnowledgeEngine:
         with self.lock:
             return list(self._knowledge.values())
 
+    def get_ai_enhanced_items(self) -> List[KnowledgeItem]:
+        """Get all AI-enhanced items."""
+        with self.lock:
+            return [item for item in self._knowledge.values() if item.ai_enhanced]
+
     # ============================================================
     # STATE MANAGEMENT
     # ============================================================
 
     def store_state(self, state: Any, metadata: Optional[Dict] = None) -> str:
-        """Store any state object."""
         try:
             state_key = safe_key(state)
             state_data = self._extract_state_data(state)
@@ -765,6 +835,7 @@ class KnowledgeEngine:
                     confidence=50.0,
                     importance=0.5,
                     metadata=safe_metadata,
+                    enhance_with_ai=False
                 )
                 
                 self._stats.state_count = len(self._state_cache)
@@ -823,7 +894,7 @@ class KnowledgeEngine:
             return f"Cognitive State at {datetime.now().isoformat()}"
 
     # ============================================================
-    # SEARCH
+    # SEARCH - WITH AI ENHANCED SCORING
     # ============================================================
 
     def search(
@@ -832,9 +903,10 @@ class KnowledgeEngine:
         category: Optional[str] = None,
         tags: Optional[List[str]] = None,
         min_confidence: float = 0.0,
-        max_results: Optional[int] = None,  # ✅ Unlimited
+        max_results: Optional[int] = None,
         include_archived: bool = False,
-        include_state_data: bool = False
+        include_state_data: bool = False,
+        prioritize_ai_enhanced: bool = True
     ) -> List[Union[KnowledgeItem, Dict]]:
         try:
             results = []
@@ -865,6 +937,11 @@ class KnowledgeEngine:
                         continue
                     
                     score = self._calculate_relevance(query, item)
+                    
+                    # Boost score for AI-enhanced items
+                    if prioritize_ai_enhanced and item.ai_enhanced:
+                        score += 0.15
+                    
                     if score > 0:
                         if include_state_data:
                             state_key = item.metadata.get('state_key')
@@ -886,7 +963,8 @@ class KnowledgeEngine:
                 results.sort(key=lambda x: (x[1], x[0].confidence), reverse=True)
                 final_results = [item for item, _ in results]
             
-            # ✅ UNLIMITED - no max_results limit
+            if max_results:
+                return final_results[:max_results]
             return final_results
         
         except Exception as e:
@@ -914,6 +992,10 @@ class KnowledgeEngine:
             score += 0.2
         
         score += (item.confidence / 100) * 0.3
+        
+        # Boost AI-enhanced items
+        if item.ai_enhanced:
+            score += 0.15
         
         try:
             created = datetime.fromisoformat(item.created_at)
@@ -1009,7 +1091,6 @@ class KnowledgeEngine:
             return None
 
     def _clean_backups(self, keep: int = MAX_BACKUP_FILES) -> None:
-        """Keep only latest N backups."""
         try:
             backups = sorted(KNOWLEDGE_BACKUP_DIR.glob("knowledge_backup_*.json"))
             for backup in backups[:-keep]:
@@ -1045,6 +1126,7 @@ class KnowledgeEngine:
             stats.total = len(self._knowledge)
             stats.state_count = len(self._state_cache)
             stats.database_size_mb = self._get_database_size_mb()
+            stats.ai_enhanced_count = sum(1 for item in self._knowledge.values() if item.ai_enhanced)
             
             for item in self._knowledge.values():
                 stats.by_category[item.category] = stats.by_category.get(item.category, 0) + 1
@@ -1077,7 +1159,6 @@ class KnowledgeEngine:
             self._stats = stats
 
     def _log_status(self) -> None:
-        """Log current status."""
         stats = self._stats
         logger.info(f"📊 Knowledge Status:")
         logger.info(f"   Total: {stats.total} (UNLIMITED)")
@@ -1086,6 +1167,26 @@ class KnowledgeEngine:
         logger.info(f"   Archived: {stats.archived}")
         logger.info(f"   Avg Confidence: {stats.avg_confidence}%")
         logger.info(f"   Database Size: {stats.database_size_mb:.2f} MB")
+        logger.info(f"   🤖 AI Enhanced: {stats.ai_enhanced_count} items")
+
+    # ============================================================
+    # AI UTILITY METHODS
+    # ============================================================
+
+    def is_ai_available(self) -> bool:
+        """Check if AI enhancement is available."""
+        return DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED
+
+    def get_ai_status(self) -> Dict:
+        """Get AI integration status."""
+        return {
+            "available": self.is_ai_available(),
+            "enhanced_items": self._stats.ai_enhanced_count,
+            "total_items": self._stats.total,
+            "enhancement_percentage": round(
+                (self._stats.ai_enhanced_count / self._stats.total * 100) if self._stats.total > 0 else 0, 2
+            )
+        }
 
     # ============================================================
     # UTILITY
@@ -1100,7 +1201,6 @@ class KnowledgeEngine:
             return list(self._tags.keys())
 
     def deduplicate(self) -> int:
-        """Remove duplicate items."""
         count = 0
         try:
             seen = {}

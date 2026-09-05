@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # ============================================================
 # INKSIDE DIGITAL
-# COGNITIVE MIRROR ENGINE v4.4.1
-# CORE BOT ENGINE - SUPER COMPREHENSIVE - FIXED
+# COGNITIVE MIRROR ENGINE v1.0.0
+# CORE BOT ENGINE
 # ============================================================
 
 from __future__ import annotations
@@ -13,11 +13,12 @@ import threading
 import time
 import json
 import os
-import random  # <-- FIX: Untuk mock data
-from datetime import datetime
+import random
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple, Union
 from dataclasses import dataclass, field, asdict
 from enum import Enum
+from collections import deque, Counter
 
 # ============================================================
 # CONFIGURATION
@@ -31,13 +32,26 @@ from config import (
 
 logger = logging.getLogger(__name__)
 
+# ============================================================
+# AI INTEGRATION
+# ============================================================
+
+try:
+    from core.deepseek import deepseek_ai
+    DEEPSEEK_AVAILABLE = True
+    DEEPSEEK_ENABLED = deepseek_ai.enabled if hasattr(deepseek_ai, 'enabled') else False
+except ImportError:
+    DEEPSEEK_AVAILABLE = False
+    DEEPSEEK_ENABLED = False
+    deepseek_ai = None
+
+logger.info(f"🤖 DeepSeek AI Integration: {'ENABLED' if DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED else 'DISABLED'}")
 
 # ============================================================
 # ENUMS & CONSTANTS
 # ============================================================
 
 class BotState(Enum):
-    """Bot operational states."""
     INITIALIZING = "INITIALIZING"
     IDLE = "IDLE"
     RUNNING = "RUNNING"
@@ -51,23 +65,17 @@ class BotState(Enum):
     RECOVERING = "RECOVERING"
     STOPPED = "STOPPED"
 
-
 class TradingMode(Enum):
-    """Trading modes."""
     PAPER = "PAPER"
     LIVE = "LIVE"
     HYBRID = "HYBRID"
 
-
 class RiskLevel(Enum):
-    """Risk levels."""
     CONSERVATIVE = "CONSERVATIVE"
     MODERATE = "MODERATE"
     AGGRESSIVE = "AGGRESSIVE"
 
-
 class SignalType(Enum):
-    """Signal types."""
     BUY = "BUY"
     SELL = "SELL"
     HOLD = "HOLD"
@@ -75,7 +83,7 @@ class SignalType(Enum):
     MONITOR = "MONITOR"
     STRONG_BUY = "STRONG_BUY"
     STRONG_SELL = "STRONG_SELL"
-
+    EXIT = "EXIT"
 
 # ============================================================
 # DATA CLASSES
@@ -83,7 +91,6 @@ class SignalType(Enum):
 
 @dataclass
 class TradeResult:
-    """Trade result data."""
     symbol: str
     side: str
     quantity: float
@@ -95,11 +102,11 @@ class TradeResult:
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
     strategy: str = "default"
     metadata: Dict[str, Any] = field(default_factory=dict)
-
+    ai_enhanced: bool = False
+    ai_confidence: float = 0.0
 
 @dataclass
 class PerformanceMetrics:
-    """Performance metrics."""
     total_trades: int = 0
     winning_trades: int = 0
     losing_trades: int = 0
@@ -116,12 +123,10 @@ class PerformanceMetrics:
     sharpe_ratio: float = 0.0
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
-
 # ============================================================
 # IMPORTS - WITH FALLBACKS
 # ============================================================
 
-# Health Monitor
 try:
     from core.health import set_status as health_set_status, health_monitor
     HEALTH_AVAILABLE = True
@@ -130,22 +135,9 @@ except ImportError:
     health_set_status = None
     health_monitor = None
 
-# ============================================================
-# FIX: set_status wrapper untuk kompatibilitas
-# ============================================================
-
 def set_status(component: str, status: str) -> None:
-    """
-    Safe wrapper untuk set_status dengan kompatibilitas.
-    
-    Args:
-        component: Nama komponen (core, gui, learning, dll)
-        status: Status (ONLINE, RUNNING, STOPPED, dll)
-    """
-    # Coba gunakan health_set_status dari core
     if health_set_status is not None:
         try:
-            # Coba dengan 2 argumen
             if hasattr(health_set_status, '__code__'):
                 import inspect
                 sig = inspect.signature(health_set_status)
@@ -160,11 +152,8 @@ def set_status(component: str, status: str) -> None:
             return
         except Exception as e:
             logger.debug(f"Health set_status error: {e}")
-    
-    # Fallback: log saja
     logger.debug(f"Status: {component} -> {status}")
 
-# Brain
 try:
     from core.brain import Brain, brain
     BRAIN_AVAILABLE = True
@@ -173,19 +162,10 @@ except ImportError:
     Brain = None
     brain = None
 
-# ============================================================
-# FIX: EXCHANGE IMPORT (CRITICAL)
-# ============================================================
-
 try:
     from core.market_data import (
-        KrakenMarketData,
-        kraken_market,
-        exchange,
-        get_exchange,
-        get_market_data,
-        TickerData,
-        Candle,
+        KrakenMarketData, kraken_market, exchange,
+        get_exchange, get_market_data, TickerData, Candle
     )
     EXCHANGE_AVAILABLE = True
     logger.info("✅ Exchange loaded from market_data")
@@ -200,7 +180,6 @@ except ImportError:
     Candle = None
     logger.debug("Exchange not available")
 
-# Scanner
 try:
     from core.scanner import MarketScanner
     SCANNER_AVAILABLE = True
@@ -208,7 +187,6 @@ except ImportError:
     SCANNER_AVAILABLE = False
     MarketScanner = None
 
-# Cognitive Scanner
 try:
     from core.cognitive_scanner import CognitiveMarketScanner
     COGNITIVE_SCANNER_AVAILABLE = True
@@ -216,7 +194,6 @@ except ImportError:
     COGNITIVE_SCANNER_AVAILABLE = False
     CognitiveMarketScanner = None
 
-# Consciousness
 try:
     from core.consciousness import consciousness
     CONSCIOUSNESS_AVAILABLE = True
@@ -224,7 +201,6 @@ except ImportError:
     CONSCIOUSNESS_AVAILABLE = False
     consciousness = None
 
-# Learning Engine
 try:
     from core.learning.engine import learning_engine
     LEARNING_ENGINE_AVAILABLE = True
@@ -232,7 +208,6 @@ except ImportError:
     LEARNING_ENGINE_AVAILABLE = False
     learning_engine = None
 
-# Notification
 try:
     from services.notification_service import NotificationService
     NOTIFICATION_AVAILABLE = True
@@ -240,44 +215,31 @@ except ImportError:
     NOTIFICATION_AVAILABLE = False
     NotificationService = None
 
-
 # ============================================================
-# TRADING BOT - SUPER COMPREHENSIVE - FIXED
+# TRADING BOT - SUPER COMPREHENSIVE - WITH AI
 # ============================================================
 
 class TradingBot:
     """
-    Trading Bot Core v4.4.1 - Super Comprehensive Trading Intelligence - FIXED.
-    
-    Features:
-    - Integrated with Cognitive Brain
-    - Exchange integration (Kraken)
-    - Real-time market data
-    - Paper trading
-    - Auto-recovery
-    - Performance tracking
+    Trading Bot Core v5.0.0 - Super Comprehensive Trading Intelligence with AI.
+    Integrated with Cognitive Brain, Exchange, Scanner, Consciousness, Learning Engine, and DeepSeek AI.
     """
+    
+    VERSION = "5.0.0"
     
     def __init__(
         self,
         scanner=None,
         notifications=None,
         brain_instance=None,
-        exchange_instance=None,  # <-- NEW: Exchange instance
+        exchange_instance=None,
         config: Optional[Dict[str, Any]] = None
     ):
-        # ====================================================
-        # LOCK & CONFIG
-        # ====================================================
-        
         self.lock = threading.RLock()
         self.config = config or {}
         
-        # ====================================================
-        # VERSION & IDENTITY
-        # ====================================================
-        
-        self.version = "4.4.1"
+        # Version & Identity
+        self.version = self.VERSION
         self.name = "Cognitive Mirror Trading Bot"
         self.identity = {
             "name": self.name,
@@ -286,10 +248,10 @@ class TradingBot:
             "created_at": datetime.now().isoformat(),
         }
         
-        # ====================================================
-        # CORE ENGINE
-        # ====================================================
+        # AI Status
+        self.ai_enabled = DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED
         
+        # Core Components
         self.scanner = scanner
         if self.scanner is None and SCANNER_AVAILABLE:
             try:
@@ -297,7 +259,6 @@ class TradingBot:
             except Exception as e:
                 logger.warning(f"Scanner creation failed: {e}")
         
-        # Try cognitive scanner if available
         if self.scanner is None and COGNITIVE_SCANNER_AVAILABLE:
             try:
                 self.scanner = CognitiveMarketScanner(
@@ -316,10 +277,7 @@ class TradingBot:
             except Exception as e:
                 logger.warning(f"Notification creation failed: {e}")
         
-        # ====================================================
-        # UNIFIED AI BRAIN
-        # ====================================================
-        
+        # Unified AI Brain
         self.brain = brain_instance
         if self.brain is None and BRAIN_AVAILABLE:
             try:
@@ -332,10 +290,7 @@ class TradingBot:
         else:
             logger.warning("⚠️ Running without Cognitive Brain.")
         
-        # ====================================================
-        # EXCHANGE INTEGRATION (NEW)
-        # ====================================================
-        
+        # Exchange Integration
         self.exchange = exchange_instance
         if self.exchange is None and EXCHANGE_AVAILABLE:
             try:
@@ -345,38 +300,28 @@ class TradingBot:
                 logger.warning(f"Exchange integration failed: {e}")
         
         if self.exchange is not None:
-            # Test connection
             try:
                 if hasattr(self.exchange, 'test_connection'):
                     if self.exchange.test_connection():
-                        logger.info("✅ Kraken connection successful.")
+                        logger.info("✅ Exchange connection successful.")
                     else:
-                        logger.warning("⚠️ Kraken connection failed - using mock data.")
+                        logger.warning("⚠️ Exchange connection failed - using mock data.")
             except Exception as e:
                 logger.warning(f"Exchange connection test failed: {e}")
         else:
             logger.warning("⚠️ Running without exchange - using mock data.")
         
-        # ====================================================
-        # CONSCIOUSNESS
-        # ====================================================
-        
+        # Consciousness
         self.consciousness = consciousness
         if CONSCIOUSNESS_AVAILABLE and self.consciousness is not None:
             logger.info("Consciousness integrated successfully.")
         
-        # ====================================================
-        # LEARNING ENGINE
-        # ====================================================
-        
+        # Learning Engine
         self.learning_engine = learning_engine
         if LEARNING_ENGINE_AVAILABLE and self.learning_engine is not None:
             logger.info("Learning Engine integrated successfully.")
         
-        # ====================================================
-        # STATE
-        # ====================================================
-        
+        # State
         self.state = BotState.INITIALIZING
         self.running = False
         self.thread: Optional[threading.Thread] = None
@@ -394,10 +339,7 @@ class TradingBot:
         self.last_error: Optional[str] = None
         self.last_update: Optional[str] = None
         
-        # ====================================================
-        # TRADING CONFIGURATION
-        # ====================================================
-        
+        # Trading Configuration
         self.trading_mode = TradingMode.PAPER
         self.risk_level = RiskLevel.MODERATE
         self.market_mode = self.config.get("market_mode", "CRYPTO")
@@ -413,10 +355,7 @@ class TradingBot:
         self.default_take_profit = self.config.get("default_take_profit", 10.0)
         self.order_size = self.config.get("order_size", 100.0)
         
-        # ====================================================
-        # BALANCE & PORTFOLIO
-        # ====================================================
-        
+        # Balance & Portfolio
         self.initial_balance = self.config.get("balance", 10000.0)
         self.balance = self.initial_balance
         self.portfolio = {
@@ -428,10 +367,7 @@ class TradingBot:
             "initial_balance": self.initial_balance,
         }
         
-        # ====================================================
-        # DATA CACHES
-        # ====================================================
-        
+        # Data Caches
         self.market_data_cache: Dict[str, List[Dict]] = {}
         self.price_cache: Dict[str, float] = {}
         self.last_results: List[Dict] = []
@@ -440,10 +376,11 @@ class TradingBot:
         self.results: List[Dict] = []
         self.memory: Dict[str, Any] = {}
         
-        # ====================================================
-        # STATISTICS
-        # ====================================================
+        # AI Cache
+        self.ai_analysis_cache: Dict[str, Dict] = {}
+        self.ai_insights_cache: Dict[str, List[str]] = {}
         
+        # Statistics
         self.total_buy_signals = 0
         self.total_sell_signals = 0
         self.total_hold_signals = 0
@@ -451,31 +388,25 @@ class TradingBot:
         self.total_trades = 0
         self.winning_trades = 0
         self.losing_trades = 0
+        self.ai_validated_trades = 0
         
+        # History
         self.trade_history: List[TradeResult] = []
         self.signal_history: List[Dict] = []
+        self.ai_analysis_history: List[Dict] = []
+        self.performance_history: List[Dict] = []
+        self.daily_pnl: Dict[str, float] = {}
         
-        # ====================================================
-        # BRAIN STATE
-        # ====================================================
-        
+        # Brain State
         self.anomaly_status = "NORMAL"
         self.market_forecast = "NEUTRAL"
         self.brain_confidence = 0.0
         self.brain_state: Optional[Dict] = None
         
-        # ====================================================
-        # PERFORMANCE
-        # ====================================================
-        
+        # Performance
         self.performance = PerformanceMetrics()
-        self.performance_history: List[Dict] = []
-        self.daily_pnl: Dict[str, float] = {}
         
-        # ====================================================
-        # CALLBACKS
-        # ====================================================
-        
+        # Callbacks
         self.on_scan_complete: Optional[callable] = None
         self.on_pair_update: Optional[callable] = None
         self.on_signal: Optional[callable] = None
@@ -483,36 +414,25 @@ class TradingBot:
         self.on_brain_update: Optional[callable] = None
         self.on_trade: Optional[callable] = None
         self.on_error: Optional[callable] = None
+        self.on_ai_analysis: Optional[callable] = None
         
-        # ====================================================
-        # INITIALIZE
-        # ====================================================
-        
+        # Initialize
         self._connect_scanner()
         self._initialize_cache()
-        
-        # Initialize exchange data
         self._initialize_exchange_data()
         
         self.state = BotState.IDLE
         
-        # ============================================================
-        # FIX: Safe set_status dengan 2 argumen (component, status)
-        # ============================================================
-        
-        try:
-            set_status("core", "ONLINE")
-        except Exception as e:
-            logger.debug(f"Set status error: {e}")
+        set_status("core", "ONLINE")
         
         logger.info(
-            "TradingBot v%s Cognitive Mirror initialized. Mode: %s, Exchange: %s",
+            "TradingBot v%s Cognitive Mirror initialized. Mode: %s, Exchange: %s, AI: %s",
             self.version,
             self.trading_mode.value,
-            "ONLINE" if self.exchange is not None else "OFFLINE"
+            "ONLINE" if self.exchange is not None else "OFFLINE",
+            "ENABLED" if self.ai_enabled else "DISABLED"
         )
         
-        # Register to health monitor
         if HEALTH_AVAILABLE and health_monitor is not None:
             try:
                 if hasattr(health_monitor, 'register'):
@@ -520,17 +440,15 @@ class TradingBot:
             except Exception as e:
                 logger.debug(f"Health register error: {e}")
     
-    # ========================================================
+    # ============================================================
     # EXCHANGE DATA INITIALIZATION
-    # ========================================================
+    # ============================================================
     
     def _initialize_exchange_data(self) -> None:
-        """Initialize exchange data for all pairs."""
         if self.exchange is None:
             return
         
         try:
-            # Get latest prices for all pairs
             if hasattr(self.exchange, 'get_latest_prices'):
                 prices = self.exchange.get_latest_prices(self.current_pairs)
                 for pair, price in prices.items():
@@ -538,9 +456,8 @@ class TradingBot:
                         self.price_cache[pair] = price
                         logger.debug(f"Initial price {pair}: ${price:.2f}")
             
-            # Get OHLC data for all pairs
             if hasattr(self.exchange, 'get_ohlc'):
-                for pair in self.current_pairs[:5]:  # Limit initial load
+                for pair in self.current_pairs[:5]:
                     candles = self.exchange.get_ohlc(pair, self.current_timeframe, 100)
                     if candles:
                         self.market_data_cache[pair] = candles
@@ -549,12 +466,7 @@ class TradingBot:
         except Exception as e:
             logger.warning(f"Exchange data initialization failed: {e}")
     
-    # ========================================================
-    # GET REAL-TIME PRICE FROM EXCHANGE
-    # ========================================================
-    
     def get_real_time_price(self, pair: str) -> Optional[float]:
-        """Get real-time price from exchange."""
         if self.exchange is None:
             return None
         
@@ -571,12 +483,11 @@ class TradingBot:
             logger.debug(f"Real-time price error for {pair}: {e}")
             return None
     
-    # ========================================================
+    # ============================================================
     # INITIALIZATION HELPERS
-    # ========================================================
+    # ============================================================
     
     def _connect_scanner(self) -> None:
-        """Connect scanner callbacks."""
         if self.scanner is None:
             return
         
@@ -590,17 +501,15 @@ class TradingBot:
             logger.exception(f"Scanner callback error: {e}")
     
     def _initialize_cache(self) -> None:
-        """Initialize market data cache."""
         for pair in self.current_pairs:
             self.market_data_cache[pair] = []
             self.price_cache[pair] = None
     
-    # ========================================================
+    # ============================================================
     # SCANNER LIVE UPDATE
-    # ========================================================
+    # ============================================================
     
     def on_scanner_update(self, data: Dict) -> None:
-        """Handle live scanner updates."""
         if not isinstance(data, dict):
             return
         
@@ -609,7 +518,6 @@ class TradingBot:
             if len(self.latest_results) > 100:
                 self.latest_results = self.latest_results[-100:]
         
-        # FIX: Update brain di background thread
         if self.brain is not None:
             threading.Thread(
                 target=self._update_brain_async,
@@ -617,7 +525,6 @@ class TradingBot:
                 daemon=True
             ).start()
         
-        # Pair update callback
         if self.on_pair_update:
             try:
                 self.on_pair_update(data)
@@ -625,23 +532,255 @@ class TradingBot:
                 pass
     
     def _update_brain_async(self, data: List[Dict]) -> None:
-        """Update brain in background thread."""
         try:
             state = self.brain.observe(data)
             self.update_brain(state)
         except Exception as e:
             logger.warning(f"Brain observe failed: {e}")
     
-    # ========================================================
-    # MAIN SCAN CYCLE - FIXED
-    # ========================================================
+    # ============================================================
+    # AI INTEGRATION - STRATEGY GENERATION
+    # ============================================================
+    
+    def generate_strategy_with_ai(
+        self,
+        pair: str,
+        market_data: Dict[str, Any],
+        risk_level: str = "moderate",
+        timeframe: str = "1h"
+    ) -> Dict[str, Any]:
+        """Generate trading strategy with AI using DeepSeek."""
+        try:
+            if not self.ai_enabled:
+                return {
+                    'status': 'disabled',
+                    'message': 'AI is disabled',
+                    'pair': pair
+                }
+            
+            context = f"""
+Pair: {pair}
+Risk Level: {risk_level}
+Timeframe: {timeframe}
+
+Market Data:
+- Price: {market_data.get('price', 0)}
+- 24h Change: {market_data.get('change_24h', 0)}%
+- Volume: {market_data.get('volume', 0)}
+- High: {market_data.get('high', 0)}
+- Low: {market_data.get('low', 0)}
+- Trend: {market_data.get('trend', 'NEUTRAL')}
+- RSI: {market_data.get('rsi', 0)}
+- MACD: {market_data.get('macd', 0)}
+- Volatility: {market_data.get('volatility', 0)}
+"""
+            
+            prompt = f"""Kembangkan strategi trading komprehensif untuk {pair}:
+
+1. ENTRY: Kondisi entry spesifik dengan harga target
+2. EXIT: Take profit level 1, 2, 3
+3. STOP LOSS: Level stop loss dengan rasio risk/reward
+4. POSITION SIZING: Ukuran posisi berdasarkan risk level {risk_level}
+5. TIMEFRAME: Timeframe terbaik untuk eksekusi
+6. RISK MANAGEMENT: Risk management rules
+7. CONFIRMATION: Konfirmasi tambahan yang diperlukan
+8. CONTINGENCY: Skenario alternatif
+
+Beri strategi yang actionable dan berbasis data.
+"""
+            
+            result = deepseek_ai.ask(
+                question=prompt,
+                context=context,
+                system_prompt="strategist",
+                temperature=0.7,
+                max_tokens=1024
+            )
+            
+            strategy = self._parse_ai_strategy(result)
+            
+            from core.knowledge import knowledge
+            knowledge.add(
+                content=f"AI Strategy for {pair}: {result[:300]}...",
+                category="strategy",
+                type="ai_strategy",
+                tags=["ai", "strategy", pair.replace('/', '_')],
+                confidence=75.0,
+                importance=0.8,
+                metadata={
+                    'pair': pair,
+                    'risk_level': risk_level,
+                    'timeframe': timeframe,
+                    'timestamp': datetime.now().isoformat()
+                }
+            )
+            
+            self.ai_analysis_history.append({
+                'type': 'strategy',
+                'pair': pair,
+                'risk_level': risk_level,
+                'timestamp': datetime.now().isoformat()
+            })
+            
+            return {
+                'status': 'success',
+                'pair': pair,
+                'strategy': result,
+                'entry': strategy.get('entry'),
+                'take_profit': strategy.get('take_profit'),
+                'stop_loss': strategy.get('stop_loss'),
+                'risk_reward': strategy.get('risk_reward'),
+                'position_size': strategy.get('position_size'),
+                'recommendation': strategy.get('recommendation'),
+                'risk_level': risk_level,
+                'timeframe': timeframe,
+                'timestamp': datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"AI strategy generation error: {e}")
+            return {
+                'status': 'error',
+                'message': str(e),
+                'pair': pair
+            }
+    
+    def _parse_ai_strategy(self, response: str) -> Dict[str, Any]:
+        import re
+        strategy = {}
+        
+        entry_match = re.search(r'entry[:\s]+(?:price|level)?[:\s]*([\d.]+)', response, re.IGNORECASE)
+        if entry_match:
+            strategy['entry'] = float(entry_match.group(1))
+        
+        tp_matches = re.findall(r'take\s*profit[:\s]+(?:level\s*)?(\d+)?[:\s]*([\d.]+)', response, re.IGNORECASE)
+        if tp_matches:
+            strategy['take_profit'] = [float(tp[1]) for tp in tp_matches]
+        else:
+            tp_single = re.search(r'tp[:\s]+([\d.]+)', response, re.IGNORECASE)
+            if tp_single:
+                strategy['take_profit'] = [float(tp_single.group(1))]
+        
+        sl_match = re.search(r'stop\s*loss[:\s]+(?:level)?[:\s]*([\d.]+)', response, re.IGNORECASE)
+        if sl_match:
+            strategy['stop_loss'] = float(sl_match.group(1))
+        
+        rr_match = re.search(r'risk[/-]?reward[:\s]*([\d.]+)', response, re.IGNORECASE)
+        if rr_match:
+            strategy['risk_reward'] = float(rr_match.group(1))
+        
+        size_match = re.search(r'position\s*size[:\s]*([\d.]+)', response, re.IGNORECASE)
+        if size_match:
+            strategy['position_size'] = float(size_match.group(1))
+        
+        rec_match = re.search(r'recommendation[:\s]*(.+?)(?:\n|$)', response, re.IGNORECASE)
+        if rec_match:
+            strategy['recommendation'] = rec_match.group(1).strip()
+        
+        return strategy
+    
+    def enhance_trade_with_ai(self, trade: Dict[str, Any]) -> Dict[str, Any]:
+        """Enhance trade decision with AI."""
+        try:
+            if not self.ai_enabled:
+                return {
+                    **trade,
+                    'ai_enhanced': False,
+                    'ai_status': 'disabled'
+                }
+            
+            context = f"""
+Trade Details:
+- Pair: {trade.get('pair', 'Unknown')}
+- Side: {trade.get('side', 'BUY')}
+- Entry: ${trade.get('entry', 0)}
+- Stop Loss: ${trade.get('stop_loss', 0)}
+- Take Profit: ${trade.get('take_profit', 0)}
+- Position Size: {trade.get('size', 0)}
+- Risk/Reward: {trade.get('risk_reward', 0)}
+"""
+            
+            prompt = f"""Analisis dan tingkatkan trade ini:
+
+1. VALIDASI: Apakah trade ini baik? Mengapa?
+2. OPTIMASI: Bagaimana bisa dioptimalkan?
+3. RISIKO: Apa risiko terbesar?
+4. INSIGHT: Insight berharga untuk trade ini
+5. ALTERNATIF: Skenario alternatif
+
+Berikan analisis kritis dan actionable.
+"""
+            
+            result = deepseek_ai.ask(
+                question=prompt,
+                context=context,
+                system_prompt="analyst",
+                temperature=0.5,
+                max_tokens=512
+            )
+            
+            is_good = "good" in result.lower() and "not" not in result.lower()
+            
+            self.ai_validated_trades += 1
+            
+            return {
+                **trade,
+                'ai_enhanced': True,
+                'ai_status': 'success',
+                'ai_analysis': result,
+                'ai_is_good': is_good,
+                'ai_confidence': 80 if is_good else 40,
+                'ai_timestamp': datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"AI trade enhancement error: {e}")
+            return {
+                **trade,
+                'ai_enhanced': False,
+                'ai_status': 'error',
+                'ai_error': str(e)
+            }
+    
+    def get_ai_insights(self, pair: str) -> List[str]:
+        """Get AI insights for a pair."""
+        try:
+            if not self.ai_enabled:
+                return ["AI is disabled"]
+            
+            cache_key = f"insights_{pair}"
+            if cache_key in self.ai_insights_cache:
+                return self.ai_insights_cache[cache_key]
+            
+            prompt = f"Berikan 3 insight trading untuk {pair} berdasarkan market conditions terkini."
+            
+            result = deepseek_ai.ask(
+                question=prompt,
+                system_prompt="analyst",
+                temperature=0.6,
+                max_tokens=256
+            )
+            
+            insights = [line.strip() for line in result.split('\n') if len(line.strip()) > 10]
+            insights = insights[:3]
+            
+            self.ai_insights_cache[cache_key] = insights
+            
+            return insights
+            
+        except Exception as e:
+            logger.error(f"AI insights error: {e}")
+            return ["AI insights unavailable"]
+    
+    # ============================================================
+    # MAIN SCAN CYCLE
+    # ============================================================
     
     def run_once(
         self,
         pairs: Optional[List[str]] = None,
         timeframe: Optional[str] = None
     ) -> List[Dict]:
-        """Run one complete scan cycle."""
         start_time = time.time()
         
         if pairs is None:
@@ -653,19 +792,11 @@ class TradingBot:
         try:
             self.state = BotState.SCANNING
             
-            # ============================================
-            # UPDATE REAL-TIME PRICES FROM EXCHANGE
-            # ============================================
-            
             if self.exchange is not None:
                 for pair in pairs:
                     price = self.get_real_time_price(pair)
                     if price:
                         self.price_cache[pair] = price
-            
-            # ============================================
-            # MARKET SCAN
-            # ============================================
             
             results = []
             if self.scanner is not None:
@@ -681,10 +812,6 @@ class TradingBot:
             if not isinstance(results, list):
                 results = []
             
-            # ============================================
-            # BRAIN ANALYSIS - FIXED: Pakai thread
-            # ============================================
-            
             if results and self.brain is not None:
                 try:
                     threading.Thread(
@@ -695,17 +822,12 @@ class TradingBot:
                 except Exception as e:
                     logger.warning(f"Brain analysis failed: {e}")
             
-            # ============================================
-            # SAVE SNAPSHOT
-            # ============================================
-            
             with self.lock:
                 self.last_results = list(results)
                 self.latest_results = list(results)
                 self.signal_snapshot = list(results)
                 self.results = list(results)
                 
-                # Cache market data
                 for item in results:
                     if not isinstance(item, dict):
                         continue
@@ -727,21 +849,9 @@ class TradingBot:
                 self.last_scan_duration = time.time() - start_time
                 self.last_update = self.last_scan_time.isoformat()
             
-            # ============================================
-            # PROCESS SIGNALS
-            # ============================================
-            
             self.process_signals(results)
-            
-            # ============================================
-            # UPDATE PERFORMANCE
-            # ============================================
-            
             self._update_performance()
-            
-            # ============================================
-            # CALLBACK
-            # ============================================
+            self._update_daily_pnl()
             
             if self.on_scan_complete:
                 try:
@@ -776,7 +886,6 @@ class TradingBot:
             return []
     
     def _analyze_with_brain(self, results: List[Dict]) -> None:
-        """Analyze results with brain in background."""
         try:
             state = self.brain.observe(results)
             self.update_brain(state)
@@ -786,12 +895,7 @@ class TradingBot:
         except Exception as e:
             logger.warning(f"Brain analysis failed: {e}")
     
-    # ========================================================
-    # BRAIN STATE UPDATE
-    # ========================================================
-    
     def update_brain(self, state: Dict) -> None:
-        """Update brain state."""
         if not isinstance(state, dict):
             return
         
@@ -804,12 +908,11 @@ class TradingBot:
         except Exception as e:
             logger.warning(f"Brain state update error: {e}")
     
-    # ========================================================
+    # ============================================================
     # SIGNAL PROCESSING
-    # ========================================================
+    # ============================================================
     
     def process_signals(self, results: List[Dict]) -> None:
-        """Process signals from scan results."""
         buy = 0
         sell = 0
         hold = 0
@@ -835,26 +938,24 @@ class TradingBot:
                 else:
                     hold += 1
                 
-                # Store signal
                 signal_data = {
                     "timestamp": datetime.now().isoformat(),
                     "pair": item.get("pair", item.get("symbol")),
                     "signal": action,
                     "confidence": confidence,
                     "price": item.get("price", item.get("close")),
+                    "ai_enhanced": item.get("ai_validated", False),
                 }
                 self.signal_history.append(signal_data)
                 if len(self.signal_history) > 1000:
                     self.signal_history = self.signal_history[-1000:]
                 
-                # GUI callback
                 if self.on_signal:
                     try:
                         self.on_signal(item)
                     except Exception:
                         pass
                 
-                # Notification
                 if action in ["BUY", "SELL", "STRONG_BUY", "STRONG_SELL"]:
                     self.send_notification(item)
             
@@ -865,12 +966,7 @@ class TradingBot:
         except Exception as e:
             logger.exception(f"Signal processing error: {e}")
     
-    # ========================================================
-    # NOTIFICATION
-    # ========================================================
-    
     def send_notification(self, data: Dict) -> None:
-        """Send notification."""
         if self.notifications is None:
             return
         
@@ -882,9 +978,9 @@ class TradingBot:
         except Exception as e:
             logger.warning(f"Notification error: {e}")
     
-    # ========================================================
+    # ============================================================
     # TRADING EXECUTION
-    # ========================================================
+    # ============================================================
     
     def execute_trade(
         self,
@@ -892,12 +988,15 @@ class TradingBot:
         side: str,
         quantity: float,
         price: float,
-        strategy: str = "default"
+        strategy: str = "default",
+        use_ai: bool = True
     ) -> Optional[TradeResult]:
-        """Execute a trade."""
         try:
             if self.trading_mode == TradingMode.PAPER:
-                return self._execute_paper_trade(symbol, side, quantity, price, strategy)
+                result = self._execute_paper_trade(symbol, side, quantity, price, strategy)
+                if result and use_ai and self.ai_enabled:
+                    result = self._enhance_trade_result_with_ai(result)
+                return result
             else:
                 return self._execute_paper_trade(symbol, side, quantity, price, strategy)
         except Exception as e:
@@ -912,7 +1011,6 @@ class TradingBot:
         price: float,
         strategy: str
     ) -> Optional[TradeResult]:
-        """Execute paper trade."""
         if side == "BUY":
             cost = quantity * price
             if cost > self.portfolio["cash"]:
@@ -943,6 +1041,8 @@ class TradingBot:
             pnl_percentage=0,
             fee=price * quantity * 0.001,
             strategy=strategy,
+            ai_enhanced=False,
+            ai_confidence=0.0
         )
         
         self.trade_history.append(trade)
@@ -957,8 +1057,30 @@ class TradingBot:
         logger.info(f"PAPER {side}: {quantity:.4f} {symbol} @ {price:.2f}")
         return trade
     
+    def _enhance_trade_result_with_ai(self, trade: TradeResult) -> TradeResult:
+        try:
+            if not self.ai_enabled:
+                return trade
+            
+            prompt = f"Analisis trade ini: {trade.symbol} {trade.side} {trade.quantity} @ {trade.entry_price}"
+            result = deepseek_ai.ask(
+                question=prompt,
+                system_prompt="analyst",
+                temperature=0.3,
+                max_tokens=200
+            )
+            
+            trade.ai_enhanced = True
+            trade.ai_confidence = 75.0
+            trade.metadata['ai_analysis'] = result
+            
+            return trade
+            
+        except Exception as e:
+            logger.warning(f"AI trade enhancement failed: {e}")
+            return trade
+    
     def _update_portfolio(self) -> None:
-        """Update portfolio value."""
         total_value = self.portfolio["cash"]
         for symbol, quantity in self.portfolio["holdings"].items():
             price = self.price_cache.get(symbol)
@@ -970,7 +1092,6 @@ class TradingBot:
         self.portfolio["pnl_percentage"] = (self.portfolio["pnl"] / self.initial_balance) * 100
     
     def _update_performance(self) -> None:
-        """Update performance metrics."""
         total = self.total_trades
         if total > 0:
             self.performance.total_trades = total
@@ -980,12 +1101,18 @@ class TradingBot:
             self.performance.total_pnl = self.portfolio["pnl"]
             self.performance.total_pnl_percentage = self.portfolio["pnl_percentage"]
     
-    # ========================================================
-    # BOT CONTROL - FIXED
-    # ========================================================
+    def _update_daily_pnl(self) -> None:
+        today = datetime.now().strftime("%Y-%m-%d")
+        self.daily_pnl[today] = self.portfolio["pnl"]
+        if len(self.daily_pnl) > 365:
+            oldest = sorted(self.daily_pnl.keys())[0]
+            del self.daily_pnl[oldest]
+    
+    # ============================================================
+    # BOT CONTROL
+    # ============================================================
     
     def start(self) -> bool:
-        """Start the bot."""
         if self.running:
             logger.warning("Bot already running.")
             return False
@@ -997,7 +1124,6 @@ class TradingBot:
         self.pause_event.clear()
         self.state = BotState.RUNNING
         
-        # FIX: Start brain di background thread
         if self.brain is not None:
             try:
                 threading.Thread(
@@ -1014,14 +1140,7 @@ class TradingBot:
         )
         self.thread.start()
         
-        # ============================================================
-        # FIX: Safe set_status dengan 2 argumen (component, status)
-        # ============================================================
-        
-        try:
-            set_status("core", "RUNNING")
-        except Exception as e:
-            logger.debug(f"Set status error: {e}")
+        set_status("core", "RUNNING")
         
         logger.info("TradingBot started.")
         
@@ -1034,7 +1153,6 @@ class TradingBot:
         return True
     
     def _start_brain_safe(self) -> None:
-        """Start brain in background."""
         try:
             if hasattr(self.brain, 'start'):
                 self.brain.start()
@@ -1042,7 +1160,6 @@ class TradingBot:
             logger.warning(f"Brain start error: {e}")
     
     def stop(self) -> bool:
-        """Stop the bot."""
         if not self.running:
             return False
         
@@ -1053,7 +1170,6 @@ class TradingBot:
         self.shutdown_event.set()
         self.state = BotState.STOPPED
         
-        # FIX: Stop brain di background
         if self.brain is not None:
             try:
                 threading.Thread(
@@ -1063,7 +1179,6 @@ class TradingBot:
             except Exception as e:
                 logger.warning(f"Brain stop failed: {e}")
         
-        # FIX: Join thread dengan timeout
         if self.thread:
             try:
                 self.thread.join(timeout=3.0)
@@ -1073,14 +1188,7 @@ class TradingBot:
                 pass
             self.thread = None
         
-        # ============================================================
-        # FIX: Safe set_status dengan 2 argumen (component, status)
-        # ============================================================
-        
-        try:
-            set_status("core", "STOPPED")
-        except Exception as e:
-            logger.debug(f"Set status error: {e}")
+        set_status("core", "STOPPED")
         
         logger.info("TradingBot stopped.")
         
@@ -1093,7 +1201,6 @@ class TradingBot:
         return True
     
     def _stop_brain_safe(self) -> None:
-        """Stop brain in background."""
         try:
             if hasattr(self.brain, 'stop'):
                 self.brain.stop()
@@ -1101,7 +1208,6 @@ class TradingBot:
             logger.warning(f"Brain stop error: {e}")
     
     def pause(self) -> bool:
-        """Pause the bot."""
         if not self.running:
             return False
         
@@ -1111,7 +1217,6 @@ class TradingBot:
         return True
     
     def resume(self) -> bool:
-        """Resume the bot."""
         if not self.running:
             return False
         
@@ -1120,15 +1225,13 @@ class TradingBot:
         logger.info("TradingBot resumed.")
         return True
     
-    # ========================================================
-    # WORKER LOOP - FIXED
-    # ========================================================
+    # ============================================================
+    # WORKER LOOP
+    # ============================================================
     
     def _worker_loop(self) -> None:
-        """Background worker thread - FIXED."""
         logger.info("Worker thread started.")
         
-        # FIX: Gunakan interval yang aman
         interval = max(1, int(self.current_interval))
         
         while self.running and not self.shutdown_event.is_set():
@@ -1139,10 +1242,17 @@ class TradingBot:
                 
                 results = self.run_once()
                 
-                # Learn from results (di background)
                 if results and self.learning_engine is not None:
                     threading.Thread(
                         target=self._learn_safe,
+                        args=(results,),
+                        daemon=True
+                    ).start()
+                
+                # AI Insights refresh
+                if self.ai_enabled and len(results) > 0:
+                    threading.Thread(
+                        target=self._refresh_ai_insights,
                         args=(results,),
                         daemon=True
                     ).start()
@@ -1156,7 +1266,6 @@ class TradingBot:
                 if self.errors > 10:
                     self._attempt_recovery()
             
-            # FIX: Sleep dengan interval yang aman
             for _ in range(interval):
                 if not self.running or self.shutdown_event.is_set():
                     break
@@ -1165,7 +1274,6 @@ class TradingBot:
         logger.info("Worker thread stopped.")
     
     def _learn_safe(self, results: List[Dict]) -> None:
-        """Learn from results in background."""
         try:
             if self.learning_engine is not None:
                 if hasattr(self.learning_engine, 'learn'):
@@ -1173,8 +1281,16 @@ class TradingBot:
         except Exception:
             pass
     
+    def _refresh_ai_insights(self, results: List[Dict]) -> None:
+        try:
+            for item in results[:3]:
+                pair = item.get('pair')
+                if pair:
+                    self.get_ai_insights(pair)
+        except Exception:
+            pass
+    
     def _attempt_recovery(self) -> bool:
-        """Attempt to recover from errors."""
         self.recovery_attempts += 1
         self.state = BotState.RECOVERING
         
@@ -1188,7 +1304,6 @@ class TradingBot:
                 self.scanner = MarketScanner()
                 self._connect_scanner()
             
-            # Reconnect exchange if available
             if self.exchange is not None and EXCHANGE_AVAILABLE:
                 try:
                     if hasattr(self.exchange, 'test_connection'):
@@ -1208,51 +1323,45 @@ class TradingBot:
             self.state = BotState.ERROR
             return False
     
-    # ========================================================
+    # ============================================================
     # DATA ACCESS
-    # ========================================================
+    # ============================================================
     
     def get_results(self) -> List[Dict]:
-        """Get latest scan results."""
         with self.lock:
             return list(self.last_results)
     
     def get_snapshot(self) -> List[Dict]:
-        """Get signal snapshot."""
         with self.lock:
             return list(self.signal_snapshot)
     
     def get_market_data(self, pair: str) -> List[Dict]:
-        """Get market data for pair."""
         with self.lock:
             return list(self.market_data_cache.get(pair, []))
     
     def get_price(self, pair: str) -> Optional[float]:
-        """Get current price for pair."""
-        # Try exchange first
         if self.exchange is not None:
             price = self.get_real_time_price(pair)
             if price is not None:
                 return price
         
-        # Fallback to cache
         with self.lock:
             return self.price_cache.get(pair)
     
     def get_trade_history(self, limit: int = 50) -> List[TradeResult]:
-        """Get trade history."""
         return self.trade_history[-limit:] if self.trade_history else []
     
     def get_signal_history(self, limit: int = 50) -> List[Dict]:
-        """Get signal history."""
         return self.signal_history[-limit:] if self.signal_history else []
     
-    # ========================================================
+    def get_ai_history(self, limit: int = 20) -> List[Dict]:
+        return self.ai_analysis_history[-limit:] if self.ai_analysis_history else []
+    
+    # ============================================================
     # STATUS & HEALTH
-    # ========================================================
+    # ============================================================
     
     def get_status(self) -> Dict[str, Any]:
-        """Get bot status."""
         return {
             "version": self.version,
             "state": self.state.value,
@@ -1265,6 +1374,8 @@ class TradingBot:
             "scanner": self.scanner is not None,
             "consciousness": CONSCIOUSNESS_AVAILABLE,
             "learning_engine": LEARNING_ENGINE_AVAILABLE,
+            "ai_enabled": self.ai_enabled,
+            "ai_validated_trades": self.ai_validated_trades,
             "anomaly": self.anomaly_status,
             "forecast": self.market_forecast,
             "confidence": self.brain_confidence,
@@ -1293,7 +1404,6 @@ class TradingBot:
         }
     
     def health_check(self) -> Dict[str, Any]:
-        """Comprehensive health check."""
         exchange_status = "OFFLINE"
         if self.exchange is not None:
             try:
@@ -1312,6 +1422,7 @@ class TradingBot:
             "exchange": exchange_status,
             "consciousness": CONSCIOUSNESS_AVAILABLE,
             "learning_engine": LEARNING_ENGINE_AVAILABLE,
+            "ai": "ONLINE" if self.ai_enabled else "OFFLINE",
             "cache_size": len(self.market_data_cache),
             "results": len(self.last_results),
             "errors": self.total_errors,
@@ -1320,12 +1431,18 @@ class TradingBot:
             "timestamp": datetime.now().isoformat(),
         }
     
-    # ========================================================
-    # MOBILE SNAPSHOT
-    # ========================================================
+    def get_ai_status(self) -> Dict[str, Any]:
+        return {
+            'ai_enabled': self.ai_enabled,
+            'ai_available': DEEPSEEK_AVAILABLE,
+            'ai_model': deepseek_ai.model if DEEPSEEK_AVAILABLE else None,
+            'ai_validated_trades': self.ai_validated_trades,
+            'total_trades': self.total_trades,
+            'validation_ratio': round(self.ai_validated_trades / max(1, self.total_trades) * 100, 2),
+            'timestamp': datetime.now().isoformat()
+        }
     
     def get_mobile_snapshot(self) -> Dict[str, Any]:
-        """Get mobile-friendly snapshot."""
         try:
             signals = self.get_snapshot()
             
@@ -1339,6 +1456,7 @@ class TradingBot:
                     "version": self.version,
                     "status": "RUNNING" if self.running else "STOPPED",
                     "state": self.state.value,
+                    "ai": "ON" if self.ai_enabled else "OFF",
                 },
                 "market": {
                     "mode": self.market_mode,
@@ -1369,12 +1487,11 @@ class TradingBot:
             logger.exception(f"Mobile snapshot error: {e}")
             return {"error": str(e)}
     
-    # ========================================================
+    # ============================================================
     # CLEAR & SHUTDOWN
-    # ========================================================
+    # ============================================================
     
     def clear_results(self) -> None:
-        """Clear all cached results."""
         with self.lock:
             self.last_results.clear()
             self.latest_results.clear()
@@ -1382,12 +1499,14 @@ class TradingBot:
             self.results.clear()
             self.signal_history.clear()
             self.trade_history.clear()
+            self.ai_analysis_history.clear()
+            self.ai_insights_cache.clear()
+            self.ai_analysis_cache.clear()
             self.performance_history.clear()
         
         logger.info("Results cleared.")
     
     def shutdown(self) -> bool:
-        """Complete shutdown with cleanup."""
         try:
             self.stop()
             self.clear_results()
@@ -1398,20 +1517,10 @@ class TradingBot:
             logger.exception(f"Shutdown error: {e}")
             return False
     
-    # ============================================================
-    # FIX: _save_state - Safe JSON serialization
-    # ============================================================
-    
     def _save_state(self) -> None:
-        """Save bot state to file."""
         try:
             state_file = self.config.get("state_file", "database/bot_state.json")
             
-            # ============================================================
-            # FIX: Buat data yang JSON-safe
-            # ============================================================
-            
-            # Convert portfolio ke safe dict
             portfolio_safe = {
                 "cash": float(self.portfolio.get("cash", 0)),
                 "holdings": {},
@@ -1421,7 +1530,6 @@ class TradingBot:
                 "initial_balance": float(self.portfolio.get("initial_balance", 0)),
             }
             
-            # Convert holdings ke string keys
             for symbol, quantity in self.portfolio.get("holdings", {}).items():
                 if isinstance(symbol, (int, float, bool)):
                     symbol = str(symbol)
@@ -1433,6 +1541,8 @@ class TradingBot:
                 "total_trades": int(self.total_trades),
                 "scan_count": int(self.scan_count),
                 "exchange_available": self.exchange is not None,
+                "ai_enabled": self.ai_enabled,
+                "ai_validated_trades": self.ai_validated_trades,
                 "timestamp": datetime.now().isoformat(),
             }
             
@@ -1444,7 +1554,6 @@ class TradingBot:
             logger.debug("State saved to %s", state_file)
         except Exception as e:
             logger.warning(f"State save failed: {e}")
-
 
 # ============================================================
 # BACKWARD COMPATIBILITY

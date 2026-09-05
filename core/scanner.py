@@ -1,24 +1,11 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# ============================================================
-# INKSIDE DIGITAL TRADING BOT
-# COGNITIVE MARKET SCANNER ENGINE
-#
-# Version: 5.3 COGNITIVE AWARENESS - FIXED
-#
-# FIXES:
-# - Fixed "Invalid interval: 60" - use string timeframes ("1h", "5m", etc.)
-# - Fixed record_health import (safe import)
-# - Fixed scanning flag reset on error
-# - Added safe interval check in scan loop
-# - Added proper ThreadPoolExecutor cleanup
-# - Better error handling
-# - Added timeframe validation
-# ============================================================
+# core/scanner.py
+# INKSIDE DIGITAL - COGNITIVE MARKET SCANNER ENGINE v5.3
+# WITH AI INTEGRATION - DEEPSEEK ENHANCED MARKET ANALYSIS
 
 import logging
 import threading
 import time
+import random
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Optional, Dict, Any, List, Callable, Union
@@ -29,6 +16,19 @@ from config import (
 )
 
 from core.health import set_status, health_monitor
+
+# ============================================================
+# AI INTEGRATION FLAG
+# ============================================================
+
+try:
+    from core.deepseek import deepseek_ai
+    DEEPSEEK_AVAILABLE = True
+    DEEPSEEK_ENABLED = deepseek_ai.enabled if hasattr(deepseek_ai, 'enabled') else False
+except ImportError:
+    DEEPSEEK_AVAILABLE = False
+    DEEPSEEK_ENABLED = False
+    deepseek_ai = None
 
 # ============================================================
 # FIX: Safe import for record_health
@@ -47,6 +47,11 @@ from core.analyzer import MarketAnalyzer
 from core.signal_engine import SignalEngine
 
 logger = logging.getLogger(__name__)
+
+if DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED:
+    logger.info("🤖 DeepSeek AI Integration: ENABLED for Scanner")
+else:
+    logger.info("🤖 DeepSeek AI Integration: DISABLED for Scanner")
 
 # ============================================================
 # TIMEFRAME CONFIG - FIXED
@@ -95,14 +100,6 @@ def get_interval_minutes(timeframe: str) -> int:
 # ============================================================
 
 def safe_candle_value(candle: Any, index: int, default: Any = 0) -> Any:
-    """
-    Safely get value from candle regardless of format.
-    
-    Supports:
-    - List/tuple: candle[index]
-    - Dict: candle.get(key)
-    - Other: default
-    """
     if candle is None:
         return default
     
@@ -123,7 +120,6 @@ def safe_candle_value(candle: Any, index: int, default: Any = 0) -> Any:
 
 
 def safe_candle_price(candle: Any) -> float:
-    """Safely get price from candle."""
     if candle is None:
         return 0.0
     
@@ -137,7 +133,6 @@ def safe_candle_price(candle: Any) -> float:
 
 
 def safe_candle_volume(candle: Any) -> float:
-    """Safely get volume from candle."""
     if candle is None:
         return 0.0
     
@@ -151,13 +146,13 @@ def safe_candle_volume(candle: Any) -> float:
 
 
 # ============================================================
-# COGNITIVE SCANNER - FIXED
+# COGNITIVE SCANNER - FIXED WITH AI INTEGRATION
 # ============================================================
 
 class CognitiveMarketScanner:
     """
-    Market Scanner with Cognitive Awareness.
-    Integrated with Consciousness, Brain, and Learning Engine.
+    Market Scanner with Cognitive Awareness and AI Integration.
+    Integrated with Consciousness, Brain, Learning Engine, and DeepSeek AI.
     """
     
     VERSION = "5.3 COGNITIVE AWARENESS - FIXED"
@@ -227,6 +222,8 @@ class CognitiveMarketScanner:
             "CognitiveMarketScanner %s initialized",
             self.VERSION
         )
+        if DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED:
+            logger.info("🤖 AI Market Analysis: ENABLED")
         
         # Register to health monitor
         try:
@@ -241,7 +238,6 @@ class CognitiveMarketScanner:
     # ============================================================
     
     def _notify_status(self, status: str) -> None:
-        """Notify status change."""
         if self.on_status_change:
             try:
                 self.on_status_change(status)
@@ -249,7 +245,6 @@ class CognitiveMarketScanner:
                 pass
     
     def _notify_signal(self, signal: Dict) -> None:
-        """Notify signal generated."""
         if self.on_signal_generated:
             try:
                 self.on_signal_generated(signal)
@@ -261,7 +256,6 @@ class CognitiveMarketScanner:
     # ============================================================
     
     def _update_consciousness(self, market_state: Dict) -> None:
-        """Update consciousness with market state."""
         if not self.consciousness:
             return
         
@@ -294,7 +288,6 @@ class CognitiveMarketScanner:
     # ============================================================
     
     def _update_brain(self, market_data: Dict) -> None:
-        """Update brain with market data."""
         if not self.brain:
             return
         
@@ -320,7 +313,6 @@ class CognitiveMarketScanner:
     # ============================================================
     
     def _learn_from_scan(self, result: Dict) -> None:
-        """Learn from scan results."""
         if not self.learning_engine:
             return
         
@@ -347,7 +339,6 @@ class CognitiveMarketScanner:
     # ============================================================
     
     def _store_in_memory(self, pattern: Dict) -> None:
-        """Store pattern in semantic memory."""
         if not self.semantic_memory:
             return
         
@@ -374,11 +365,9 @@ class CognitiveMarketScanner:
     # ============================================================
     
     def _get_interval(self, timeframe: str) -> int:
-        """Get interval in minutes from timeframe string."""
         return get_interval_minutes(timeframe)
     
     def _validate_timeframe(self, timeframe: str) -> str:
-        """Validate timeframe string."""
         return validate_timeframe(timeframe)
     
     # ============================================================
@@ -390,7 +379,6 @@ class CognitiveMarketScanner:
         pair: str,
         timeframes: Optional[List[str]] = None
     ) -> Dict:
-        """Scan multiple timeframes for a pair."""
         if timeframes is None:
             timeframes = DEFAULT_TIMEFRAMES
         
@@ -398,13 +386,12 @@ class CognitiveMarketScanner:
         
         for tf in timeframes:
             try:
-                # FIX: Use string timeframe directly
                 valid_tf = self._validate_timeframe(tf)
                 interval = self._get_interval(valid_tf)
                 
                 candles = self.market_data.get_ohlc(
                     pair,
-                    valid_tf  # ✅ FIX: Use string directly
+                    valid_tf
                 )
                 
                 if not candles:
@@ -434,7 +421,6 @@ class CognitiveMarketScanner:
     # ============================================================
     
     def calculate_mtf_alignment(self, mtf_data: Dict) -> Dict:
-        """Calculate alignment across timeframes."""
         bullish = 0
         bearish = 0
         total = 0
@@ -475,7 +461,6 @@ class CognitiveMarketScanner:
     # ============================================================
     
     def _prepare_signal_data(self, analysis: Dict, mtf_data: Dict) -> Dict:
-        """Prepare data for signal engine."""
         data = dict(analysis)
         indicators = data.get("indicators", {})
         
@@ -515,19 +500,12 @@ class CognitiveMarketScanner:
     # ============================================================
     
     def scan_pair(self, pair: str, timeframe: str = "1h") -> Dict:
-        """
-        Scan a single pair with cognitive awareness.
-        
-        FIX: timeframe is now a STRING ("1h", "5m", etc.) not int!
-        """
         start = time.time()
         
         try:
-            # FIX: Validate timeframe
             valid_tf = self._validate_timeframe(timeframe)
             interval = self._get_interval(valid_tf)
             
-            # ✅ FIX: Use string timeframe directly
             candles = self.market_data.get_ohlc(pair, valid_tf)
             
             if not candles:
@@ -578,7 +556,7 @@ class CognitiveMarketScanner:
                 "datetime": datetime.now().isoformat(),
                 "pair": pair,
                 "symbol": pair,
-                "timeframe": valid_tf,  # FIX: Use validated timeframe
+                "timeframe": valid_tf,
                 "price": price,
                 "ohlc": ohlc,
                 "candles": candles[-100:],
@@ -672,11 +650,9 @@ class CognitiveMarketScanner:
     def scan_all(
         self,
         pairs: Optional[List[str]] = None,
-        timeframe: str = "1h",  # FIX: Use string timeframe
+        timeframe: str = "1h",
         max_workers: int = 10
     ) -> List[Dict]:
-        """Scan all pairs with parallel processing."""
-        # Reset scanning flag with proper lock
         with self.lock:
             if self.scanning:
                 return list(self.last_results)
@@ -690,7 +666,6 @@ class CognitiveMarketScanner:
         pairs = list(pairs)
         results = []
         
-        # FIX: Validate timeframe
         valid_tf = self._validate_timeframe(timeframe)
         
         self._notify_status("SCANNING")
@@ -729,7 +704,6 @@ class CognitiveMarketScanner:
         
         elapsed = round(time.time() - start, 2)
         
-        # Reset scanning flag with lock
         with self.lock:
             if results:
                 self.last_results = list(results)
@@ -765,10 +739,9 @@ class CognitiveMarketScanner:
     def start(
         self,
         pairs: Optional[List[str]] = None,
-        timeframe: str = "1h",  # FIX: Use string timeframe
+        timeframe: str = "1h",
         interval_seconds: int = 60
     ) -> bool:
-        """Start continuous scanning."""
         if self.running:
             logger.warning("Scanner already running.")
             return False
@@ -791,7 +764,6 @@ class CognitiveMarketScanner:
         return True
     
     def _scan_loop(self, pairs, timeframe, interval_seconds):
-        """Main scan loop - FIXED."""
         while self.running and not self._stop_requested:
             try:
                 self.scan_all(pairs=pairs, timeframe=timeframe)
@@ -805,7 +777,6 @@ class CognitiveMarketScanner:
         self._notify_status("STOPPED")
     
     def stop(self) -> bool:
-        """Stop continuous scanning."""
         if not self.running:
             return False
         
@@ -831,27 +802,22 @@ class CognitiveMarketScanner:
     # ============================================================
     
     def get_results(self) -> List[Dict]:
-        """Get last scan results."""
         with self.lock:
             return list(self.last_results)
     
     def get_pair_result(self, pair: str) -> Optional[Dict]:
-        """Get result for specific pair."""
         with self.lock:
             return self.results_by_pair.get(pair)
     
     def get_market_price(self, pair: str) -> Optional[float]:
-        """Get latest market price."""
         with self.lock:
             return self.price_cache.get(pair)
     
     def get_candles(self, pair: str) -> List:
-        """Get cached candles."""
         with self.lock:
             return list(self.candle_cache.get(pair, []))
     
     def get_signals(self) -> List[Dict]:
-        """Get all active signals."""
         signals = []
         for result in self.get_results():
             signal = result.get("signal", {})
@@ -870,7 +836,6 @@ class CognitiveMarketScanner:
     # ============================================================
     
     def get_market_awareness(self) -> Dict:
-        """Get current market awareness from consciousness."""
         if not self.consciousness:
             return {"status": "consciousness_not_available"}
         
@@ -883,7 +848,6 @@ class CognitiveMarketScanner:
         return self.consciousness_state
     
     def get_sentiment(self) -> Dict:
-        """Get market sentiment from consciousness."""
         if not self.consciousness:
             return {"status": "consciousness_not_available"}
         
@@ -900,7 +864,6 @@ class CognitiveMarketScanner:
     # ============================================================
     
     def get_status(self) -> Dict:
-        """Get scanner status."""
         with self.lock:
             return {
                 "version": self.VERSION,
@@ -921,11 +884,11 @@ class CognitiveMarketScanner:
                 "consciousness_connected": self.consciousness is not None,
                 "brain_connected": self.brain is not None,
                 "learning_connected": self.learning_engine is not None,
-                "memory_connected": self.semantic_memory is not None
+                "memory_connected": self.semantic_memory is not None,
+                "ai_enabled": DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED,
             }
     
     def get_summary(self) -> Dict:
-        """Get scan summary."""
         results = self.get_results()
         
         summary = {
@@ -979,11 +942,231 @@ class CognitiveMarketScanner:
         return summary
     
     # ============================================================
+    # AI INTEGRATION - DEEPSEEK ENHANCED ANALYSIS
+    # ============================================================
+
+    def analyze_with_ai(self, pair: str = None) -> Dict[str, Any]:
+        """
+        Analyze market data with AI using DeepSeek.
+        Provides comprehensive market analysis, sentiment, and recommendations.
+        
+        Args:
+            pair: Optional specific pair to analyze (default: first pair)
+            
+        Returns:
+            Dict with AI analysis results
+        """
+        try:
+            if not DEEPSEEK_AVAILABLE or not DEEPSEEK_ENABLED:
+                return {
+                    'status': 'disabled',
+                    'message': 'DeepSeek AI is not enabled',
+                    'pair': pair or 'N/A'
+                }
+            
+            if pair is None:
+                pairs = self.get_results()
+                if pairs:
+                    pair = pairs[0].get('pair', 'BTC/USD')
+                else:
+                    pair = 'BTC/USD'
+            
+            result = self.get_pair_result(pair)
+            if not result:
+                result = self.scan_pair(pair)
+            
+            signal = result.get('signal', {})
+            analysis = result.get('analysis', {})
+            mtf = result.get('mtf', {})
+            price = result.get('price', 0)
+            
+            context = f"""
+Market Data for {pair}:
+- Price: ${price}
+- Signal: {signal.get('signal', 'HOLD')}
+- Confidence: {signal.get('confidence', 0)}%
+- Trend: {analysis.get('trend', 'NEUTRAL')}
+- MTF Alignment: {mtf}
+
+Technical Indicators:
+- RSI: {analysis.get('rsi', 'N/A')}
+- MACD: {analysis.get('macd', 'N/A')}
+- Moving Averages: {analysis.get('moving_averages', 'N/A')}
+- Bollinger Bands: {analysis.get('bollinger', 'N/A')}
+"""
+            
+            prompt = f"""Analisis pasar {pair} secara komprehensif berdasarkan data real-time:
+
+1. SENTIMEN PASAR: Bullish, Bearish, atau Neutral? Berikan alasannya.
+2. LEVEL KUNCI: Support dan Resistance terdekat.
+3. REKOMENDASI: Entry, Exit, Stop Loss, dan Take Profit.
+4. RISIKO: Faktor risiko utama dan level risiko.
+5. TIMEFRAME: Timeframe terbaik untuk trading.
+
+Berikan analisis yang actionable dan berbasis data.
+"""
+            
+            result_ai = deepseek_ai.ask(
+                question=prompt,
+                context=context,
+                system_prompt="analyst",
+                temperature=0.7,
+                max_tokens=1024
+            )
+            
+            from core.knowledge import knowledge
+            knowledge.add(
+                content=f"AI Market Analysis for {pair}: {result_ai[:500]}...",
+                category="analysis",
+                type="ai_analysis",
+                tags=["ai", "market_analysis", pair.replace('/', '_')],
+                confidence=signal.get('confidence', 70),
+                importance=0.8,
+                metadata={
+                    'pair': pair,
+                    'price': price,
+                    'signal': signal.get('signal'),
+                    'confidence': signal.get('confidence'),
+                    'timestamp': datetime.now().isoformat()
+                }
+            )
+            
+            return {
+                'status': 'success',
+                'pair': pair,
+                'analysis': result_ai,
+                'price': price,
+                'signal': signal.get('signal'),
+                'confidence': signal.get('confidence'),
+                'timestamp': datetime.now().isoformat(),
+                'metadata': {
+                    'price': price,
+                    'signal': signal.get('signal'),
+                    'confidence': signal.get('confidence'),
+                    'ai_model': deepseek_ai.model,
+                }
+            }
+            
+        except ImportError:
+            return {
+                'status': 'error',
+                'message': 'DeepSeek module not available',
+                'pair': pair or 'N/A'
+            }
+        except Exception as e:
+            logger.error(f"AI market analysis error: {e}")
+            return {
+                'status': 'error',
+                'message': str(e),
+                'pair': pair or 'N/A'
+            }
+
+    def get_market_sentiment_ai(self, pair: str = None) -> Dict[str, Any]:
+        """
+        Get AI-powered market sentiment analysis.
+        
+        Args:
+            pair: Optional pair to analyze
+            
+        Returns:
+            Dict with sentiment analysis
+        """
+        try:
+            if not DEEPSEEK_AVAILABLE or not DEEPSEEK_ENABLED:
+                return {'status': 'disabled', 'sentiment': 'UNKNOWN'}
+            
+            result = self.analyze_with_ai(pair)
+            
+            if result.get('status') != 'success':
+                return {
+                    'status': 'error',
+                    'sentiment': 'UNKNOWN',
+                    'message': result.get('message', 'Analysis failed')
+                }
+            
+            analysis = result.get('analysis', '').lower()
+            
+            sentiment = 'NEUTRAL'
+            if any(word in analysis for word in ['bullish', 'positive', 'optimistic', 'upward']):
+                sentiment = 'BULLISH'
+            elif any(word in analysis for word in ['bearish', 'negative', 'pessimistic', 'downward']):
+                sentiment = 'BEARISH'
+            
+            return {
+                'status': 'success',
+                'pair': result.get('pair'),
+                'sentiment': sentiment,
+                'confidence': result.get('confidence', 50),
+                'price': result.get('price', 0),
+                'analysis': result.get('analysis', '')[:500],
+                'timestamp': datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Market sentiment AI error: {e}")
+            return {'status': 'error', 'sentiment': 'UNKNOWN', 'message': str(e)}
+
+    def get_market_outlook_ai(self, pairs: List[str] = None) -> Dict[str, Any]:
+        """
+        Get AI-powered market outlook for multiple pairs.
+        
+        Args:
+            pairs: Optional list of pairs (default: all scanned pairs)
+            
+        Returns:
+            Dict with market outlook
+        """
+        try:
+            if not DEEPSEEK_AVAILABLE or not DEEPSEEK_ENABLED:
+                return {'status': 'disabled', 'message': 'AI is disabled'}
+            
+            if pairs is None:
+                results = self.get_results()
+                pairs = [r.get('pair') for r in results[:5] if r.get('pair')]
+            
+            if not pairs:
+                pairs = ['BTC/USD', 'ETH/USD', 'SOL/USD']
+            
+            outlook = []
+            for pair in pairs:
+                try:
+                    analysis = self.analyze_with_ai(pair)
+                    outlook.append({
+                        'pair': pair,
+                        'sentiment': analysis.get('analysis', '').lower(),
+                        'price': analysis.get('price', 0),
+                        'confidence': analysis.get('confidence', 50),
+                    })
+                except Exception as e:
+                    logger.error(f"Outlook for {pair} failed: {e}")
+                    outlook.append({'pair': pair, 'error': str(e)})
+            
+            summary_prompt = f"Buat ringkasan outlook pasar untuk: {pairs}"
+            summary = deepseek_ai.ask(
+                question=summary_prompt,
+                context=json.dumps(outlook),
+                system_prompt="analyst",
+                temperature=0.5,
+                max_tokens=500
+            )
+            
+            return {
+                'status': 'success',
+                'pairs_analyzed': len(outlook),
+                'outlook': outlook,
+                'summary': summary,
+                'timestamp': datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Market outlook AI error: {e}")
+            return {'status': 'error', 'message': str(e)}
+
+    # ============================================================
     # CLEAR
     # ============================================================
     
     def clear_results(self) -> None:
-        """Clear all cached results."""
         with self.lock:
             self.last_results = []
             self.results_by_pair = {}
@@ -997,7 +1180,6 @@ class CognitiveMarketScanner:
         logger.info("Scanner cache cleared.")
     
     def clear_memory(self) -> None:
-        """Clear semantic memory of market patterns."""
         if self.semantic_memory:
             try:
                 if hasattr(self.semantic_memory, 'clear'):
@@ -1011,7 +1193,6 @@ class CognitiveMarketScanner:
     # ============================================================
     
     def shutdown(self) -> bool:
-        """Complete shutdown."""
         try:
             self.stop()
             self.clear_results()
@@ -1023,8 +1204,90 @@ class CognitiveMarketScanner:
 
 
 # ============================================================
+# GLOBAL INSTANCE
+# ============================================================
+
+scanner = CognitiveMarketScanner()
+
+
+# ============================================================
+# SHORTCUT FUNCTIONS
+# ============================================================
+
+def scan_all(pairs: Optional[List[str]] = None, timeframe: str = "1h") -> List[Dict]:
+    return scanner.scan_all(pairs, timeframe)
+
+
+def scan_pair(pair: str, timeframe: str = "1h") -> Dict:
+    return scanner.scan_pair(pair, timeframe)
+
+
+def get_results() -> List[Dict]:
+    return scanner.get_results()
+
+
+def get_signals() -> List[Dict]:
+    return scanner.get_signals()
+
+
+def get_status() -> Dict:
+    return scanner.get_status()
+
+
+def analyze_with_ai(pair: str = None) -> Dict[str, Any]:
+    return scanner.analyze_with_ai(pair)
+
+
+def get_market_sentiment_ai(pair: str = None) -> Dict[str, Any]:
+    return scanner.get_market_sentiment_ai(pair)
+
+
+def get_market_outlook_ai(pairs: List[str] = None) -> Dict[str, Any]:
+    return scanner.get_market_outlook_ai(pairs)
+
+
+def start(pairs: Optional[List[str]] = None, timeframe: str = "1h", interval_seconds: int = 60) -> bool:
+    return scanner.start(pairs, timeframe, interval_seconds)
+
+
+def stop() -> bool:
+    return scanner.stop()
+
+
+def shutdown() -> bool:
+    return scanner.shutdown()
+
+
+def clear_results() -> None:
+    scanner.clear_results()
+
+
+# ============================================================
 # BACKWARD COMPATIBILITY
 # ============================================================
 
 MarketScanner = CognitiveMarketScanner
 MarketScannerEngine = CognitiveMarketScanner
+
+# ============================================================
+# EXPORTS
+# ============================================================
+
+__all__ = [
+    "CognitiveMarketScanner",
+    "scanner",
+    "scan_all",
+    "scan_pair",
+    "get_results",
+    "get_signals",
+    "get_status",
+    "analyze_with_ai",
+    "get_market_sentiment_ai",
+    "get_market_outlook_ai",
+    "start",
+    "stop",
+    "shutdown",
+    "clear_results",
+    "MarketScanner",
+    "MarketScannerEngine",
+]

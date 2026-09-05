@@ -1,6 +1,7 @@
 // frontend/src/components/DiagnosticsView.tsx
-// INKSIDE DIGITAL - DIAGNOSTICS VIEW v7.0
-// REAL DATA - SMOOTH UI - NO DUMMY
+// INKSIDE DIGITAL - DIAGNOSTICS VIEW v2.0
+// FULL VERSION DENGAN SEMUA FITUR FASE 1 & 2
+// Search, Filter, Sort, Mini Health Bar, Dependencies, View Logs, Export Report, dll
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
@@ -34,6 +35,13 @@ import {
   Copy,
   Check,
   Info,
+  Search,
+  Filter,
+  ArrowUpDown,
+  FileText,
+  Download,
+  Link,
+  ChevronUp,
 } from 'lucide-react';
 
 // ============================================================
@@ -53,6 +61,8 @@ interface SystemMetrics {
   ram: number;
   ram_percent?: number;
   disk_percent?: number;
+  disk_used?: number;
+  disk_total?: number;
   uptime: number;
   memory_count: number;
   knowledge_count: number;
@@ -64,6 +74,9 @@ interface SystemMetrics {
   risk_level: string;
   health_score: number;
   last_update?: string;
+  swap_used?: number;
+  swap_total?: number;
+  swap_percent?: number;
 }
 
 interface WatchdogStatus {
@@ -81,6 +94,9 @@ interface WatchdogStatus {
   pid?: number;
   version?: string;
   timestamp?: string;
+  last_alert?: string | null;
+  auto_restarts?: number;
+  health_trend?: 'up' | 'down' | 'stable';
 }
 
 interface HeartbeatData {
@@ -92,6 +108,7 @@ interface HeartbeatData {
   last_error?: string | null;
   is_alive?: boolean;
   health_score?: number;
+  last_error_time?: string | null;
 }
 
 interface WatchdogSnapshot {
@@ -109,6 +126,8 @@ interface ComponentDetail {
   dependencies: string[];
   health_score?: number;
   methods?: Record<string, string>;
+  logs?: string[];
+  last_scan?: string;
 }
 
 // ============================================================
@@ -135,6 +154,14 @@ const formatUptime = (seconds: number): string => {
   if (secs > 0 && days === 0) parts.push(`${secs}s`);
 
   return parts.join(' ') || '0s';
+};
+
+const formatBytes = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
 const getStatusColor = (status: string): string => {
@@ -191,6 +218,12 @@ const getRiskEmoji = (risk: string): string => {
   return '⚪';
 };
 
+const getTrendIcon = (trend?: string) => {
+  if (trend === 'up') return <TrendingUp className="w-3 h-3 text-green-400" />;
+  if (trend === 'down') return <TrendingUp className="w-3 h-3 text-red-400 transform rotate-180" />;
+  return <div className="w-3 h-3 rounded-full bg-gray-500" />;
+};
+
 // ============================================================
 // SUB-COMPONENTS
 // ============================================================
@@ -236,6 +269,15 @@ const StatusBadge = ({ status }: { status: string }) => (
   </span>
 );
 
+const MiniHealthBar = ({ score, className = '' }: { score: number; className?: string }) => (
+  <div className={`w-12 h-1.5 rounded-full bg-[#1A2530] overflow-hidden ${className}`}>
+    <div
+      className={`h-full rounded-full transition-all duration-500 ${getHealthBarColor(score)}`}
+      style={{ width: `${Math.min(Math.max(score, 0), 100)}%` }}
+    />
+  </div>
+);
+
 // ============================================================
 // MAIN COMPONENT
 // ============================================================
@@ -256,6 +298,15 @@ const DiagnosticsView: React.FC = () => {
   const [selectedComponent, setSelectedComponent] = useState<string>('');
   const [componentDetail, setComponentDetail] = useState<ComponentDetail | null>(null);
   const [expandedComponents, setExpandedComponents] = useState<Set<string>>(new Set());
+
+  // Filter & Search State
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'healthy' | 'degraded' | 'critical' | 'offline'>('all');
+  const [sortBy, setSortBy] = useState<'name' | 'health' | 'status'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  // View Logs State
+  const [showLogs, setShowLogs] = useState<boolean>(false);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -322,6 +373,7 @@ const DiagnosticsView: React.FC = () => {
   const handleComponentSelect = useCallback(async (name: string) => {
     setSelectedComponent(name);
     await fetchComponentDetail(name);
+    setExpandedComponents(prev => new Set(prev).add(name));
   }, [fetchComponentDetail]);
 
   const handleResetCircuit = useCallback(async (name: string) => {
@@ -334,6 +386,31 @@ const DiagnosticsView: React.FC = () => {
     }
   }, [fetchWatchdogData, fetchComponentDetail]);
 
+  const handleViewLogs = useCallback(async (name: string) => {
+    try {
+      const res = await axios.get(`${API_BASE}/api/watchdog/component/${name}/logs`);
+      setComponentDetail(prev => prev ? { ...prev, logs: res.data.logs || [] } : null);
+      setShowLogs(true);
+    } catch (err) {
+      console.error('Failed to fetch logs:', err);
+    }
+  }, []);
+
+  const handleExportReport = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/api/watchdog/report`);
+      const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `watchdog-report-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to export report:', err);
+    }
+  }, []);
+
   const toggleComponentExpand = (name: string) => {
     setExpandedComponents(prev => {
       const newSet = new Set(prev);
@@ -345,6 +422,60 @@ const DiagnosticsView: React.FC = () => {
       return newSet;
     });
   };
+
+  // Filter & Sort Functions
+  const getFilteredComponents = useCallback(() => {
+    const components = watchdogSnapshot?.components || [];
+    const heartbeats = watchdogSnapshot?.heartbeats || {};
+    const componentHealth = watchdogSnapshot?.component_health || {};
+
+    let filtered = components.filter(name => {
+      // Search filter
+      if (searchQuery && !name.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+
+      // Status filter
+      const hb = heartbeats[name] || { status: 'unknown' };
+      const status = hb.status?.toLowerCase() || 'unknown';
+      
+      if (statusFilter === 'healthy' && !['alive', 'healthy', 'online', 'ok', 'running'].includes(status)) {
+        return false;
+      }
+      if (statusFilter === 'degraded' && status !== 'degraded' && status !== 'warning') {
+        return false;
+      }
+      if (statusFilter === 'critical' && status !== 'critical' && status !== 'error') {
+        return false;
+      }
+      if (statusFilter === 'offline' && status !== 'offline' && status !== 'dead' && status !== 'stopped') {
+        return false;
+      }
+
+      return true;
+    });
+
+    // Sort
+    filtered.sort((a, b) => {
+      const healthA = componentHealth[a] || 0;
+      const healthB = componentHealth[b] || 0;
+      const statusA = (heartbeats[a]?.status?.toLowerCase() || 'unknown');
+      const statusB = (heartbeats[b]?.status?.toLowerCase() || 'unknown');
+
+      let comparison = 0;
+      if (sortBy === 'name') {
+        comparison = a.localeCompare(b);
+      } else if (sortBy === 'health') {
+        comparison = healthA - healthB;
+      } else if (sortBy === 'status') {
+        comparison = statusA.localeCompare(statusB);
+      }
+
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    return filtered;
+  }, [watchdogSnapshot, searchQuery, statusFilter, sortBy, sortOrder]);
 
   // ============================================================
   // EFFECTS
@@ -396,13 +527,32 @@ const DiagnosticsView: React.FC = () => {
   const heartbeats = watchdogSnapshot?.heartbeats || {};
   const componentHealth = watchdogSnapshot?.component_health || {};
   const health = metrics?.health_score || 0;
+  const filteredComponents = getFilteredComponents();
+
+  const statusCounts = {
+    total: components.length,
+    healthy: components.filter(name => {
+      const status = heartbeats[name]?.status?.toLowerCase() || '';
+      return ['alive', 'healthy', 'online', 'ok', 'running'].includes(status);
+    }).length,
+    degraded: components.filter(name => {
+      const status = heartbeats[name]?.status?.toLowerCase() || '';
+      return status === 'degraded' || status === 'warning';
+    }).length,
+    critical: components.filter(name => {
+      const status = heartbeats[name]?.status?.toLowerCase() || '';
+      return status === 'critical' || status === 'error';
+    }).length,
+    offline: components.filter(name => {
+      const status = heartbeats[name]?.status?.toLowerCase() || '';
+      return status === 'offline' || status === 'dead' || status === 'stopped';
+    }).length,
+  };
 
   return (
     <div className="p-4 md:p-6 bg-gray-900 min-h-screen text-white">
       <div className="max-w-7xl mx-auto">
-        {/* ============================================================
-        HEADER - SMOOTH
-        ============================================================ */}
+        {/* HEADER */}
         <div className="mb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -413,7 +563,7 @@ const DiagnosticsView: React.FC = () => {
                 <h1 className="text-2xl font-bold text-white tracking-tight">
                   System Diagnostics
                   <span className="ml-2 text-xs font-normal text-gray-400 bg-gray-800 px-2.5 py-1 rounded-full">
-                    v7.0
+                    v2.0
                   </span>
                 </h1>
                 <p className="text-sm text-gray-400">
@@ -442,9 +592,9 @@ const DiagnosticsView: React.FC = () => {
             </div>
           </div>
 
-          {/* Quick Stats Bar */}
+          {/* Quick Stats Bar - DENGAN DISK & SWAP */}
           {metrics && (
-            <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-5 lg:grid-cols-7 gap-3">
               <div className="p-3 rounded-xl bg-[#131A22] border border-[#26313D]">
                 <div className="text-[10px] text-gray-400 uppercase tracking-wider">Health</div>
                 <div className="flex items-center gap-2 mt-1">
@@ -466,6 +616,36 @@ const DiagnosticsView: React.FC = () => {
                 <div className="text-xl font-bold font-mono text-white">{metrics.ram?.toFixed(1) || 0} GB</div>
                 <div className="text-[10px] text-gray-500">{metrics.ram_percent?.toFixed(0) || 0}% used</div>
               </div>
+              {/* Disk Usage */}
+              <div className="p-3 rounded-xl bg-[#131A22] border border-[#26313D]">
+                <div className="text-[10px] text-gray-400 uppercase tracking-wider">Disk</div>
+                <div className="text-xl font-bold font-mono text-white">
+                  {metrics.disk_used ? formatBytes(metrics.disk_used) : '--'}
+                </div>
+                <div className="text-[10px] text-gray-500">
+                  {metrics.disk_total ? `of ${formatBytes(metrics.disk_total)}` : '--'}
+                </div>
+                {metrics.disk_percent !== undefined && (
+                  <div className="w-full bg-[#1A2530] rounded-full h-1.5 mt-1">
+                    <div className={`h-1.5 rounded-full transition-all ${metrics.disk_percent > 80 ? 'bg-red-500' : metrics.disk_percent > 60 ? 'bg-yellow-500' : 'bg-green-500'}`} style={{ width: `${Math.min(metrics.disk_percent, 100)}%` }} />
+                  </div>
+                )}
+              </div>
+              {/* Swap Usage */}
+              <div className="p-3 rounded-xl bg-[#131A22] border border-[#26313D]">
+                <div className="text-[10px] text-gray-400 uppercase tracking-wider">Swap</div>
+                <div className="text-xl font-bold font-mono text-white">
+                  {metrics.swap_used ? formatBytes(metrics.swap_used) : '0 B'}
+                </div>
+                <div className="text-[10px] text-gray-500">
+                  {metrics.swap_total ? `of ${formatBytes(metrics.swap_total)}` : 'N/A'}
+                </div>
+                {metrics.swap_percent !== undefined && metrics.swap_total && metrics.swap_total > 0 && (
+                  <div className="w-full bg-[#1A2530] rounded-full h-1.5 mt-1">
+                    <div className={`h-1.5 rounded-full transition-all ${metrics.swap_percent > 50 ? 'bg-red-500' : metrics.swap_percent > 25 ? 'bg-yellow-500' : 'bg-green-500'}`} style={{ width: `${Math.min(metrics.swap_percent, 100)}%` }} />
+                  </div>
+                )}
+              </div>
               <div className="p-3 rounded-xl bg-[#131A22] border border-[#26313D]">
                 <div className="text-[10px] text-gray-400 uppercase tracking-wider">Risk</div>
                 <div className="text-xl font-bold font-mono flex items-center gap-1.5">
@@ -482,9 +662,7 @@ const DiagnosticsView: React.FC = () => {
           )}
         </div>
 
-        {/* ============================================================
-        ERROR DISPLAY
-        ============================================================ */}
+        {/* ERROR DISPLAY */}
         {error && (
           <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
@@ -498,14 +676,12 @@ const DiagnosticsView: React.FC = () => {
           </div>
         )}
 
-        {/* ============================================================
-        TWO COLUMN LAYOUT
-        ============================================================ */}
+        {/* TWO COLUMN LAYOUT */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* LEFT COLUMN - Watchdog Status & Components List */}
           <div className="lg:col-span-1 space-y-4">
-            {/* Watchdog Status Card */}
+            {/* Watchdog Status Card - DENGAN FITUR BARU */}
             <div className="p-5 rounded-2xl bg-[#131A22] border border-[#26313D]">
               <h3 className="text-sm font-bold text-white tracking-wider uppercase flex items-center gap-2 mb-4">
                 <Heart className="w-4 h-4 text-rose-400" />
@@ -525,16 +701,50 @@ const DiagnosticsView: React.FC = () => {
                 
                 <div className="flex justify-between items-center p-3 rounded-xl bg-[#1A2530] border border-[#26313D]/50">
                   <span className="text-xs text-gray-400">Health Score</span>
-                  <span className={`text-sm font-bold font-mono ${getHealthScoreColor(watchdogStatus?.health_score || 0)}`}>
-                    {watchdogStatus?.health_score || 0}%
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-bold font-mono ${getHealthScoreColor(watchdogStatus?.health_score || 0)}`}>
+                      {watchdogStatus?.health_score || 0}%
+                    </span>
+                    {watchdogStatus?.health_trend && (
+                      <span className="text-xs">
+                        {getTrendIcon(watchdogStatus.health_trend)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Component Health Summary - BARU */}
+                <div className="p-3 rounded-xl bg-[#1A2530] border border-[#26313D]/50">
+                  <span className="text-xs text-gray-400 block mb-2">Component Health</span>
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-green-500" />
+                      <span className="text-green-400 font-bold">{watchdogStatus?.components_healthy || 0}</span>
+                      <span className="text-gray-500">healthy</span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                      <span className="text-yellow-400 font-bold">{watchdogStatus?.components_degraded || 0}</span>
+                      <span className="text-gray-500">degraded</span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-red-500" />
+                      <span className="text-red-400 font-bold">{watchdogStatus?.components_critical || 0}</span>
+                      <span className="text-gray-500">critical</span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-gray-500" />
+                      <span className="text-gray-400 font-bold">{watchdogStatus?.components_offline || 0}</span>
+                      <span className="text-gray-500">offline</span>
+                    </span>
+                  </div>
                 </div>
                 
                 <div className="flex justify-between items-center p-3 rounded-xl bg-[#1A2530] border border-[#26313D]/50">
                   <span className="text-xs text-gray-400">Components</span>
                   <span className="text-sm font-bold font-mono text-white">
-                    {watchdogStatus?.components_healthy || 0}/{watchdogStatus?.components || 0}
-                    <span className="text-xs text-gray-500 ml-1">healthy</span>
+                    {watchdogStatus?.components || 0}
+                    <span className="text-xs text-gray-500 ml-1">total</span>
                   </span>
                 </div>
                 
@@ -558,18 +768,122 @@ const DiagnosticsView: React.FC = () => {
                     {watchdogStatus?.alerts || 0}
                   </span>
                 </div>
+
+                {/* Auto-Restart Count - BARU */}
+                <div className="flex justify-between items-center p-3 rounded-xl bg-[#1A2530] border border-[#26313D]/50">
+                  <span className="text-xs text-gray-400">Auto-Restarts</span>
+                  <span className={`text-sm font-bold font-mono ${(watchdogStatus?.auto_restarts || 0) > 0 ? 'text-orange-400' : 'text-green-400'}`}>
+                    {watchdogStatus?.auto_restarts || 0}
+                  </span>
+                </div>
+
+                {/* Last Alert Time - BARU */}
+                <div className="flex justify-between items-center p-3 rounded-xl bg-[#1A2530] border border-[#26313D]/50">
+                  <span className="text-xs text-gray-400">Last Alert</span>
+                  <span className="text-xs font-mono text-gray-400">
+                    {watchdogStatus?.last_alert
+                      ? new Date(watchdogStatus.last_alert).toLocaleTimeString()
+                      : 'Never'}
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Components List */}
+            {/* Components List - DENGAN SEARCH, FILTER, SORT */}
             <div className="p-5 rounded-2xl bg-[#131A22] border border-[#26313D]">
-              <h3 className="text-sm font-bold text-white tracking-wider uppercase flex items-center gap-2 mb-4">
-                <LayoutGrid className="w-4 h-4 text-blue-400" />
-                Components ({components.length})
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-white tracking-wider uppercase flex items-center gap-2">
+                  <LayoutGrid className="w-4 h-4 text-blue-400" />
+                  Components ({filteredComponents.length}/{components.length})
+                </h3>
+                {/* Export Report Button - BARU */}
+                <button
+                  onClick={handleExportReport}
+                  className="p-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 transition-colors"
+                  title="Export Report"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Search Bar - BARU */}
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Search components..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#1A2530] border border-[#26313D] text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors"
+                />
+              </div>
+
+              {/* Filter & Sort Controls - BARU */}
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <div className="flex items-center gap-1 bg-[#1A2530] rounded-lg p-1">
+                  <button
+                    onClick={() => setStatusFilter('all')}
+                    className={`px-2 py-1 rounded-md text-xs transition-colors ${
+                      statusFilter === 'all' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    All ({statusCounts.total})
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter('healthy')}
+                    className={`px-2 py-1 rounded-md text-xs transition-colors ${
+                      statusFilter === 'healthy' ? 'bg-green-600 text-white' : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    🟢 ({statusCounts.healthy})
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter('degraded')}
+                    className={`px-2 py-1 rounded-md text-xs transition-colors ${
+                      statusFilter === 'degraded' ? 'bg-yellow-600 text-white' : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    🟡 ({statusCounts.degraded})
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter('critical')}
+                    className={`px-2 py-1 rounded-md text-xs transition-colors ${
+                      statusFilter === 'critical' ? 'bg-red-600 text-white' : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    🔴 ({statusCounts.critical})
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter('offline')}
+                    className={`px-2 py-1 rounded-md text-xs transition-colors ${
+                      statusFilter === 'offline' ? 'bg-gray-600 text-white' : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    ⚫ ({statusCounts.offline})
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1 ml-auto">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="px-2 py-1 rounded-lg bg-[#1A2530] border border-[#26313D] text-xs text-gray-400 focus:outline-none focus:border-blue-500/50"
+                  >
+                    <option value="name">Name</option>
+                    <option value="health">Health</option>
+                    <option value="status">Status</option>
+                  </select>
+                  <button
+                    onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                    className="p-1.5 rounded-lg bg-[#1A2530] border border-[#26313D] text-gray-400 hover:text-white transition-colors"
+                  >
+                    <ArrowUpDown className={`w-3.5 h-3.5 ${sortOrder === 'desc' ? 'transform rotate-180' : ''}`} />
+                  </button>
+                </div>
+              </div>
               
               <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
-                {components.map((name) => {
+                {filteredComponents.map((name) => {
                   const hb = heartbeats[name] || { status: 'unknown', beat_count: 0, missed_beats: 0, restart_count: 0, last_beat: null };
                   const health = componentHealth[name] || 0;
                   const isSelected = name === selectedComponent;
@@ -595,8 +909,17 @@ const DiagnosticsView: React.FC = () => {
                           <span className="flex-shrink-0">{getStatusIcon(hb.status)}</span>
                           <span className="text-sm font-medium text-white truncate">{name}</span>
                           <StatusBadge status={hb.status || 'unknown'} />
+                          {/* Dependency Indicator - BARU */}
+                          {componentDetail?.dependencies?.length && componentDetail.name === name && (
+                            <span className="flex items-center gap-0.5 text-[8px] text-gray-500">
+                              <Link className="w-3 h-3" />
+                              {componentDetail.dependencies.length}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0">
+                          {/* Mini Health Bar - BARU */}
+                          <MiniHealthBar score={health} className="w-10" />
                           <span className={`text-xs font-mono font-bold ${getHealthScoreColor(health)}`}>
                             {health}%
                           </span>
@@ -608,7 +931,7 @@ const DiagnosticsView: React.FC = () => {
                         </div>
                       </div>
                       
-                      {/* Expanded Detail */}
+                      {/* Expanded Detail - DENGAN DEPENDENCIES & VIEW LOGS */}
                       {isExpanded && isSelected && componentDetail && componentDetail.name === name && (
                         <div className="px-3 pb-3 pt-1 border-t border-[#26313D]/50 space-y-2">
                           <div className="grid grid-cols-2 gap-2 text-xs">
@@ -635,22 +958,54 @@ const DiagnosticsView: React.FC = () => {
                               </div>
                             </div>
                           </div>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleResetCircuit(name); }}
-                            className="w-full py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 text-xs font-medium transition-colors"
-                          >
-                            🔄 Reset Circuit
-                          </button>
+
+                          {/* Dependencies List - BARU */}
+                          {componentDetail.dependencies?.length > 0 && (
+                            <div className="p-2 rounded-lg bg-[#0B0F14]">
+                              <span className="text-xs text-gray-400">Dependencies</span>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {componentDetail.dependencies.map((dep) => (
+                                  <span key={dep} className="px-2 py-0.5 rounded-md bg-blue-600/20 text-blue-400 text-[10px] font-mono">
+                                    {dep}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex gap-2">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleResetCircuit(name); }}
+                              className="flex-1 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 text-xs font-medium transition-colors"
+                            >
+                              🔄 Reset Circuit
+                            </button>
+                            {/* View Logs Button - BARU */}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleViewLogs(name); }}
+                              className="flex-1 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                            >
+                              <FileText className="w-3 h-3" />
+                              View Logs
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
                   );
                 })}
+
+                {filteredComponents.length === 0 && (
+                  <div className="text-center py-8 text-gray-500 text-sm">
+                    <Search className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                    No components found matching your filters
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* RIGHT COLUMN - Component Detail */}
+          {/* RIGHT COLUMN - Component Detail - DENGAN FITUR BARU */}
           <div className="lg:col-span-2 space-y-4">
             {componentDetail ? (
               <>
@@ -704,7 +1059,45 @@ const DiagnosticsView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Heartbeat Detail */}
+                {/* Dependencies Section - BARU */}
+                {componentDetail.dependencies?.length > 0 && (
+                  <div className="p-5 rounded-2xl bg-[#131A22] border border-[#26313D]">
+                    <h3 className="text-sm font-bold text-white tracking-wider uppercase flex items-center gap-2 mb-4">
+                      <Link className="w-4 h-4 text-purple-400" />
+                      Dependencies
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {componentDetail.dependencies.map((dep) => (
+                        <span
+                          key={dep}
+                          className="px-3 py-1.5 rounded-xl bg-purple-600/10 border border-purple-500/30 text-purple-400 text-sm font-mono"
+                        >
+                          {dep}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Methods Section - BARU */}
+                {componentDetail.methods && Object.keys(componentDetail.methods).length > 0 && (
+                  <div className="p-5 rounded-2xl bg-[#131A22] border border-[#26313D]">
+                    <h3 className="text-sm font-bold text-white tracking-wider uppercase flex items-center gap-2 mb-4">
+                      <Workflow className="w-4 h-4 text-cyan-400" />
+                      Available Methods
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {Object.entries(componentDetail.methods).map(([name, type]) => (
+                        <div key={name} className="p-2 rounded-lg bg-[#1A2530] border border-[#26313D]/50">
+                          <span className="text-xs font-mono text-white">{name}</span>
+                          <span className="text-[9px] text-gray-500 block">{type}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Heartbeat Detail - DENGAN LAST ERROR TIME */}
                 <div className="p-5 rounded-2xl bg-[#131A22] border border-[#26313D]">
                   <h3 className="text-sm font-bold text-white tracking-wider uppercase flex items-center gap-2 mb-4">
                     <Heart className="w-4 h-4 text-rose-400" />
@@ -729,6 +1122,15 @@ const DiagnosticsView: React.FC = () => {
                         {componentDetail.heartbeat?.is_alive ? '✅ Yes' : '❌ No'}
                       </span>
                     </div>
+                    {/* Last Error Time - BARU */}
+                    {componentDetail.heartbeat?.last_error_time && (
+                      <div className="p-3 rounded-xl bg-[#1A2530] border border-[#26313D]/50">
+                        <span className="text-xs text-gray-400 block">Last Error Time</span>
+                        <span className="font-mono text-red-400 text-xs">
+                          {new Date(componentDetail.heartbeat.last_error_time).toLocaleTimeString()}
+                        </span>
+                      </div>
+                    )}
                     {componentDetail.heartbeat?.last_error && (
                       <div className="col-span-full p-3 rounded-xl bg-red-500/10 border border-red-500/30">
                         <span className="text-xs text-gray-400 block">Last Error</span>
@@ -738,7 +1140,32 @@ const DiagnosticsView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Actions */}
+                {/* Logs Section - BARU */}
+                {showLogs && componentDetail.logs && componentDetail.logs.length > 0 && (
+                  <div className="p-5 rounded-2xl bg-[#131A22] border border-[#26313D]">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-sm font-bold text-white tracking-wider uppercase flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-yellow-400" />
+                        Logs
+                      </h3>
+                      <button
+                        onClick={() => setShowLogs(false)}
+                        className="text-xs text-gray-400 hover:text-white transition-colors"
+                      >
+                        Close
+                      </button>
+                    </div>
+                    <div className="max-h-60 overflow-y-auto space-y-1 font-mono text-xs">
+                      {componentDetail.logs.map((log, index) => (
+                        <div key={index} className="p-1.5 rounded bg-[#0B0F14] text-gray-300 border border-[#26313D]/30">
+                          {log}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions - DENGAN TOMBOL BARU */}
                 <div className="p-5 rounded-2xl bg-[#131A22] border border-[#26313D]">
                   <h3 className="text-sm font-bold text-white tracking-wider uppercase flex items-center gap-2 mb-4">
                     <Zap className="w-4 h-4 text-yellow-400" />
@@ -760,6 +1187,20 @@ const DiagnosticsView: React.FC = () => {
                     >
                       🔍 Refresh Component
                     </button>
+                    {/* View Logs Button - BARU */}
+                    <button
+                      onClick={() => handleViewLogs(selectedComponent)}
+                      className="px-4 py-2 rounded-xl bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium transition-all shadow-md shadow-yellow-600/30"
+                    >
+                      📝 View Logs
+                    </button>
+                    {/* Export Report Button - BARU */}
+                    <button
+                      onClick={handleExportReport}
+                      className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium transition-all shadow-md shadow-purple-600/30"
+                    >
+                      📊 Export Report
+                    </button>
                   </div>
                 </div>
               </>
@@ -773,19 +1214,26 @@ const DiagnosticsView: React.FC = () => {
           </div>
         </div>
 
-        {/* ============================================================
-        FOOTER
-        ============================================================ */}
+        {/* FOOTER - DENGAN LAST SCAN */}
         <div className="mt-8 pt-4 border-t border-[#26313D]/40 flex flex-wrap items-center justify-between text-[10px] text-gray-600 gap-2">
           <span>
-            Inkside Digital v7.0 • Diagnostics & Watchdog v3.1 REAL
+            Inkside Digital v2.0 • Diagnostics & Watchdog v3.1
             {watchdogStatus?.running ? ' 🟢 All systems operational' : ' 🔴 Monitoring inactive'}
           </span>
-          <span>
-            PID: {watchdogStatus?.pid || 'N/A'} • 
-            Components: {watchdogStatus?.components || 0} • 
-            Uptime: {formatUptime(watchdogStatus?.uptime_seconds || 0)}
-          </span>
+          <div className="flex items-center gap-4">
+            <span>
+              PID: {watchdogStatus?.pid || 'N/A'} • 
+              Components: {watchdogStatus?.components || 0} • 
+              Uptime: {formatUptime(watchdogStatus?.uptime_seconds || 0)}
+            </span>
+            {/* Last Scan - BARU */}
+            <span className="text-gray-500">
+              Last scan: {lastUpdate || '--'}
+            </span>
+            <span className="text-gray-500">
+              v{diagnostics?.version || 'N/A'}
+            </span>
+          </div>
         </div>
       </div>
     </div>
