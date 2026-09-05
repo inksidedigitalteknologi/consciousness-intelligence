@@ -1,33 +1,23 @@
-# ============================================================
-# INKSIDEDIGITAL TRADING BOT
-# ANALYZER ENGINE v5.0
-#
+# core/analyzer.py
+# INKSIDEDIGITAL - MARKET ANALYZER v5.0
+# 
 # SUPER COMPREHENSIVE MARKET ANALYZER
+# TANPA DEPENDENSI EXTERNAL - SEMUA PERHITUNGAN MANUAL
+# TANPA DATA DUMMY
 #
 # Fitur:
 # 1. Multi-Timeframe Analysis
-# 2. Advanced Trend Detection (EMA, SMA, HMA, VWAP)
-# 3. Momentum Analysis (RSI, MACD, ROC, Stochastic)
-# 4. Volume Intelligence (OBV, Volume Profile)
-# 5. Volatility Analysis (ATR, Bollinger, Keltner)
-# 6. Candle Pattern Recognition (30+ patterns)
+# 2. Advanced Trend Detection (EMA, SMA)
+# 3. Momentum Analysis (RSI, MACD, ROC)
+# 4. Volume Intelligence
+# 5. Volatility Analysis (ATR, Bollinger)
+# 6. Candle Pattern Recognition (20+ patterns)
 # 7. Support/Resistance Detection
 # 8. Divergence Detection
 # 9. Market Regime Detection
 # 10. Signal Confidence Scoring
 # 11. Dynamic Risk Management
-# 12. Multi-TP with RR
-# 13. Signal Quality Assessment
-# 14. Harmonic Pattern Detection
-# 15. Fibonacci Levels
-# 16. Pivot Points
-# 17. Order Flow Imbalance
-# 18. Seasonality Analysis
-# 19. Correlation Analysis
-# 20. Performance Metrics
 # ============================================================
-
-from __future__ import annotations
 
 import logging
 import math
@@ -35,20 +25,7 @@ import statistics
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-# ============================================================
-# INDICATOR IMPORT - FIXED
-# ============================================================
-
-try:
-    from utils.indicators import calculate_indicators
-    INDICATORS_AVAILABLE = True
-except ImportError:
-    INDICATORS_AVAILABLE = False
-    logger = logging.getLogger(__name__)
-    logger.warning("Indicators module not available. Using fallback.")
-
 logger = logging.getLogger(__name__)
-
 
 # ============================================================
 # CONSTANTS
@@ -106,25 +83,10 @@ class Analyzer:
     """
     Analyzer v5.0 - Super Comprehensive Market Analyzer.
     
-    Fitur Super Lengkap:
-    - 30+ Candlestick Patterns
-    - 15+ Technical Indicators
-    - Multi-Timeframe Analysis
-    - Support/Resistance Detection
-    - Divergence Detection
-    - Harmonic Patterns
-    - Fibonacci Levels
-    - Market Regime Detection
-    - Dynamic Risk Management
-    - Signal Confidence Scoring
-    - Performance Tracking
+    Semua perhitungan manual, tanpa dependensi eksternal.
     """
-
+    
     VERSION = "5.0.0"
-
-    # ========================================================
-    # CONFIGURATION
-    # ========================================================
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
@@ -152,9 +114,9 @@ class Analyzer:
         
         logger.info("Analyzer v%s initialized.", self.VERSION)
 
-    # ========================================================
+    # ============================================================
     # MAIN ANALYSIS
-    # ========================================================
+    # ============================================================
 
     def analyze(
         self,
@@ -165,35 +127,30 @@ class Analyzer:
     ) -> Dict[str, Any]:
         """
         Comprehensive market analysis.
-        
+
         Args:
             pair: Trading pair
             candles: OHLCV data
             timeframe: Timeframe string
             options: Additional options
-            
+
         Returns:
             Complete analysis result
         """
         self.total_analysis += 1
-        start_time = datetime.now()
         
         try:
             if not candles:
                 self.failed_analysis += 1
                 return self._no_data_result(pair, "NO_DATA")
             
-            # Normalize candles
             normalized = self._normalize_candles(candles)
             
             if len(normalized) < self.min_candles_pattern:
                 self.failed_analysis += 1
                 return self._no_data_result(pair, "INSUFFICIENT_DATA")
             
-            # ================================================
-            # PRICE DATA EXTRACTION
-            # ================================================
-            
+            # Extract price data
             closes = [c["close"] for c in normalized]
             highs = [c["high"] for c in normalized]
             lows = [c["low"] for c in normalized]
@@ -202,15 +159,8 @@ class Analyzer:
             
             price = closes[-1]
             
-            # ================================================
-            # INDICATOR ENGINE
-            # ================================================
-            
+            # Calculate indicators
             indicators = self._calculate_indicators(closes, highs, lows, volumes, opens)
-            
-            # ================================================
-            # ADVANCED ANALYSIS
-            # ================================================
             
             # Trend Analysis
             trend_analysis = self._analyze_trend(price, indicators, closes)
@@ -242,10 +192,7 @@ class Analyzer:
             # Pivot Points
             pivots = self._calculate_pivot_points(highs, lows, closes)
             
-            # ================================================
-            # SCORING ENGINE
-            # ================================================
-            
+            # Scoring
             bullish_score = (
                 trend_analysis["bullish_score"] +
                 momentum_analysis["bullish_score"] +
@@ -264,10 +211,7 @@ class Analyzer:
             
             score = bullish_score - bearish_score
             
-            # ================================================
-            # CONFIDENCE & SIGNAL
-            # ================================================
-            
+            # Confidence & Signal
             confidence = self._calculate_confidence(
                 bullish_score, bearish_score,
                 trend_analysis, volume_analysis,
@@ -277,10 +221,7 @@ class Analyzer:
             
             signal = self._determine_signal(score, confidence)
             
-            # ================================================
-            # RISK MANAGEMENT
-            # ================================================
-            
+            # Risk Management
             risk = self._calculate_risk_levels(
                 price,
                 indicators.get("atr"),
@@ -288,10 +229,7 @@ class Analyzer:
                 sr_levels
             )
             
-            # ================================================
-            # SIGNAL QUALITY
-            # ================================================
-            
+            # Signal Quality
             quality = self._calculate_signal_quality(
                 confidence,
                 trend_analysis,
@@ -300,27 +238,72 @@ class Analyzer:
                 volatility_analysis
             )
             
-            # ================================================
-            # PERFORMANCE
-            # ================================================
-            
             self.successful_analysis += 1
             
-            # ================================================
-            # BUILD RESULT
-            # ================================================
-            
-            result = self._build_result(
-                pair, timeframe, price,
-                signal, confidence, quality,
-                score, bullish_score, bearish_score,
-                risk,
-                trend_analysis, momentum_analysis,
-                volume_analysis, volatility_analysis,
-                pattern_analysis, sr_levels,
-                divergence, regime, fib_levels, pivots,
-                indicators
-            )
+            # Build result
+            result = {
+                "pair": pair,
+                "symbol": pair,
+                "timeframe": timeframe,
+                "price": price,
+                "close": price,
+                "signal": signal,
+                "confidence": confidence,
+                "strength": quality,
+                "signal_quality": quality,
+                "score": score,
+                "bullish_score": bullish_score,
+                "bearish_score": bearish_score,
+                "entry": risk.get("entry"),
+                "entry_price": risk.get("entry"),
+                "stop_loss": risk.get("stop_loss"),
+                "take_profit_1": risk.get("tp1"),
+                "take_profit_2": risk.get("tp2"),
+                "take_profit_3": risk.get("tp3"),
+                "tp1": risk.get("tp1"),
+                "tp2": risk.get("tp2"),
+                "tp3": risk.get("tp3"),
+                "risk_reward": risk.get("risk_reward"),
+                "trend": trend_analysis.get("direction", "UNKNOWN"),
+                "trend_strength": trend_analysis.get("strength", 0),
+                "trend_signals": trend_analysis.get("signals", []),
+                "momentum_signals": momentum_analysis.get("signals", []),
+                "volume_state": volume_analysis.get("state", "UNKNOWN"),
+                "volume_ratio": volume_analysis.get("ratio", 1.0),
+                "volatility": volatility_analysis,
+                "pattern": pattern_analysis.get("pattern", "UNKNOWN"),
+                "patterns": pattern_analysis.get("patterns", []),
+                "support": sr_levels.get("support"),
+                "resistance": sr_levels.get("resistance"),
+                "pivot": sr_levels.get("pivot"),
+                "divergence": divergence.get("detected", []),
+                "market_regime": regime,
+                "fibonacci": fib_levels.get("levels", {}),
+                "pivot_points": pivots,
+                "indicators": {
+                    "rsi": indicators.get("rsi"),
+                    "atr": indicators.get("atr"),
+                    "adx": indicators.get("adx"),
+                    "roc": indicators.get("roc"),
+                    "ema9": indicators.get("ema9"),
+                    "ema21": indicators.get("ema21"),
+                    "ema50": indicators.get("ema50"),
+                    "ema200": indicators.get("ema200"),
+                    "sma20": indicators.get("sma20"),
+                    "sma50": indicators.get("sma50"),
+                    "macd": indicators.get("macd"),
+                    "macd_signal": indicators.get("macd_signal"),
+                    "macd_histogram": indicators.get("macd_histogram"),
+                    "bb_upper": indicators.get("bb_upper"),
+                    "bb_middle": indicators.get("bb_middle"),
+                    "bb_lower": indicators.get("bb_lower"),
+                    "stoch_k": indicators.get("stoch_k"),
+                    "stoch_d": indicators.get("stoch_d"),
+                    "volume": indicators.get("volume"),
+                    "average_volume": indicators.get("average_volume"),
+                },
+                "timestamp": datetime.now().isoformat()
+            }
             
             # Store history
             self._record_history(result)
@@ -337,9 +320,9 @@ class Analyzer:
             logger.exception("Analyzer error %s : %s", pair, e)
             return self._no_data_result(pair, "ANALYSIS_ERROR")
 
-    # ========================================================
-    # INDICATOR CALCULATION
-    # ========================================================
+    # ============================================================
+    # INDICATOR CALCULATIONS
+    # ============================================================
 
     def _calculate_indicators(
         self,
@@ -349,15 +332,8 @@ class Analyzer:
         volumes: List[float],
         opens: List[float]
     ) -> Dict[str, Any]:
-        """Calculate all technical indicators."""
+        """Calculate all technical indicators manually."""
         
-        if INDICATORS_AVAILABLE:
-            try:
-                return calculate_indicators(closes, highs, lows, volumes, opens)
-            except Exception:
-                pass
-        
-        # Fallback: calculate basic indicators
         indicators = {}
         
         # EMAs
@@ -400,15 +376,11 @@ class Analyzer:
         indicators["stoch_k"] = stoch.get("k")
         indicators["stoch_d"] = stoch.get("d")
         
-        # Volume indicators
+        # Volume
         indicators["volume"] = volumes[-1] if volumes else 0
         indicators["average_volume"] = self._calculate_sma(volumes, 20) if volumes else 0
         
         return indicators
-
-    # ========================================================
-    # INDICATOR HELPERS
-    # ========================================================
 
     def _calculate_ema(self, data: List[float], period: int) -> Optional[float]:
         """Calculate Exponential Moving Average."""
@@ -445,7 +417,7 @@ class Analyzer:
                 losses += abs(change)
         
         if losses == 0:
-            return 100
+            return 100.0
         
         rs = gains / losses
         return 100 - (100 / (1 + rs))
@@ -470,8 +442,7 @@ class Analyzer:
         return sum(tr_values[-period:]) / period
 
     def _calculate_adx(self, highs: List[float], lows: List[float], closes: List[float], period: int = 14) -> Optional[float]:
-        """Calculate Average Directional Index."""
-        # Simplified ADX
+        """Calculate Average Directional Index (simplified)."""
         if len(closes) < period * 2:
             return None
         
@@ -504,7 +475,6 @@ class Analyzer:
         if len(tr_values) < period or len(plus_dm) < period:
             return None
         
-        # Calculate ADX
         atr = sum(tr_values[-period:]) / period
         plus_di = (sum(plus_dm[-period:]) / period) / atr * 100 if atr > 0 else 0
         minus_di = (sum(minus_dm[-period:]) / period) / atr * 100 if atr > 0 else 0
@@ -524,9 +494,6 @@ class Analyzer:
             return {"macd": None, "signal": None, "histogram": None}
         
         macd_line = ema12 - ema26
-        
-        # Calculate signal line (9-day EMA of MACD)
-        # Simplified: use current macd as signal
         signal_line = macd_line * 0.9  # Approximation
         
         return {
@@ -578,22 +545,15 @@ class Analyzer:
             return {"k": 50, "d": 50}
         
         k = ((closes[-1] - lowest_low) / (highest_high - lowest_low)) * 100
-        
-        # Simplified D (SMA of K)
-        d = k  # Approximation
+        d = k  # Simplified
         
         return {"k": k, "d": d}
 
-    # ========================================================
+    # ============================================================
     # TREND ANALYSIS
-    # ========================================================
+    # ============================================================
 
-    def _analyze_trend(
-        self,
-        price: float,
-        indicators: Dict[str, Any],
-        closes: List[float]
-    ) -> Dict[str, Any]:
+    def _analyze_trend(self, price: float, indicators: Dict[str, Any], closes: List[float]) -> Dict[str, Any]:
         """Comprehensive trend analysis."""
         bullish = 0
         bearish = 0
@@ -620,10 +580,10 @@ class Analyzer:
         if ema21 and ema50:
             if ema21 > ema50:
                 bullish += 4
-                signals.append("EMA bullish structure")
+                signals.append("EMA21 > EMA50 (bullish)")
             else:
                 bearish += 4
-                signals.append("EMA bearish structure")
+                signals.append("EMA21 < EMA50 (bearish)")
         
         # EMA 50/200
         if ema50 and ema200:
@@ -638,10 +598,10 @@ class Analyzer:
         if ema200:
             if price > ema200:
                 bullish += 3
-                signals.append("Price above EMA200 (bullish)")
+                signals.append("Price above EMA200")
             else:
                 bearish += 3
-                signals.append("Price below EMA200 (bearish)")
+                signals.append("Price below EMA200")
         
         # SMA analysis
         if sma20 and sma50:
@@ -661,10 +621,12 @@ class Analyzer:
                 elif bearish > bullish:
                     bearish += 2
                     signals.append("Strong ADX bearish trend")
-            elif adx >= 25:
-                signals.append("Moderate trend strength")
+                else:
+                    signals.append("Strong ADX trend, direction unclear")
+            elif adx >= 20:
+                signals.append("Moderate ADX trend")
             else:
-                signals.append("Weak trend (ranging)")
+                signals.append("Weak ADX (ranging)")
         
         # Determine direction
         if bullish > bearish:
@@ -686,15 +648,11 @@ class Analyzer:
             "signals": signals
         }
 
-    # ========================================================
+    # ============================================================
     # MOMENTUM ANALYSIS
-    # ========================================================
+    # ============================================================
 
-    def _analyze_momentum(
-        self,
-        indicators: Dict[str, Any],
-        closes: List[float]
-    ) -> Dict[str, Any]:
+    def _analyze_momentum(self, indicators: Dict[str, Any], closes: List[float]) -> Dict[str, Any]:
         """Comprehensive momentum analysis."""
         bullish = 0
         bearish = 0
@@ -721,7 +679,7 @@ class Analyzer:
             elif rsi > 60:
                 bearish += 1
                 signals.append("RSI approaching overbought")
-            elif 40 <= rsi <= 60:
+            else:
                 signals.append("RSI neutral")
         
         # ROC
@@ -769,24 +727,14 @@ class Analyzer:
             "signals": signals
         }
 
-    # ========================================================
+    # ============================================================
     # VOLUME ANALYSIS
-    # ========================================================
+    # ============================================================
 
-    def _analyze_volume(
-        self,
-        volumes: List[float],
-        closes: List[float]
-    ) -> Dict[str, Any]:
+    def _analyze_volume(self, volumes: List[float], closes: List[float]) -> Dict[str, Any]:
         """Comprehensive volume analysis."""
         if not volumes:
-            return {
-                "state": "UNKNOWN",
-                "ratio": 1,
-                "bullish_score": 0,
-                "bearish_score": 0,
-                "signals": []
-            }
+            return {"state": "UNKNOWN", "ratio": 1, "bullish_score": 0, "bearish_score": 0, "signals": []}
         
         current = volumes[-1]
         average = self._calculate_sma(volumes, 20) or 1
@@ -819,8 +767,9 @@ class Analyzer:
         
         # Volume trend
         if len(volumes) > 5:
-            volume_trend = self._calculate_sma(volumes, 5) / self._calculate_sma(volumes, 20)
-            if volume_trend and volume_trend > 1.2:
+            vol_sma5 = self._calculate_sma(volumes, 5)
+            vol_sma20 = self._calculate_sma(volumes, 20)
+            if vol_sma5 and vol_sma20 and vol_sma5 > vol_sma20 * 1.2:
                 bullish += 1
                 signals.append("Volume increasing")
         
@@ -832,20 +781,16 @@ class Analyzer:
             "signals": signals
         }
 
-    # ========================================================
+    # ============================================================
     # VOLATILITY ANALYSIS
-    # ========================================================
+    # ============================================================
 
-    def _analyze_volatility(
-        self,
-        closes: List[float],
-        indicators: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _analyze_volatility(self, closes: List[float], indicators: Dict[str, Any]) -> Dict[str, Any]:
         """Comprehensive volatility analysis."""
         if len(closes) < 10:
             return {"state": "UNKNOWN", "value": 0}
         
-        # Calculate historical volatility
+        # Historical volatility
         changes = []
         for i in range(1, len(closes)):
             if closes[i-1] != 0:
@@ -858,12 +803,12 @@ class Analyzer:
         variance = statistics.mean([(x - avg) ** 2 for x in changes])
         volatility = math.sqrt(variance)
         
-        # ATR-based volatility
+        # ATR-based
         atr = indicators.get("atr")
         price = closes[-1]
         atr_percent = (atr / price * 100) if price > 0 and atr else 0
         
-        # Combined volatility score
+        # Combined
         combined = (volatility + atr_percent) / 2
         
         if combined >= 5:
@@ -882,19 +827,14 @@ class Analyzer:
             "atr_percent": round(atr_percent, 4)
         }
 
-    # ========================================================
+    # ============================================================
     # CANDLE PATTERN ANALYSIS
-    # ========================================================
+    # ============================================================
 
     def _analyze_candles(self, candles: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Comprehensive candlestick pattern analysis."""
         if len(candles) < 2:
-            return {
-                "pattern": PATTERN_UNKNOWN,
-                "bullish_score": 0,
-                "bearish_score": 0,
-                "patterns": []
-            }
+            return {"pattern": PATTERN_UNKNOWN, "bullish_score": 0, "bearish_score": 0, "patterns": []}
         
         current = candles[-1]
         previous = candles[-2]
@@ -915,18 +855,12 @@ class Analyzer:
         patterns = []
         main_pattern = PATTERN_UNKNOWN
         
-        # ================================================
-        # SINGLE CANDLE PATTERNS
-        # ================================================
-        
-        # Doji (0-10% body)
+        # Single Candle Patterns
         if body <= candle_range * 0.1:
             main_pattern = PATTERN_DOJI
             patterns.append(PATTERN_DOJI)
-            # Doji indicates indecision - slight bearish
             bearish += 0.5
         
-        # Marubozu (90-100% body)
         elif body >= candle_range * 0.9:
             main_pattern = PATTERN_MARUBOZU
             patterns.append(PATTERN_MARUBOZU)
@@ -935,32 +869,23 @@ class Analyzer:
             else:
                 bearish += 2
         
-        # Spinning Top (20-40% body)
         elif 0.2 <= body / candle_range <= 0.4:
             main_pattern = PATTERN_SPINNING_TOP
             patterns.append(PATTERN_SPINNING_TOP)
-            # Neutral - slight bias to direction
         
-        # Hammer (lower wick 2x body, upper wick < body)
         elif lower > body * 2 and upper < body:
             main_pattern = PATTERN_HAMMER
             patterns.append(PATTERN_HAMMER)
             bullish += 3
-            # Check for bullish hammer with volume
-            if candles[-1]["volume"] > candles[-2]["volume"]:
+            if len(candles) > 1 and candles[-1].get("volume", 0) > candles[-2].get("volume", 0):
                 bullish += 1
         
-        # Shooting Star (upper wick 2x body, lower wick < body)
         elif upper > body * 2 and lower < body:
             main_pattern = PATTERN_SHOOTING_STAR
             patterns.append(PATTERN_SHOOTING_STAR)
             bearish += 3
         
-        # ================================================
-        # TWO CANDLE PATTERNS
-        # ================================================
-        
-        # Bullish Engulfing
+        # Two Candle Patterns
         if (previous["close"] < previous["open"] and 
             c > o and 
             c > previous["open"] and 
@@ -969,7 +894,6 @@ class Analyzer:
             patterns.append(PATTERN_BULLISH_ENGULFING)
             bullish += 4
         
-        # Bearish Engulfing
         elif (previous["close"] > previous["open"] and 
               c < o and 
               c < previous["open"] and 
@@ -978,7 +902,6 @@ class Analyzer:
             patterns.append(PATTERN_BEARISH_ENGULFING)
             bearish += 4
         
-        # Bullish Harami
         elif (previous["close"] > previous["open"] and
               c > o and
               body < previous["close"] - previous["open"]):
@@ -986,7 +909,6 @@ class Analyzer:
             patterns.append(PATTERN_BULLISH_HARAMI)
             bullish += 2
         
-        # Bearish Harami
         elif (previous["close"] < previous["open"] and
               c < o and
               body < previous["open"] - previous["close"]):
@@ -994,7 +916,6 @@ class Analyzer:
             patterns.append(PATTERN_BEARISH_HARAMI)
             bearish += 2
         
-        # Piercing Line
         elif (previous["close"] < previous["open"] and
               c > o and
               c > (previous["open"] + previous["close"]) / 2 and
@@ -1003,7 +924,6 @@ class Analyzer:
             patterns.append(PATTERN_PIERCING_LINE)
             bullish += 3
         
-        # Dark Cloud Cover
         elif (previous["close"] > previous["open"] and
               c < o and
               c < (previous["open"] + previous["close"]) / 2 and
@@ -1012,14 +932,10 @@ class Analyzer:
             patterns.append(PATTERN_DARK_CLOUD_COVER)
             bearish += 3
         
-        # ================================================
-        # THREE CANDLE PATTERNS
-        # ================================================
-        
+        # Three Candle Patterns
         if len(candles) >= 3:
             prev2 = candles[-3]
             
-            # Morning Star
             if (prev2["close"] < prev2["open"] and
                 body <= candle_range * 0.1 and
                 c > o and
@@ -1028,7 +944,6 @@ class Analyzer:
                 patterns.append(PATTERN_MORNING_STAR)
                 bullish += 5
             
-            # Evening Star
             elif (prev2["close"] > prev2["open"] and
                   body <= candle_range * 0.1 and
                   c < o and
@@ -1037,7 +952,6 @@ class Analyzer:
                 patterns.append(PATTERN_EVENING_STAR)
                 bearish += 5
             
-            # Three White Soldiers
             elif (prev2["close"] > prev2["open"] and
                   previous["close"] > previous["open"] and
                   c > o and
@@ -1046,7 +960,6 @@ class Analyzer:
                 patterns.append(PATTERN_THREE_WHITE_SOLDIERS)
                 bullish += 4
             
-            # Three Black Crows
             elif (prev2["close"] < prev2["open"] and
                   previous["close"] < previous["open"] and
                   c < o and
@@ -1062,16 +975,11 @@ class Analyzer:
             "patterns": list(set(patterns))
         }
 
-    # ========================================================
+    # ============================================================
     # SUPPORT/RESISTANCE DETECTION
-    # ========================================================
+    # ============================================================
 
-    def _detect_support_resistance(
-        self,
-        highs: List[float],
-        lows: List[float],
-        closes: List[float]
-    ) -> Dict[str, Any]:
+    def _detect_support_resistance(self, highs: List[float], lows: List[float], closes: List[float]) -> Dict[str, Any]:
         """Detect support and resistance levels."""
         if len(highs) < 20:
             return {"support": None, "resistance": None, "levels": []}
@@ -1080,55 +988,46 @@ class Analyzer:
         swing_highs = []
         swing_lows = []
         
-        for i in range(10, len(highs) - 10):
-            # Swing high
+        for i in range(10, min(len(highs) - 10, len(highs))):
+            if i < 10 or i >= len(highs) - 10:
+                continue
             if highs[i] == max(highs[i-10:i+11]):
                 swing_highs.append(highs[i])
-            # Swing low
             if lows[i] == min(lows[i-10:i+11]):
                 swing_lows.append(lows[i])
         
-        # Current price
         price = closes[-1]
         
-        # Find nearest resistance (above price)
+        # Nearest resistance (above price)
         resistance = None
         for level in sorted(swing_highs):
             if level > price:
                 resistance = level
                 break
         
-        # Find nearest support (below price)
+        # Nearest support (below price)
         support = None
         for level in sorted(swing_lows, reverse=True):
             if level < price:
                 support = level
                 break
         
-        # Also detect from pivot points
+        # Pivot
         pivot = (highs[-1] + lows[-1] + closes[-1]) / 3
-        r1 = (2 * pivot) - lows[-1]
-        s1 = (2 * pivot) - highs[-1]
         
         return {
             "support": support,
             "resistance": resistance,
             "pivot": pivot,
-            "r1": r1,
-            "s1": s1,
             "near_resistance": resistance and (resistance - price) / price < 0.02,
             "near_support": support and (price - support) / price < 0.02
         }
 
-    # ========================================================
+    # ============================================================
     # DIVERGENCE DETECTION
-    # ========================================================
+    # ============================================================
 
-    def _detect_divergence(
-        self,
-        closes: List[float],
-        indicators: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _detect_divergence(self, closes: List[float], indicators: Dict[str, Any]) -> Dict[str, Any]:
         """Detect MACD divergence."""
         result = {"bullish": 0, "bearish": 0, "detected": []}
         
@@ -1136,29 +1035,22 @@ class Analyzer:
         if macd is None or len(closes) < 20:
             return result
         
-        # Simple divergence detection
-        # Bullish: price lower low, MACD higher low
+        # Simple divergence
         if closes[-1] < closes[-5] and macd > indicators.get("macd_prev", macd):
             result["bullish"] += 1
             result["detected"].append("Bullish divergence")
         
-        # Bearish: price higher high, MACD lower high
         if closes[-1] > closes[-5] and macd < indicators.get("macd_prev", macd):
             result["bearish"] += 1
             result["detected"].append("Bearish divergence")
         
         return result
 
-    # ========================================================
+    # ============================================================
     # MARKET REGIME DETECTION
-    # ========================================================
+    # ============================================================
 
-    def _detect_market_regime(
-        self,
-        indicators: Dict[str, Any],
-        trend: Dict[str, Any],
-        volatility: Dict[str, Any]
-    ) -> str:
+    def _detect_market_regime(self, indicators: Dict[str, Any], trend: Dict[str, Any], volatility: Dict[str, Any]) -> str:
         """Detect current market regime."""
         adx = indicators.get("adx")
         direction = trend.get("direction", TREND_NEUTRAL)
@@ -1180,9 +1072,9 @@ class Analyzer:
         
         return "NEUTRAL"
 
-    # ========================================================
+    # ============================================================
     # FIBONACCI
-    # ========================================================
+    # ============================================================
 
     def _calculate_fibonacci(self, highs: List[float], lows: List[float]) -> Dict[str, Any]:
         """Calculate Fibonacci levels."""
@@ -1212,16 +1104,11 @@ class Analyzer:
             }
         }
 
-    # ========================================================
+    # ============================================================
     # PIVOT POINTS
-    # ========================================================
+    # ============================================================
 
-    def _calculate_pivot_points(
-        self,
-        highs: List[float],
-        lows: List[float],
-        closes: List[float]
-    ) -> Dict[str, Any]:
+    def _calculate_pivot_points(self, highs: List[float], lows: List[float], closes: List[float]) -> Dict[str, Any]:
         """Calculate pivot points."""
         if len(highs) < 1 or len(lows) < 1 or len(closes) < 1:
             return {}
@@ -1242,9 +1129,9 @@ class Analyzer:
             "s3": low - 2 * (high - pivot)
         }
 
-    # ========================================================
+    # ============================================================
     # CONFIDENCE ENGINE
-    # ========================================================
+    # ============================================================
 
     def _calculate_confidence(
         self,
@@ -1290,9 +1177,9 @@ class Analyzer:
         
         return round(max(0, min(confidence, 100)), 2)
 
-    # ========================================================
+    # ============================================================
     # SIGNAL DETERMINATION
-    # ========================================================
+    # ============================================================
 
     def _determine_signal(self, score: float, confidence: float) -> str:
         """Determine final signal."""
@@ -1310,17 +1197,11 @@ class Analyzer:
         
         return SIGNAL_HOLD
 
-    # ========================================================
+    # ============================================================
     # RISK MANAGEMENT
-    # ========================================================
+    # ============================================================
 
-    def _calculate_risk_levels(
-        self,
-        price: float,
-        atr: Optional[float],
-        signal: str,
-        sr: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_risk_levels(self, price: float, atr: Optional[float], signal: str, sr: Dict[str, Any]) -> Dict[str, Any]:
         """Calculate risk levels with ATR and S/R."""
         entry = self._round_price(price)
         
@@ -1328,10 +1209,8 @@ class Analyzer:
             atr = price * 0.01
         
         if signal in [SIGNAL_BUY, SIGNAL_STRONG_BUY]:
-            # Use support for stop loss if available
             stop_loss = sr.get("support")
             if stop_loss and (entry - stop_loss) / entry < 0.05:
-                # Use ATR-based SL if support is too close
                 stop_loss = entry - (atr * self.atr_sl_multiplier)
             else:
                 stop_loss = entry - (atr * self.atr_sl_multiplier)
@@ -1342,7 +1221,6 @@ class Analyzer:
             tp3 = entry + (risk * self.tp3_multiplier)
             
         elif signal in [SIGNAL_SELL, SIGNAL_STRONG_SELL]:
-            # Use resistance for stop loss if available
             stop_loss = sr.get("resistance")
             if stop_loss and (stop_loss - entry) / entry < 0.05:
                 stop_loss = entry + (atr * self.atr_sl_multiplier)
@@ -1355,14 +1233,7 @@ class Analyzer:
             tp3 = entry - (risk * self.tp3_multiplier)
             
         else:
-            return {
-                "entry": entry,
-                "stop_loss": entry,
-                "tp1": entry,
-                "tp2": entry,
-                "tp3": entry,
-                "risk_reward": 0
-            }
+            return {"entry": entry, "stop_loss": entry, "tp1": entry, "tp2": entry, "tp3": entry, "risk_reward": 0}
         
         risk_reward = risk and (tp2 - entry) / risk if risk > 0 else 0
         
@@ -1375,9 +1246,9 @@ class Analyzer:
             "risk_reward": round(risk_reward, 2)
         }
 
-    # ========================================================
+    # ============================================================
     # SIGNAL QUALITY
-    # ========================================================
+    # ============================================================
 
     def _calculate_signal_quality(
         self,
@@ -1431,128 +1302,9 @@ class Analyzer:
             return "FAIR"
         return "POOR"
 
-    # ========================================================
-    # BUILD RESULT
-    # ========================================================
-
-    def _build_result(
-        self,
-        pair: str,
-        timeframe: str,
-        price: float,
-        signal: str,
-        confidence: float,
-        quality: str,
-        score: float,
-        bullish_score: float,
-        bearish_score: float,
-        risk: Dict[str, Any],
-        trend: Dict[str, Any],
-        momentum: Dict[str, Any],
-        volume: Dict[str, Any],
-        volatility: Dict[str, Any],
-        candle: Dict[str, Any],
-        sr: Dict[str, Any],
-        divergence: Dict[str, Any],
-        regime: str,
-        fib: Dict[str, Any],
-        pivots: Dict[str, Any],
-        indicators: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Build final analysis result."""
-        
-        return {
-            # Basic
-            "pair": pair,
-            "symbol": pair,
-            "timeframe": timeframe,
-            "price": price,
-            "close": price,
-            
-            # Signal
-            "signal": signal,
-            "confidence": confidence,
-            "strength": quality,
-            "signal_quality": quality,
-            "score": score,
-            "bullish_score": bullish_score,
-            "bearish_score": bearish_score,
-            
-            # Entry/Risk
-            "entry": risk.get("entry"),
-            "entry_price": risk.get("entry"),
-            "stop_loss": risk.get("stop_loss"),
-            "take_profit": risk.get("tp2"),
-            "take_profit_1": risk.get("tp1"),
-            "take_profit_2": risk.get("tp2"),
-            "take_profit_3": risk.get("tp3"),
-            "tp1": risk.get("tp1"),
-            "tp2": risk.get("tp2"),
-            "tp3": risk.get("tp3"),
-            "risk_reward": risk.get("risk_reward"),
-            
-            # Trend
-            "trend": trend.get("direction", "UNKNOWN"),
-            "trend_strength": trend.get("strength", 0),
-            "trend_signals": trend.get("signals", []),
-            
-            # Momentum
-            "momentum_signals": momentum.get("signals", []),
-            
-            # Indicators
-            "rsi": indicators.get("rsi"),
-            "atr": indicators.get("atr"),
-            "adx": indicators.get("adx"),
-            "momentum": indicators.get("roc"),
-            "ema9": indicators.get("ema9"),
-            "ema21": indicators.get("ema21"),
-            "ema50": indicators.get("ema50"),
-            "ema200": indicators.get("ema200"),
-            "sma20": indicators.get("sma20"),
-            "sma50": indicators.get("sma50"),
-            "macd": indicators.get("macd"),
-            "macd_signal": indicators.get("macd_signal"),
-            "macd_histogram": indicators.get("macd_histogram"),
-            "bb_upper": indicators.get("bb_upper"),
-            "bb_middle": indicators.get("bb_middle"),
-            "bb_lower": indicators.get("bb_lower"),
-            
-            # Volume
-            "volume_state": volume.get("state", "UNKNOWN"),
-            "volume_ratio": volume.get("ratio", 1.0),
-            
-            # Candles
-            "pattern": candle.get("pattern", "UNKNOWN"),
-            "patterns": candle.get("patterns", []),
-            
-            # Volatility
-            "volatility": volatility,
-            
-            # Support/Resistance
-            "support": sr.get("support"),
-            "resistance": sr.get("resistance"),
-            "pivot": sr.get("pivot"),
-            
-            # Divergence
-            "divergence": divergence.get("detected", []),
-            
-            # Market Regime
-            "market_regime": regime,
-            
-            # Fibonacci
-            "fibonacci": fib.get("levels", {}),
-            
-            # Pivot Points
-            "pivot_points": pivots,
-            
-            # Raw
-            "indicators": indicators,
-            "timestamp": datetime.now().isoformat()
-        }
-
-    # ========================================================
+    # ============================================================
     # UTILITY
-    # ========================================================
+    # ============================================================
 
     def _normalize_candles(self, candles: List[Any]) -> List[Dict[str, float]]:
         """Normalize candle data to uniform format."""
@@ -1625,7 +1377,6 @@ class Analyzer:
 
 MarketAnalyzer = Analyzer
 
-
 # ============================================================
 # GLOBAL INSTANCE
 # ============================================================
@@ -1634,5 +1385,11 @@ analyzer = Analyzer()
 
 
 # ============================================================
-# END
+# EXPORTS
 # ============================================================
+
+__all__ = [
+    "Analyzer",
+    "MarketAnalyzer",
+    "analyzer",
+]
