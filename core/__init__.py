@@ -22,6 +22,12 @@ SINGLE ENTRY POINT:
         Scanner, scanner,
         SignalEngine, signal_engine,
         
+        # AI Integration
+        deepseek_ai,
+        
+        # Dividend Hunter
+        dividend, fetch_dividends, screen_dividends, check_dividend_alerts,
+        
         # Autonomous Learning
         AutonomousEngine, autonomous,
         autonomous_start, autonomous_stop,
@@ -50,7 +56,7 @@ __author__ = "Inkside Intelligence OS"
 __description__ = "Cognitive Mirror Engine - Ultimate Core Package"
 __all__ = []
 
-import time  # <-- FIX: tambahkan import time untuk get_exchange_status()
+import time
 
 
 # ============================================================
@@ -77,6 +83,9 @@ try:
         self_test as brain_self_test,
         get_module_status,
         print_module_status,
+        reflection,
+        reflection_with_ai,
+        get_ai_status,
     )
     BRAIN_AVAILABLE = True
     __all__ += [
@@ -89,6 +98,7 @@ try:
         "brain_start", "brain_stop", "brain_reset",
         "brain_self_test",
         "get_module_status", "print_module_status",
+        "reflection", "reflection_with_ai", "get_ai_status",
         "BRAIN_AVAILABLE",
     ]
 except ImportError:
@@ -110,6 +120,9 @@ except ImportError:
     brain_self_test = None
     get_module_status = None
     print_module_status = None
+    reflection = None
+    reflection_with_ai = None
+    get_ai_status = None
 
 # 1.2 CONSCIOUSNESS
 try:
@@ -260,13 +273,14 @@ except ImportError:
 
 # 1.8 SCANNER
 try:
-    from .scanner import MarketScanner, CognitiveMarketScanner
+    from .scanner import MarketScanner, CognitiveMarketScanner, scanner
     SCANNER_AVAILABLE = True
-    __all__ += ["MarketScanner", "CognitiveMarketScanner", "SCANNER_AVAILABLE"]
+    __all__ += ["MarketScanner", "CognitiveMarketScanner", "scanner", "SCANNER_AVAILABLE"]
 except ImportError:
     SCANNER_AVAILABLE = False
     MarketScanner = None
     CognitiveMarketScanner = None
+    scanner = None
 
 # 1.9 SIGNAL ENGINE
 try:
@@ -278,8 +292,78 @@ except ImportError:
     SignalEngine = None
     signal_engine = None
 
+
 # ============================================================
-# 1.10 MARKET DATA & EXCHANGE (FULL INTEGRATION)
+# 1.10 AI INTEGRATION - DEEPSEEK (BARU!)
+# ============================================================
+
+try:
+    from .deepseek import (
+        DeepSeekAI,
+        deepseek_ai,
+        KnowledgeEnhancer,
+        auto_enhance_knowledge_item,
+    )
+    DEEPSEEK_AVAILABLE = True
+    DEEPSEEK_ENABLED = deepseek_ai.enabled if hasattr(deepseek_ai, 'enabled') else False
+    __all__ += [
+        "DeepSeekAI",
+        "deepseek_ai",
+        "KnowledgeEnhancer",
+        "auto_enhance_knowledge_item",
+        "DEEPSEEK_AVAILABLE",
+        "DEEPSEEK_ENABLED",
+    ]
+except ImportError:
+    DEEPSEEK_AVAILABLE = False
+    DEEPSEEK_ENABLED = False
+    DeepSeekAI = None
+    deepseek_ai = None
+    KnowledgeEnhancer = None
+    auto_enhance_knowledge_item = None
+
+
+# ============================================================
+# 1.11 DIVIDEND HUNTER (BARU!)
+# ============================================================
+
+try:
+    from .dividend import (
+        DividendModule,
+        dividend,
+        fetch_dividends,
+        screen_dividends,
+        check_dividend_alerts,
+        NASDAQ_DIVIDEND_API,
+        MIN_DIVIDEND,
+        ALERT_DAYS_BEFORE,
+    )
+    DIVIDEND_AVAILABLE = True
+    __all__ += [
+        "DividendModule",
+        "dividend",
+        "fetch_dividends",
+        "screen_dividends",
+        "check_dividend_alerts",
+        "NASDAQ_DIVIDEND_API",
+        "MIN_DIVIDEND",
+        "ALERT_DAYS_BEFORE",
+        "DIVIDEND_AVAILABLE",
+    ]
+except ImportError:
+    DIVIDEND_AVAILABLE = False
+    DividendModule = None
+    dividend = None
+    fetch_dividends = None
+    screen_dividends = None
+    check_dividend_alerts = None
+    NASDAQ_DIVIDEND_API = "https://api.nasdaq.com/api/calendar/dividends"
+    MIN_DIVIDEND = 0.10
+    ALERT_DAYS_BEFORE = 3
+
+
+# ============================================================
+# 1.12 MARKET DATA & EXCHANGE
 # ============================================================
 
 try:
@@ -299,80 +383,26 @@ try:
     )
     MARKET_DATA_AVAILABLE = True
     
-    # ============================================================
-    # EXCHANGE ALIAS (for compatibility with bot.py and others)
-    # ============================================================
-    
-    # Alias class
+    # Exchange alias
     Exchange = KrakenMarketData
-    
-    # Alias instance
     exchange = kraken_market
     
-    # Convenience functions
     def get_exchange():
-        """
-        Get exchange instance.
-        
-        Returns:
-            KrakenMarketData instance
-        """
         return kraken_market
     
     def get_market_data():
-        """
-        Get market data instance.
-        
-        Returns:
-            KrakenMarketData instance
-        """
         return kraken_market
     
     def get_ticker(pair: str):
-        """
-        Get ticker for a pair.
-        
-        Args:
-            pair: Trading pair (e.g., 'BTC/USD')
-            
-        Returns:
-            TickerData or None
-        """
         return kraken_market.get_ticker(pair)
     
     def get_ohlc(pair: str, interval: str = '1h', limit: int = 250):
-        """
-        Get OHLC data for a pair.
-        
-        Args:
-            pair: Trading pair
-            interval: Timeframe ('1m', '5m', '15m', '1h', '4h', '1d')
-            limit: Number of candles
-            
-        Returns:
-            List of Candle objects
-        """
         return kraken_market.get_ohlc(pair, interval, limit)
     
     def get_latest_prices(pairs: list = None):
-        """
-        Get latest prices for multiple pairs.
-        
-        Args:
-            pairs: List of trading pairs
-            
-        Returns:
-            Dictionary of pair -> price
-        """
         return kraken_market.get_latest_prices(pairs)
     
     def test_connection():
-        """
-        Test connection to Kraken.
-        
-        Returns:
-            True if connected, False otherwise
-        """
         return kraken_market.health_check().get('status') == 'ONLINE'
     
     __all__ += [
@@ -422,7 +452,7 @@ except ImportError:
     market_self_test = None
     KRAKEN_VERSION = "N/A"
 
-# 1.11 ANALYZER
+# 1.13 ANALYZER
 try:
     from .analyzer import Analyzer, MarketAnalyzer
     ANALYZER_AVAILABLE = True
@@ -432,7 +462,7 @@ except ImportError:
     Analyzer = None
     MarketAnalyzer = None
 
-# 1.12 MODULE MANAGER
+# 1.14 MODULE MANAGER
 try:
     from .module_manager import module_manager
     MODULE_MANAGER_AVAILABLE = True
@@ -441,7 +471,7 @@ except ImportError:
     MODULE_MANAGER_AVAILABLE = False
     module_manager = None
 
-# 1.13 SCHEDULER
+# 1.15 SCHEDULER
 try:
     from .scheduler import (
         Scheduler,
@@ -479,7 +509,7 @@ except ImportError:
     run_now = None
     scheduler_status = None
 
-# 1.14 RUNTIME
+# 1.16 RUNTIME
 try:
     from .runtime import (
         RuntimeManager,
@@ -516,7 +546,7 @@ except ImportError:
     runtime_status = None
     runtime_health = None
 
-# 1.15 SYSTEM CONFIG
+# 1.17 SYSTEM CONFIG
 try:
     from .system_config import (
         SystemConfig,
@@ -557,7 +587,7 @@ except ImportError:
     config_load = None
     config_status = None
 
-# 1.16 WATCHDOG
+# 1.18 WATCHDOG
 try:
     from .watchdog import SystemWatchdog, watchdog
     WATCHDOG_AVAILABLE = True
@@ -567,7 +597,7 @@ except ImportError:
     SystemWatchdog = None
     watchdog = None
 
-# 1.17 AUTONOMOUS LEARNING ENGINE (BARU!)
+# 1.19 AUTONOMOUS LEARNING ENGINE
 try:
     from .autonomous import (
         AutonomousEngine,
@@ -596,7 +626,7 @@ except ImportError:
     autonomous_process_historical = None
     autonomous_self_test = None
 
-# 1.18 DIAGNOSTICS
+# 1.20 DIAGNOSTICS
 try:
     from .diagnostics import SystemDiagnostics, diagnostics
     DIAGNOSTICS_AVAILABLE = True
@@ -606,7 +636,7 @@ except ImportError:
     SystemDiagnostics = None
     diagnostics = None
 
-# 1.19 VALIDATOR
+# 1.21 VALIDATOR
 try:
     from .validator import ModuleValidator, validator
     VALIDATOR_AVAILABLE = True
@@ -616,7 +646,7 @@ except ImportError:
     ModuleValidator = None
     validator = None
 
-# 1.20 BOOTSTRAP
+# 1.22 BOOTSTRAP
 try:
     from .bootstrap import Bootstrap, bootstrap
     BOOTSTRAP_AVAILABLE = True
@@ -709,12 +739,7 @@ except ImportError:
     PredictionEngine = None
     prediction_engine = None
 
-# 2.4 REASONING ENGINE - DINONAKTIFKAN (diganti core/reasoning.py)
-REASONING_ENGINE_AVAILABLE = False
-ReasoningEngine = None
-reasoning_engine = None
-
-# 2.5 DECISION ENGINE
+# 2.4 DECISION ENGINE
 try:
     from .learning.decision_engine import DecisionEngine, decision_engine
     DECISION_ENGINE_AVAILABLE = True
@@ -724,7 +749,7 @@ except ImportError:
     DecisionEngine = None
     decision_engine = None
 
-# 2.6 SEMANTIC MEMORY
+# 2.5 SEMANTIC MEMORY
 try:
     from .learning.semantic_memory import SemanticMemory, semantic_memory
     SEMANTIC_MEMORY_AVAILABLE = True
@@ -734,7 +759,7 @@ except ImportError:
     SemanticMemory = None
     semantic_memory = None
 
-# 2.7 LEARNING MEMORY
+# 2.6 LEARNING MEMORY
 try:
     from .learning.learning_memory import LearningMemory, learning_memory
     LEARNING_MEMORY_AVAILABLE = True
@@ -744,7 +769,7 @@ except ImportError:
     LearningMemory = None
     learning_memory = None
 
-# 2.8 MEMORY OPTIMIZER
+# 2.7 MEMORY OPTIMIZER
 try:
     from .learning.memory_optimizer import MemoryOptimizer, memory_optimizer
     MEMORY_OPTIMIZER_AVAILABLE = True
@@ -754,7 +779,7 @@ except ImportError:
     MemoryOptimizer = None
     memory_optimizer = None
 
-# 2.9 ENTITY RECOGNITION
+# 2.8 ENTITY RECOGNITION
 try:
     from .learning.entity_recognition import EntityRecognition, entity_recognition
     ENTITY_RECOGNITION_AVAILABLE = True
@@ -764,7 +789,7 @@ except ImportError:
     EntityRecognition = None
     entity_recognition = None
 
-# 2.10 SEMANTIC PROCESSOR
+# 2.9 SEMANTIC PROCESSOR
 try:
     from .learning.semantic_processor import SemanticProcessor, semantic_processor
     SEMANTIC_PROCESSOR_AVAILABLE = True
@@ -774,7 +799,7 @@ except ImportError:
     SemanticProcessor = None
     semantic_processor = None
 
-# 2.11 CONTEXT MANAGER
+# 2.10 CONTEXT MANAGER
 try:
     from .learning.context_manager import ContextManager, context_manager
     CONTEXT_MANAGER_AVAILABLE = True
@@ -784,7 +809,7 @@ except ImportError:
     ContextManager = None
     context_manager = None
 
-# 2.12 GOAL MANAGER
+# 2.11 GOAL MANAGER
 try:
     from .learning.goal_manager import GoalManager, goal_manager
     GOAL_MANAGER_AVAILABLE = True
@@ -794,7 +819,7 @@ except ImportError:
     GoalManager = None
     goal_manager = None
 
-# 2.13 REFLECTION
+# 2.12 REFLECTION
 try:
     from .learning.reflection import ReflectionEngine, reflection_engine
     REFLECTION_AVAILABLE = True
@@ -804,7 +829,7 @@ except ImportError:
     ReflectionEngine = None
     reflection_engine = None
 
-# 2.14 INSIGHT
+# 2.13 INSIGHT
 try:
     from .learning.insight import InsightEngine, insight_engine
     INSIGHT_AVAILABLE = True
@@ -814,7 +839,7 @@ except ImportError:
     InsightEngine = None
     insight_engine = None
 
-# 2.15 BEHAVIOR
+# 2.14 BEHAVIOR
 try:
     from .learning.behavior import BehaviorEngine, behavior_engine
     BEHAVIOR_AVAILABLE = True
@@ -824,7 +849,7 @@ except ImportError:
     BehaviorEngine = None
     behavior_engine = None
 
-# 2.16 ASSOCIATION
+# 2.15 ASSOCIATION
 try:
     from .learning.association import AssociationEngine, association_engine
     ASSOCIATION_AVAILABLE = True
@@ -834,7 +859,7 @@ except ImportError:
     AssociationEngine = None
     association_engine = None
 
-# 2.17 SELF DIAGNOSTIC
+# 2.16 SELF DIAGNOSTIC
 try:
     from .learning.self_diagnostic import SelfDiagnostic, self_diagnostic
     SELF_DIAGNOSTIC_AVAILABLE = True
@@ -844,7 +869,7 @@ except ImportError:
     SelfDiagnostic = None
     self_diagnostic = None
 
-# 2.18 IMPROVEMENT
+# 2.17 IMPROVEMENT
 try:
     from .learning.improvement import ImprovementEngine, improvement_engine
     IMPROVEMENT_AVAILABLE = True
@@ -854,8 +879,9 @@ except ImportError:
     ImprovementEngine = None
     improvement_engine = None
 
+
 # ============================================================
-# 2.19 EVENT
+# 2.18 EVENT
 # ============================================================
 
 try:
@@ -901,13 +927,9 @@ try:
         test_event_system,
         test_event_system_advanced,
     )
-    
-    # Alias untuk backward compatibility
-    EventSystem = EventBus
-    
     EVENT_AVAILABLE = True
     __all__ += [
-        "EventBus", "EventSystem", "Event", "EventHandler", "EventResult",
+        "EventBus", "Event", "EventHandler", "EventResult",
         "event_system",
         "subscribe", "unsubscribe", "publish", "emit", "dispatch",
         "publish_async", "event_status",
@@ -927,7 +949,6 @@ try:
 except ImportError:
     EVENT_AVAILABLE = False
     EventBus = None
-    EventSystem = None
     Event = None
     EventHandler = None
     EventResult = None
@@ -968,7 +989,7 @@ except ImportError:
     test_event_system = None
     test_event_system_advanced = None
 
-# 2.20 MARKET LEARNING
+# 2.19 MARKET LEARNING
 try:
     from .learning.market_learning import MarketLearning, market_learning
     MARKET_LEARNING_AVAILABLE = True
@@ -978,7 +999,7 @@ except ImportError:
     MarketLearning = None
     market_learning = None
 
-# 2.21 STRATEGY
+# 2.20 STRATEGY
 try:
     from .learning.strategy import StrategyEngine, strategy_engine
     STRATEGY_AVAILABLE = True
@@ -988,7 +1009,7 @@ except ImportError:
     StrategyEngine = None
     strategy_engine = None
 
-# 2.22 SIMULATION
+# 2.21 SIMULATION
 try:
     from .learning.simulation import SimulationEngine, simulation_engine
     SIMULATION_AVAILABLE = True
@@ -998,7 +1019,7 @@ except ImportError:
     SimulationEngine = None
     simulation_engine = None
 
-# 2.23 EVALUATOR
+# 2.22 EVALUATOR
 try:
     from .learning.evaluator import EvaluatorEngine, evaluator_engine
     EVALUATOR_AVAILABLE = True
@@ -1008,7 +1029,7 @@ except ImportError:
     EvaluatorEngine = None
     evaluator_engine = None
 
-# 2.24 ADAPTIVE
+# 2.23 ADAPTIVE
 try:
     from .learning.adaptive import AdaptiveEngine, adaptive_engine
     ADAPTIVE_AVAILABLE = True
@@ -1018,7 +1039,7 @@ except ImportError:
     AdaptiveEngine = None
     adaptive_engine = None
 
-# 2.25 LEARNING ANALYZER
+# 2.24 LEARNING ANALYZER
 try:
     from .learning.analyzer import LearningAnalyzer, learning_analyzer
     LEARNING_ANALYZER_AVAILABLE = True
@@ -1028,7 +1049,7 @@ except ImportError:
     LearningAnalyzer = None
     learning_analyzer = None
 
-# 2.26 DATA PIPELINE
+# 2.25 DATA PIPELINE
 try:
     from .learning.collector import Collector
     from .learning.data_cleaner import DataCleaner
@@ -1047,7 +1068,7 @@ except ImportError:
     Normalizer = None
     FeatureExtractor = None
 
-# 2.27 ARCHIVE MANAGER
+# 2.26 ARCHIVE MANAGER
 try:
     from .learning.archive_manager import ArchiveManager, archive_manager
     ARCHIVE_AVAILABLE = True
@@ -1057,7 +1078,7 @@ except ImportError:
     ArchiveManager = None
     archive_manager = None
 
-# 2.28 MODULE REGISTRY
+# 2.27 MODULE REGISTRY
 try:
     from .learning.module_registry import ModuleRegistry, module_registry
     MODULE_REGISTRY_AVAILABLE = True
@@ -1067,22 +1088,23 @@ except ImportError:
     ModuleRegistry = None
     module_registry = None
 
-# 2.29 MODULE BASE
+# 2.28 MODULE BASE
 try:
     from .learning.module_base import ModuleBase
     __all__ += ["ModuleBase"]
 except ImportError:
     ModuleBase = None
 
-# 2.30 SERIALIZER
+# 2.29 SERIALIZER
 try:
     from .learning.serializer import SafeSerializer
     __all__ += ["SafeSerializer"]
 except ImportError:
     SafeSerializer = None
 
+
 # ============================================================
-# 2.31 CONTRACTS
+# 2.30 CONTRACTS
 # ============================================================
 
 try:
@@ -1263,7 +1285,7 @@ except ImportError:
     DEFAULT_MAX_ITEMS = 10000
     DEFAULT_MAX_STRING_LENGTH = 100000
 
-# 2.32 KNOWLEDGE BUILDER
+# 2.31 KNOWLEDGE BUILDER
 try:
     from .learning.knowledge_builder import KnowledgeBuilder, knowledge_builder
     KNOWLEDGE_BUILDER_AVAILABLE = True
@@ -1273,7 +1295,7 @@ except ImportError:
     KnowledgeBuilder = None
     knowledge_builder = None
 
-# 2.33 CURIOSITY
+# 2.32 CURIOSITY
 try:
     from .learning.curiosity import CuriosityEngine, curiosity_engine
     CURIOSITY_AVAILABLE = True
@@ -1283,7 +1305,7 @@ except ImportError:
     CuriosityEngine = None
     curiosity_engine = None
 
-# 2.34 EXPERIENCE
+# 2.33 EXPERIENCE
 try:
     from .learning.experience import ExperienceEngine, experience_engine
     EXPERIENCE_AVAILABLE = True
@@ -1293,7 +1315,7 @@ except ImportError:
     ExperienceEngine = None
     experience_engine = None
 
-# 2.35 KNOWLEDGE GRAPH
+# 2.34 KNOWLEDGE GRAPH
 try:
     from .learning.knowledge_graph import KnowledgeGraph, knowledge_graph
     KNOWLEDGE_GRAPH_AVAILABLE = True
@@ -1320,7 +1342,7 @@ def get_package_info() -> dict:
             "analyzer": ANALYZER_AVAILABLE,
             "archive": ARCHIVE_AVAILABLE,
             "association": ASSOCIATION_AVAILABLE,
-            "autonomous": AUTONOMOUS_AVAILABLE,  # <-- BARU!
+            "autonomous": AUTONOMOUS_AVAILABLE,
             "behavior": BEHAVIOR_AVAILABLE,
             "bootstrap": BOOTSTRAP_AVAILABLE,
             "bot": BOT_AVAILABLE,
@@ -1331,7 +1353,9 @@ def get_package_info() -> dict:
             "curiosity": CURIOSITY_AVAILABLE,
             "data_pipeline": DATA_PIPELINE_AVAILABLE,
             "decision_engine": DECISION_ENGINE_AVAILABLE,
+            "deepseek": DEEPSEEK_AVAILABLE,           # <-- BARU
             "diagnostics": DIAGNOSTICS_AVAILABLE,
+            "dividend": DIVIDEND_AVAILABLE,            # <-- BARU
             "entity_recognition": ENTITY_RECOGNITION_AVAILABLE,
             "evaluator": EVALUATOR_AVAILABLE,
             "event": EVENT_AVAILABLE,
@@ -1405,7 +1429,7 @@ def get_exchange_status() -> dict:
             "available": True,
             "status": health.get("status", "UNKNOWN"),
             "pairs": len(kraken_market.pairs) if hasattr(kraken_market, 'pairs') else 0,
-            "cache_size": len(kraken_market.cache) if hasattr(kraken_market, 'cache') else 0,
+            "cache_size": len(kraken_market._cache) if hasattr(kraken_market, '_cache') else 0,
             "timestamp": health.get("timestamp", time.time()),
         }
     except Exception as e:
@@ -1414,6 +1438,16 @@ def get_exchange_status() -> dict:
             "status": "ERROR",
             "error": str(e),
         }
+
+
+def get_ai_status() -> dict:
+    """Get AI integration status."""
+    return {
+        "available": DEEPSEEK_AVAILABLE,
+        "enabled": DEEPSEEK_ENABLED if DEEPSEEK_AVAILABLE else False,
+        "model": deepseek_ai.model if DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED else None,
+        "version": deepseek_ai.VERSION if DEEPSEEK_AVAILABLE else None,
+    }
 
 
 # ============================================================
@@ -1450,6 +1484,14 @@ print()
 print("=" * 70)
 health = health_summary()
 print(f"  HEALTH: {health['health_score']:.1f}%  ({health['online']}/{health['total']})")
+print("=" * 70)
+
+# AI Status
+ai_status = get_ai_status()
+if ai_status.get("available"):
+    print(f"  AI: {'ENABLED' if ai_status.get('enabled') else 'DISABLED'}  (Model: {ai_status.get('model', 'N/A')})")
+else:
+    print(f"  AI: NOT AVAILABLE")
 print("=" * 70)
 
 # Exchange status

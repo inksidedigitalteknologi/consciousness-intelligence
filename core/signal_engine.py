@@ -1,34 +1,3 @@
-# core/signal_engine.py
-# INKSIDE DIGITAL - SIGNAL ENGINE v5.0
-# SUPER COMPREHENSIVE SIGNAL ENGINE WITH AI INTEGRATION
-# 
-# Fitur:
-# 1. Multi-Timeframe Analysis (MTF) dengan Weighted Scoring
-# 2. Trend Detection (EMA, SMA, ADX, Ichimoku)
-# 3. Momentum Analysis (RSI, MACD, ROC, Stochastic)
-# 4. Volume Intelligence dengan VSA (Volume Spread Analysis)
-# 5. Pattern Recognition (Candlestick + Chart Patterns)
-# 6. Breakout / Breakdown Detection
-# 7. Bollinger Bands + Keltner Channels
-# 8. MACD Divergence (Regular & Hidden)
-# 9. Risk Management (ATR-based SL/TP dengan Dynamic Sizing)
-# 10. Signal Quality Scoring dengan AI Enhancement
-# 11. Confidence Calculation Multi-Factor
-# 12. Market Regime Detection (Trending, Ranging, Volatile)
-# 13. Support / Resistance (Dynamic & Static)
-# 14. Volatility Analysis (Historical & Implied)
-# 15. Signal Strength dengan Weighted Ensemble
-# 16. Dynamic Threshold Adjustment
-# 17. AI Validation & Enhancement (DeepSeek Integration)
-# 18. Performance Tracking & Backtesting
-# 19. Multi-Asset Support (Crypto, Forex, Stocks)
-# 20. Real-time Signal Monitoring
-# 21. Signal Ranking & Prioritization
-# 22. Risk-Reward Optimization
-# 23. Sentiment Analysis Integration
-# 24. Correlation Analysis
-# 25. Time-based Seasonality
-
 from __future__ import annotations
 
 import logging
@@ -139,8 +108,8 @@ class SignalEngine:
         "support_resistance": 5,
         "volatility": 3,
         "seasonality": 2,
-        "sentiment": 3,  # NEW
-        "correlation": 2,  # NEW
+        "sentiment": 3,
+        "correlation": 2,
     }
 
     MAX_SCORE = sum(WEIGHTS.values())
@@ -251,6 +220,22 @@ class SignalEngine:
         logger.info("Signal Engine v%s initialized.", self.VERSION)
         logger.info("🤖 AI Integration: %s", "ENABLED" if self.ai_enabled else "DISABLED")
         set_status("signal_engine", "INITIALIZED")
+
+    # ============================================================
+    # NORMALIZE ANALYSIS
+    # ============================================================
+
+    def _normalize_analysis(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
+        """Normalize analysis data for consistent processing."""
+        if not analysis:
+            return {}
+        if isinstance(analysis, dict):
+            return analysis
+        if hasattr(analysis, 'to_dict'):
+            return analysis.to_dict()
+        if hasattr(analysis, '__dict__'):
+            return analysis.__dict__
+        return {"raw": str(analysis)}
 
     # ============================================================
     # MAIN SIGNAL GENERATOR
