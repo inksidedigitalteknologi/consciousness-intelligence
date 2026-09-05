@@ -1,6 +1,5 @@
 # ============================================================
-# INKSIDE DIGITAL - REQUIREMENTS
-# Full Production Dependencies
+# INKSIDE DIGITAL - CONSCIOUSNESS INTELLIGENCE
 # ============================================================
 
 # ============================================================
@@ -60,6 +59,8 @@ python-dateutil==2.9.0.post0
 pytz==2026.3.post1
 tzlocal==5.4.4
 narwhals==2.24.0
+scipy==1.16.3       
+statsmodels==0.14.6
 
 # ============================================================
 # DATABASE
@@ -119,12 +120,43 @@ six==1.17.0
 typing_extensions==4.16.0
 gdown==6.1.0
 zlib-ng==1.0.0
+psutil==7.1.2         
 
 # ============================================================
-# AI / ML (Optional)
+# AI / ML (Optional - Comment if not needed)
 # ============================================================
-# torch
-# tensorflow
-# scikit-learn
-psutil
-psutil>=5.9.0
+# torch==2.6.0
+# tensorflow==2.18.0
+# scikit-learn==1.6.1
+# openai==1.61.0
+
+# ============================================================
+# WEBSOCKET CLIENT (Untuk frontend)
+# ============================================================
+socketio-client==0.7.2  
+engineio-client==3.14.3  
+
+# ============================================================
+# WEB SCRAPING (Untuk auto-crawl)
+# ============================================================
+lxml==5.4.0              
+html5lib==1.1           
+requests-html==0.10.0   
+
+# ============================================================
+# EXPORT & REPORTING
+# ============================================================
+openpyxl==3.1.5         
+tabulate==0.9.0          
+
+# ============================================================
+# DIVIDEND DATA (Untuk Dividend Hunter)
+# ============================================================
+yfinance==0.2.52        
+alpha-vantage==2.3.1   
+
+# ============================================================
+# NOTE: 
+# Jika ada error import 'idna.core', jalankan:
+# pip install --force-reinstall --no-cache-dir idna requests
+# ============================================================
