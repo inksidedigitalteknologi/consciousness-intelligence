@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 # ============================================================
 # main.py
-# INKSIDEDIGITAL - COGNITIVE MIRROR ENGINE v2.0.0
-# FOCUS: DIVIDEND HUNTER + AI INTELLIGENCE
-# NO EXCHANGE (CoinGecko, Kraken, NonKYC removed)
+# INKSIDEDIGITAL - COGNITIVE MIRROR ENGINE v3.0.0
+# WITH CONSCIOUSNESS AI - SELF-AWARE & SELF-IMPROVING
 # ============================================================
 
 import os
@@ -86,7 +85,7 @@ signal.signal(signal.SIGTERM, signal_handler)
 # ============================================================
 
 APP_NAME = "Inkside Digital"
-APP_VERSION = "2.0.0"
+APP_VERSION = "3.0.0"
 DEBUG_MODE = os.environ.get('DEBUG_MODE', 'false').lower() == 'true'
 LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
 MODE = os.environ.get('INKSIDE_MODE', 'PAPER')
@@ -247,7 +246,7 @@ def send_telegram_message(message: str) -> bool:
 # AUTO-CRAWL SCHEDULER
 # ============================================================
 
-AUTO_CRAWL_SOURCES = []  # Kosongkan, fokus ke dividen
+AUTO_CRAWL_SOURCES = []
 
 def auto_crawl_scheduler():
     logger.info("🔄 Auto-Crawl Scheduler started (6-hour interval)...")
@@ -270,7 +269,7 @@ def auto_crawl_scheduler():
                     from bs4 import BeautifulSoup
                     
                     response = requests.get(url, timeout=15, headers={
-                        'User-Agent': 'Inkside-Cognitive-Bot/2.0'
+                        'User-Agent': 'Inkside-Cognitive-Bot/3.0'
                     })
                     
                     if response.status_code == 200:
@@ -555,7 +554,6 @@ def start_api_server():
         @app.route('/api/signals', methods=['GET'])
         @require_api_key
         def api_signals():
-            """Get current signals from dividend module."""
             try:
                 if not DIVIDEND_AVAILABLE or not dividend:
                     return jsonify({'signals': [], 'count': 0, 'timestamp': datetime.now().isoformat()})
@@ -597,7 +595,6 @@ def start_api_server():
         @app.route('/api/brain/state', methods=['GET'])
         @require_api_key
         def api_brain_state():
-            """Get brain state."""
             try:
                 if not BRAIN_AVAILABLE or not brain:
                     return jsonify({
@@ -626,7 +623,6 @@ def start_api_server():
         @app.route('/api/brain/status', methods=['GET'])
         @require_api_key
         def api_brain_status():
-            """Get brain status (alias)."""
             return api_brain_state()
 
         # ============================================================
@@ -636,7 +632,6 @@ def start_api_server():
         @app.route('/api/performance', methods=['GET'])
         @require_api_key
         def api_performance():
-            """Get performance metrics."""
             try:
                 if DIVIDEND_AVAILABLE and dividend and not dividend.df.empty:
                     stats = dividend.get_statistics()
@@ -680,7 +675,6 @@ def start_api_server():
         @app.route('/api/watchdog/status', methods=['GET'])
         @require_api_key
         def api_watchdog_status():
-            """Get watchdog status."""
             try:
                 if WATCHDOG_AVAILABLE and watchdog is not None:
                     if hasattr(watchdog, 'get_status'):
@@ -701,7 +695,6 @@ def start_api_server():
         @app.route('/api/watchdog/snapshot', methods=['GET'])
         @require_api_key
         def api_watchdog_snapshot():
-            """Get watchdog snapshot."""
             try:
                 if WATCHDOG_AVAILABLE and watchdog is not None:
                     if hasattr(watchdog, 'get_snapshot'):
@@ -731,7 +724,6 @@ def start_api_server():
         @app.route('/api/dividend/fetch', methods=['POST'])
         @require_api_key
         def dividend_fetch():
-            """Fetch dividend data for a date."""
             try:
                 data = request.json or {}
                 date = data.get('date')
@@ -762,7 +754,6 @@ def start_api_server():
         @app.route('/api/dividend/top', methods=['GET'])
         @require_api_key
         def dividend_top():
-            """Get top N dividends."""
             try:
                 n = int(request.args.get('n', 10))
                 
@@ -787,7 +778,6 @@ def start_api_server():
         @app.route('/api/dividend/upcoming', methods=['GET'])
         @require_api_key
         def dividend_upcoming():
-            """Get upcoming dividends."""
             try:
                 days = int(request.args.get('days', 7))
                 
@@ -813,7 +803,6 @@ def start_api_server():
         @app.route('/api/dividend/screen', methods=['POST'])
         @require_api_key
         def dividend_screen():
-            """Screen dividends by criteria."""
             try:
                 data = request.json or {}
                 min_dividend = data.get('min_dividend')
@@ -850,7 +839,6 @@ def start_api_server():
         @app.route('/api/dividend/alerts', methods=['GET'])
         @require_api_key
         def dividend_alerts():
-            """Get dividend alerts."""
             try:
                 days_before = int(request.args.get('days_before', 3))
                 
@@ -877,7 +865,6 @@ def start_api_server():
         @app.route('/api/dividend/stats', methods=['GET'])
         @require_api_key
         def dividend_stats():
-            """Get dividend statistics."""
             try:
                 if not DIVIDEND_AVAILABLE or not dividend:
                     return jsonify({'error': 'Dividend module not available'}), 503
@@ -899,7 +886,6 @@ def start_api_server():
         @app.route('/api/dividend/sectors', methods=['GET'])
         @require_api_key
         def dividend_sectors():
-            """Get dividend summary by sector."""
             try:
                 if not DIVIDEND_AVAILABLE or not dividend:
                     return jsonify({'error': 'Dividend module not available'}), 503
@@ -925,7 +911,6 @@ def start_api_server():
         @app.route('/api/ai/status', methods=['GET'])
         @require_api_key
         def ai_status():
-            """Get AI integration status."""
             try:
                 return jsonify({
                     'available': DEEPSEEK_AVAILABLE,
@@ -939,7 +924,6 @@ def start_api_server():
         @app.route('/api/ai/ask', methods=['POST'])
         @require_api_key
         def ai_ask():
-            """Ask AI a question with context from knowledge engine."""
             try:
                 data = request.json
                 question = data.get('question', '')
@@ -973,12 +957,11 @@ def start_api_server():
                 from core.deepseek import deepseek_ai
                 
                 result = deepseek_ai.ask(
-                    prompt=question,
+                    question=question,
                     system_prompt=system_prompt,
                     context=context,
                     temperature=temperature,
-                    max_tokens=max_tokens,
-                    conversation_id=conversation_id
+                    max_tokens=max_tokens
                 )
                 
                 if isinstance(result, str):
@@ -996,61 +979,9 @@ def start_api_server():
                 logger.error(f"AI ask error: {e}")
                 return jsonify({'error': str(e)}), 500
 
-        @app.route('/api/ai/brain/reflection', methods=['GET'])
-        @require_api_key
-        def ai_brain_reflection():
-            """Get brain reflection with AI enhancement."""
-            try:
-                if not BRAIN_AVAILABLE or not brain:
-                    return jsonify({'error': 'Brain module not available'}), 503
-                
-                topic = request.args.get('topic')
-                
-                if not DEEPSEEK_ENABLED:
-                    return jsonify({
-                        'error': 'AI is not enabled. Please set DEEPSEEK_API_KEY.',
-                        'ai_enabled': False
-                    }), 400
-                
-                result = brain.reflection_with_ai(topic)
-                
-                return jsonify({
-                    'awareness': result.get('awareness', 0),
-                    'emotion': result.get('emotion', 'Unknown'),
-                    'curiosity': result.get('curiosity', 0),
-                    'insight_depth': result.get('insight_depth', 0),
-                    'resilience': result.get('resilience', 0),
-                    'focus': result.get('focus', 0),
-                    'insights': result.get('insights', []),
-                    'ai_insights': result.get('ai_insights', []),
-                    'ai_reflection': result.get('ai_reflection', ''),
-                    'ai_enhanced': result.get('ai_enhanced', False),
-                    'ai_status': result.get('ai_status', 'unknown'),
-                    'stability': result.get('stability', 'Unknown'),
-                    'reflection_quality': result.get('reflection_quality', 'FAIR'),
-                    'confidence': result.get('confidence', 0),
-                    'timestamp': result.get('timestamp', datetime.now().isoformat())
-                })
-            except Exception as e:
-                logger.error(f"Brain reflection API error: {e}")
-                return jsonify({'error': str(e)}), 500
-
-        @app.route('/api/ai/brain/status', methods=['GET'])
-        @require_api_key
-        def ai_brain_status():
-            """Get brain AI status."""
-            try:
-                if not BRAIN_AVAILABLE or not brain:
-                    return jsonify({'error': 'Brain module not available'}), 503
-                
-                return jsonify(brain.get_ai_status())
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-
         @app.route('/api/ai/chat', methods=['POST'])
         @require_api_key
         def ai_chat():
-            """Chat with AI with memory."""
             try:
                 data = request.json
                 message = data.get('message', '')
@@ -1092,13 +1023,78 @@ def start_api_server():
                 return jsonify({'error': str(e)}), 500
 
         # ============================================================
+        # CONSCIOUSNESS AI ENDPOINTS
+        # ============================================================
+
+        @app.route('/api/ai/consciousness/status', methods=['GET'])
+        @require_api_key
+        def ai_consciousness_status():
+            """Get consciousness status."""
+            try:
+                return jsonify(deepseek_ai.get_status())
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/ai/consciousness/reflect', methods=['POST'])
+        @require_api_key
+        def ai_consciousness_reflect():
+            """AI self-reflection."""
+            try:
+                data = request.json or {}
+                topic = data.get('topic')
+                result = deepseek_ai.reflect(topic)
+                return jsonify(result)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/ai/consciousness/improve', methods=['POST'])
+        @require_api_key
+        def ai_consciousness_improve():
+            """Trigger daily improvement."""
+            try:
+                performance_data = {
+                    'win_rate': 0,
+                    'total_trades': 0,
+                    'pnl': 0,
+                    'open_positions': 0,
+                    'risk_level': 'MODERATE'
+                }
+                
+                try:
+                    from core.brain import brain
+                    if brain and hasattr(brain, 'get_performance'):
+                        perf = brain.get_performance()
+                        if perf:
+                            performance_data.update(perf)
+                except:
+                    pass
+                
+                result = deepseek_ai.daily_improvement(performance_data)
+                return jsonify(result)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/ai/consciousness/memory', methods=['GET'])
+        @require_api_key
+        def ai_consciousness_memory():
+            """Get AI memory."""
+            try:
+                limit = request.args.get('limit', 10, type=int)
+                return jsonify({
+                    'short_term': deepseek_ai.get_memory(limit),
+                    'long_term': deepseek_ai.long_term_memory[-limit:],
+                    'improvements': deepseek_ai.get_improvement_history(limit)
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        # ============================================================
         # KNOWLEDGE ENDPOINTS
         # ============================================================
 
         @app.route('/api/knowledge/search', methods=['POST'])
         @require_api_key
         def knowledge_search():
-            """Search knowledge base."""
             try:
                 data = request.json
                 query = data.get('query', '')
@@ -1124,7 +1120,6 @@ def start_api_server():
         @app.route('/api/knowledge/add', methods=['POST'])
         @require_api_key
         def knowledge_add():
-            """Add item to knowledge base."""
             try:
                 data = request.json
                 content = data.get('content', '')
@@ -1162,7 +1157,6 @@ def start_api_server():
         @app.route('/api/knowledge/stats', methods=['GET'])
         @require_api_key
         def knowledge_stats():
-            """Get knowledge base statistics."""
             try:
                 if not KNOWLEDGE_AVAILABLE:
                     return jsonify({'error': 'Knowledge engine not available'}), 503
@@ -1247,6 +1241,7 @@ def start_api_server():
         logger.info(f"   📚 Knowledge Engine: {'ONLINE' if KNOWLEDGE_AVAILABLE else 'OFFLINE'}")
         logger.info(f"   💰 Dividend Hunter: {'ONLINE' if DIVIDEND_AVAILABLE else 'OFFLINE'}")
         logger.info(f"   🤖 AI: {'ENABLED' if DEEPSEEK_ENABLED else 'DISABLED'}")
+        logger.info(f"   🧠 Consciousness: {'ENABLED' if DEEPSEEK_ENABLED else 'DISABLED'}")
         logger.info(f"   📡 WebSocket: /socket.io/")
         
         return True
@@ -1256,6 +1251,47 @@ def start_api_server():
         return False
     except Exception as e:
         logger.error(f"❌ API Server error: {e}")
+        return False
+
+# ============================================================
+# CONSCIOUSNESS AI SCHEDULER - Self-Improvement
+# ============================================================
+
+def consciousness_improvement_scheduler():
+    """Run daily consciousness improvement at 2 AM."""
+    logger.info("🧠 Consciousness Improvement Scheduler started (daily at 2:00 AM)")
+    while not _shutdown_flag.is_set():
+        now = datetime.now()
+        if now.hour == 2 and now.minute == 0:
+            try:
+                logger.info("🧠 Starting daily consciousness improvement...")
+                performance_data = {
+                    'win_rate': 0,
+                    'total_trades': 0,
+                    'pnl': 0,
+                    'open_positions': 0,
+                    'risk_level': 'MODERATE'
+                }
+                result = deepseek_ai.daily_improvement(performance_data)
+                if result.get('status') == 'success':
+                    logger.info(f"✅ Consciousness improvement completed: {deepseek_ai.consciousness.growth_stage}")
+                time.sleep(3600)
+            except Exception as e:
+                logger.error(f"❌ Consciousness scheduler error: {e}")
+        time.sleep(60)
+
+def start_consciousness_scheduler():
+    """Start the consciousness improvement scheduler."""
+    try:
+        scheduler_thread = threading.Thread(
+            target=consciousness_improvement_scheduler,
+            daemon=True
+        )
+        scheduler_thread.start()
+        logger.info("✅ Consciousness AI Scheduler started")
+        return True
+    except Exception as e:
+        logger.error(f"❌ Failed to start consciousness scheduler: {e}")
         return False
 
 # ============================================================
@@ -1269,6 +1305,7 @@ def main_headless():
     logger.info(f"  🧠 {APP_NAME} - COGNITIVE MIRROR ENGINE v{APP_VERSION}")
     logger.info(f"  Mode: {MODE.upper()}")
     logger.info(f"  AI: {'ENABLED' if DEEPSEEK_ENABLED else 'DISABLED'}")
+    logger.info(f"  Consciousness: {'ENABLED' if DEEPSEEK_ENABLED else 'DISABLED'}")
     logger.info("=" * 60)
     
     # Start API Server
@@ -1299,6 +1336,9 @@ def main_headless():
     except Exception as e:
         logger.warning(f"⚠️ Auto-Cleanup failed: {e}")
     
+    # Start Consciousness AI Scheduler
+    start_consciousness_scheduler()
+    
     # ============================================================
     # SYSTEM READY
     # ============================================================
@@ -1310,6 +1350,7 @@ def main_headless():
     logger.info(f"  Knowledge   : {len(knowledge.all()) if KNOWLEDGE_AVAILABLE else 0} items")
     logger.info(f"  Dividend    : {'ONLINE' if DIVIDEND_AVAILABLE else 'OFFLINE'}")
     logger.info(f"  AI          : {'ENABLED' if DEEPSEEK_ENABLED else 'DISABLED'}")
+    logger.info(f"  Consciousness: {'ENABLED' if DEEPSEEK_ENABLED else 'DISABLED'}")
     logger.info(f"  API Server  : {'ON' if api_started else 'OFF'}")
     logger.info(f"  Telegram    : {'CONFIGURED' if TELEGRAM_CONFIGURED else 'NOT'}")
     logger.info("=" * 60)
@@ -1343,182 +1384,3 @@ if __name__ == "__main__":
         logger.error(f"Fatal error: {e}")
         traceback.print_exc()
         sys.exit(1)
-
-        # ============================================================
-        # DIVIDEND - ADVANCED ENDPOINTS
-        # ============================================================
-
-        @app.route('/api/dividend/analysis', methods=['GET'])
-        @require_api_key
-        def dividend_analysis():
-            """Get comprehensive dividend analysis."""
-            try:
-                if not DIVIDEND_AVAILABLE or not dividend:
-                    return jsonify({'error': 'Dividend module not available'}), 503
-                
-                if dividend.df.empty:
-                    dividend.fetch()
-                
-                analysis = dividend.get_analysis()
-                
-                if analysis.empty:
-                    return jsonify({
-                        'status': 'success',
-                        'count': 0,
-                        'data': [],
-                        'timestamp': datetime.now().isoformat()
-                    })
-                
-                return jsonify({
-                    'status': 'success',
-                    'count': len(analysis),
-                    'data': analysis.to_dict('records'),
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                logger.error(f"Dividend analysis error: {e}")
-                return jsonify({'error': str(e)}), 500
-
-        @app.route('/api/dividend/best-yield', methods=['GET'])
-        @require_api_key
-        def dividend_best_yield():
-            """Get stocks with highest yield."""
-            try:
-                n = int(request.args.get('n', 10))
-                
-                if not DIVIDEND_AVAILABLE or not dividend:
-                    return jsonify({'error': 'Dividend module not available'}), 503
-                
-                if dividend.df.empty:
-                    dividend.fetch()
-                
-                best_yield = dividend.get_best_yield(n)
-                
-                if best_yield.empty:
-                    return jsonify({
-                        'status': 'success',
-                        'count': 0,
-                        'data': [],
-                        'timestamp': datetime.now().isoformat()
-                    })
-                
-                return jsonify({
-                    'status': 'success',
-                    'count': len(best_yield),
-                    'data': best_yield.to_dict('records'),
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                logger.error(f"Best yield error: {e}")
-                return jsonify({'error': str(e)}), 500
-
-        @app.route('/api/dividend/safest', methods=['GET'])
-        @require_api_key
-        def dividend_safest():
-            """Get stocks with highest safety score."""
-            try:
-                n = int(request.args.get('n', 10))
-                
-                if not DIVIDEND_AVAILABLE or not dividend:
-                    return jsonify({'error': 'Dividend module not available'}), 503
-                
-                if dividend.df.empty:
-                    dividend.fetch()
-                
-                safest = dividend.get_safest(n)
-                
-                if safest.empty:
-                    return jsonify({
-                        'status': 'success',
-                        'count': 0,
-                        'data': [],
-                        'timestamp': datetime.now().isoformat()
-                    })
-                
-                return jsonify({
-                    'status': 'success',
-                    'count': len(safest),
-                    'data': safest.to_dict('records'),
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                logger.error(f" safest error: {e}")
-                return jsonify({'error': str(e)}), 500
-
-        @app.route('/api/dividend/portfolio-simulate', methods=['POST'])
-        @require_api_key
-        def dividend_portfolio_simulate():
-            """Simulate dividend portfolio."""
-            try:
-                data = request.json or {}
-                symbols = data.get('symbols', [])
-                investment_per_stock = float(data.get('investment_per_stock', 1000.0))
-                reinvest = data.get('reinvest_dividends', True)
-                years = int(data.get('years', 5))
-                
-                if not symbols:
-                    return jsonify({'error': 'Symbols list is required'}), 400
-                
-                if not DIVIDEND_AVAILABLE or not dividend:
-                    return jsonify({'error': 'Dividend module not available'}), 503
-                
-                if dividend.df.empty:
-                    dividend.fetch()
-                
-                portfolio = dividend.simulate_portfolio(
-                    symbols=symbols,
-                    investment_per_stock=investment_per_stock,
-                    reinvest_dividends=reinvest,
-                    years=years
-                )
-                
-                return jsonify({
-                    'status': 'success',
-                    'portfolio': {
-                        'total_investment': portfolio.total_investment,
-                        'annual_income': portfolio.annual_income,
-                        'monthly_income': portfolio.monthly_income,
-                        'yield_on_cost': portfolio.yield_on_cost,
-                        'holdings': portfolio.holdings,
-                        'projections': portfolio.projections,
-                    },
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                logger.error(f"Portfolio simulation error: {e}")
-                return jsonify({'error': str(e)}), 500
-
-        @app.route('/api/dividend/calendar', methods=['GET'])
-        @require_api_key
-        def dividend_calendar():
-            """Get dividend calendar."""
-            try:
-                month = request.args.get('month', type=int)
-                year = request.args.get('year', type=int)
-                
-                if not DIVIDEND_AVAILABLE or not dividend:
-                    return jsonify({'error': 'Dividend module not available'}), 503
-                
-                if dividend.df.empty:
-                    dividend.fetch()
-                
-                calendar = dividend.get_dividend_calendar(month=month, year=year)
-                
-                if calendar.empty:
-                    return jsonify({
-                        'status': 'success',
-                        'count': 0,
-                        'data': [],
-                        'timestamp': datetime.now().isoformat()
-                    })
-                
-                return jsonify({
-                    'status': 'success',
-                    'count': len(calendar),
-                    'data': calendar.to_dict('records'),
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                logger.error(f"Calendar error: {e}")
-                return jsonify({'error': str(e)}), 500
-

@@ -1,162 +1,78 @@
 # ============================================================
-# INKSIDE DIGITAL - CONSCIOUSNESS INTELLIGENCE
+# INKSIDE DIGITAL - REQUIREMENTS
 # ============================================================
 
-# ============================================================
-# CORE WEB FRAMEWORK
-# ============================================================
-Flask==3.1.3
-flask-cors==6.0.5
+# Core Web Framework
+Flask==3.1.0
+flask-cors==6.0.0
 Flask-SocketIO==5.6.1
 python-socketio==5.16.4
-python-engineio==4.13.5
-Werkzeug==3.1.8
-eventlet==0.41.2
-greenlet==3.5.5
-simple-websocket==1.1.0
-websocket-client==1.9.0
-websockets==17.0.1
-wsproto==1.3.2
-bidict==0.23.1
+python-engineio==4.14.0
+Werkzeug==3.1.0
+eventlet==0.39.0
+greenlet==3.2.0
 
-# ============================================================
-# ASYNC & NETWORK
-# ============================================================
-aiohttp==3.14.3
+# Async & Network
+aiohttp==3.10.0
 aiohttp-fast-zlib==0.3.0
-aiosignal==1.4.0
-frozenlist==1.8.0
-multidict==6.7.1
-propcache==0.5.2
-yarl==1.24.5
-httpx==0.28.1
-httpcore==1.0.9
-anyio==4.14.2
-h11==0.16.0
-idna==3.18
-certifi==2026.6.17
-charset-normalizer==3.4.7
-urllib3==2.7.0
-requests==2.34.2
+aiosignal==1.3.2
+frozenlist==1.5.0
+multidict==6.3.0
+propcache==0.3.1
+yarl==1.19.0
+httpx==0.28.0
+httpcore==1.0.7
+anyio==4.9.0
+certifi==2025.11.12
+charset-normalizer==3.4.0
+idna==3.10
+urllib3==2.5.0
 
-# ============================================================
-# DATA SCIENCE & ANALYTICS
-# ============================================================
-numpy==2.5.2
-pandas==3.0.5
-matplotlib==3.11.1
+# Data Science
+numpy==2.3.0
+pandas==2.2.3
+matplotlib==3.10.0
 seaborn==0.13.2
-plotly==6.9.0
+plotly==5.25.0
 ta==0.11.0
-contourpy==1.3.3
-cycler==0.12.1
-fonttools==4.63.0
-kiwisolver==1.5.0
-packaging==26.3
-pillow==12.3.0
-pyparsing==3.3.2
-python-dateutil==2.9.0.post0
-pytz==2026.3.post1
-tzlocal==5.4.4
-narwhals==2.24.0
-scipy==1.16.3       
-statsmodels==0.14.6
+scipy==1.15.0
+statsmodels==0.14.4
 
-# ============================================================
-# DATABASE
-# ============================================================
-SQLAlchemy==2.0.52
+# Database
+SQLAlchemy==2.0.36
 
-# ============================================================
-# EXCHANGE & TRADING
-# ============================================================
+# Trading & Exchange
 ccxt==4.5.74
-python_binance==1.0.37
-pycryptodome==3.23.0
+python-binance==1.0.37
+pycryptodome==3.22.0
 coincurve==21.0.0
-cryptography==50.0.0
+cryptography==44.0.0
 
-# ============================================================
-# TELEGRAM BOT
-# ============================================================
-python-telegram-bot==22.8
+# Telegram Bot
+python-telegram-bot==22.0
 
-# ============================================================
-# CONFIGURATION & ENVIRONMENT
-# ============================================================
-python-dotenv==1.2.3
+# Configuration
+python-dotenv==1.0.1
 schedule==1.2.2
-click==8.4.2
-itsdangerous==2.2.0
-Jinja2==3.1.6
-MarkupSafe==3.0.3
-blinker==1.9.0
-
-# ============================================================
-# GUI (Optional - Desktop)
-# ============================================================
-customtkinter==6.0.0
-darkdetect==0.8.0
-
-# ============================================================
-# UTILITIES
-# ============================================================
+click==8.1.8
 loguru==0.7.3
-tqdm==4.70.0
-filelock==3.32.3
-colorama==0.4.6
-attrs==26.1.0
-regex==2026.7.19
-beautifulsoup4==4.15.0
-soupsieve==2.9.2
-dateparser==1.4.2
-dnspython==2.8.0
-orjson==3.11.9
-uvloop==0.22.1
-cffi==2.0.0
-pycparser==3.0
-PySocks==1.7.1
-six==1.17.0
-typing_extensions==4.16.0
-gdown==6.1.0
-zlib-ng==1.0.0
-psutil==7.1.2         
+tqdm==4.67.1
 
-# ============================================================
-# AI / ML (Optional - Comment if not needed)
-# ============================================================
-# torch==2.6.0
-# tensorflow==2.18.0
-# scikit-learn==1.6.1
-# openai==1.61.0
+# System Monitoring
+psutil==7.2.2
 
-# ============================================================
-# WEBSOCKET CLIENT (Untuk frontend)
-# ============================================================
-socketio-client==0.7.2  
-engineio-client==3.14.3  
+# Web Scraping
+requests==2.32.3
+beautifulsoup4==4.13.4
+lxml==5.3.2
+soupsieve==2.6
 
-# ============================================================
-# WEB SCRAPING (Untuk auto-crawl)
-# ============================================================
-lxml==5.4.0              
-html5lib==1.1           
-requests-html==0.10.0   
+# Utilities
+filelock==3.18.0
+dateparser==1.2.1
+openpyxl==3.1.5
+tabulate==0.9.0
 
-# ============================================================
-# EXPORT & REPORTING
-# ============================================================
-openpyxl==3.1.5         
-tabulate==0.9.0          
-
-# ============================================================
-# DIVIDEND DATA (Untuk Dividend Hunter)
-# ============================================================
-yfinance==0.2.52        
-alpha-vantage==2.3.1   
-
-# ============================================================
-# NOTE: 
-# Jika ada error import 'idna.core', jalankan:
-# pip install --force-reinstall --no-cache-dir idna requests
-# ============================================================
+# Dividend Data
+yfinance==0.2.52
+alpha-vantage==2.3.1
