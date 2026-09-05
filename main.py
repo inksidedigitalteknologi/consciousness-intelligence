@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 # ============================================================
 # main.py
-# INKSIDEDIGITAL TRADING BOT v2.0.0
-# COGNITIVE MIRROR ENGINE - FULL HEADLESS (API MODE)
-# WITH AI INTEGRATION - DEEPSEEK ENHANCED
+# INKSIDEDIGITAL - COGNITIVE MIRROR ENGINE v2.0.0
+# FOCUS: DIVIDEND HUNTER + AI INTELLIGENCE
+# NO EXCHANGE (CoinGecko, Kraken, NonKYC removed)
 # ============================================================
 
 import os
@@ -17,7 +17,7 @@ import threading
 import traceback
 import random
 from pathlib import Path
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 from dotenv import load_dotenv
 from functools import wraps
@@ -61,8 +61,8 @@ os.environ['HEADLESS_MODE'] = 'true'
 CURRENT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(CURRENT_DIR))
 
-for folder in ['logs', 'database', 'database/backup', 'cache', 'database/shards']:
-    (CURRENT_DIR / folder).mkdir(exist_ok=True)
+for folder in ['logs', 'database', 'database/backup', 'cache', 'database/shards', 'data/dividends']:
+    (CURRENT_DIR / folder).mkdir(exist_ok=True, parents=True)
 
 # ============================================================
 # SIGNAL HANDLER
@@ -90,12 +90,10 @@ APP_VERSION = "2.0.0"
 DEBUG_MODE = os.environ.get('DEBUG_MODE', 'false').lower() == 'true'
 LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
 MODE = os.environ.get('INKSIDE_MODE', 'PAPER')
-API_PORT = int(os.environ.get('API_PORT', 5001))
+API_PORT = int(os.environ.get('API_PORT', 5000))
 API_HOST = os.environ.get('API_HOST', '0.0.0.0')
 
 engine_running = False
-bot_instance = None
-brain_instance = None
 
 API_KEY = os.environ.get('API_KEY', 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ')
 
@@ -173,16 +171,30 @@ except ImportError as e:
     KNOWLEDGE_AVAILABLE = False
 
 # ============================================================
-# SIMULATION IMPORT
+# DIVIDEND IMPORT
 # ============================================================
 
 try:
-    from core.simulation import simulation_engine
-    SIMULATION_AVAILABLE = True
-    logger.info("✅ Simulation Engine loaded")
+    from core.dividend import dividend, fetch_dividends, screen_dividends, check_dividend_alerts
+    DIVIDEND_AVAILABLE = True
+    logger.info("✅ Dividend Hunter Module loaded")
 except ImportError as e:
-    logger.warning(f"⚠️ Simulation Engine not available: {e}")
-    SIMULATION_AVAILABLE = False
+    logger.warning(f"⚠️ Dividend Hunter not available: {e}")
+    DIVIDEND_AVAILABLE = False
+
+# ============================================================
+# BRAIN IMPORT (Optional - untuk AI)
+# ============================================================
+
+try:
+    from core.brain import Brain, brain
+    BRAIN_AVAILABLE = True
+    logger.info("✅ Brain module loaded")
+except ImportError as e:
+    logger.warning(f"⚠️ Brain module not available: {e}")
+    BRAIN_AVAILABLE = False
+    Brain = None
+    brain = None
 
 # ============================================================
 # IMPORT CORE MODULES
@@ -203,33 +215,10 @@ def safe_import(module_path, attr_name=None):
         logger.debug(f"Import exception {module_path}: {e}")
         return None
 
-Brain = safe_import('core.brain', 'Brain')
-brain = safe_import('core.brain', 'brain')
-TradingBot = safe_import('core.bot', 'TradingBot')
+# Optional modules (tidak wajib)
 Analyzer = safe_import('core.analyzer', 'Analyzer')
 Scanner = safe_import('core.scanner', 'CognitiveMarketScanner')
 SignalEngine = safe_import('core.signal_engine', 'SignalEngine')
-exchange = safe_import('core.market_data', 'exchange')
-KrakenMarketData = safe_import('core.market_data', 'KrakenMarketData')
-
-EXCHANGE_AVAILABLE = exchange is not None
-
-if EXCHANGE_AVAILABLE:
-    logger.info("✅ Exchange loaded")
-else:
-    logger.warning("⚠️ Exchange not available")
-
-# ============================================================
-# FALLBACK
-# ============================================================
-
-if Brain is None:
-    logger.critical("❌ Brain module not available!")
-    sys.exit(1)
-
-if TradingBot is None:
-    logger.critical("❌ TradingBot module not available!")
-    sys.exit(1)
 
 logger.info("✅ Core modules loaded")
 
@@ -266,31 +255,10 @@ def send_telegram_message(message: str) -> bool:
         return False
 
 # ============================================================
-# AUTO-CRAWL SCHEDULER
+# AUTO-CRAWL SCHEDULER (Untuk Knowledge)
 # ============================================================
 
-AUTO_CRAWL_SOURCES = [
-    'https://id.wikipedia.org/wiki/Kecerdasan_buatan',
-    'https://id.wikipedia.org/wiki/Blockchain',
-    'https://id.wikipedia.org/wiki/Indonesia',
-    'https://id.wikipedia.org/wiki/Energi_terbarukan',
-    'https://id.wikipedia.org/wiki/Perubahan_iklim',
-    'https://id.wikipedia.org/wiki/Trading_online',
-    'https://id.wikipedia.org/wiki/Investasi',
-    'https://id.wikipedia.org/wiki/Mata_uang_kripto',
-    'https://id.wikipedia.org/wiki/Teknologi_keuangan',
-    'https://id.wikipedia.org/wiki/Pasar_modal',
-    'https://id.wikipedia.org/wiki/Ekonomi',
-    'https://id.wikipedia.org/wiki/Keuangan',
-    'https://id.wikipedia.org/wiki/Analisis_teknikal',
-    'https://id.wikipedia.org/wiki/Manajemen_risiko',
-    'https://en.wikipedia.org/wiki/Artificial_intelligence',
-    'https://en.wikipedia.org/wiki/Blockchain',
-    'https://en.wikipedia.org/wiki/Cryptocurrency',
-    'https://en.wikipedia.org/wiki/Trading_strategy',
-    'https://en.wikipedia.org/wiki/Technical_analysis',
-    'https://en.wikipedia.org/wiki/Financial_market',
-]
+AUTO_CRAWL_SOURCES = []  # Kosongkan, fokus ke dividen
 
 def auto_crawl_scheduler():
     logger.info("🔄 Auto-Crawl Scheduler started (6-hour interval)...")
@@ -439,7 +407,7 @@ def auto_cleanup_scheduler():
 # API SERVER
 # ============================================================
 
-def start_api_server(bot_instance):
+def start_api_server():
     try:
         from flask import Flask, jsonify, request
         from flask_cors import CORS
@@ -470,6 +438,200 @@ def start_api_server(bot_instance):
                 })
             except Exception as e:
                 logger.debug(f"Broadcast error: {e}")
+
+        # ============================================================
+        # DIVIDEND ENDPOINTS - FOKUS UTAMA
+        # ============================================================
+
+        @app.route('/api/dividend/fetch', methods=['POST'])
+        @require_api_key
+        def dividend_fetch():
+            """Fetch dividend data for a date."""
+            try:
+                data = request.json or {}
+                date = data.get('date')  # Optional: YYYY-MM-DD
+                
+                if not DIVIDEND_AVAILABLE:
+                    return jsonify({'error': 'Dividend module not available'}), 503
+                
+                df = dividend.fetch(date)
+                
+                if df.empty:
+                    return jsonify({
+                        'status': 'error',
+                        'message': 'No dividend data found',
+                        'count': 0,
+                        'data': []
+                    }), 404
+                
+                return jsonify({
+                    'status': 'success',
+                    'count': len(df),
+                    'data': df.to_dict('records'),
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                logger.error(f"Dividend fetch error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/dividend/top', methods=['GET'])
+        @require_api_key
+        def dividend_top():
+            """Get top N dividends."""
+            try:
+                n = int(request.args.get('n', 10))
+                
+                if not DIVIDEND_AVAILABLE:
+                    return jsonify({'error': 'Dividend module not available'}), 503
+                
+                if dividend.df.empty:
+                    dividend.fetch()
+                
+                top = dividend.get_top(n)
+                
+                return jsonify({
+                    'status': 'success',
+                    'count': len(top),
+                    'data': top.to_dict('records') if not top.empty else [],
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                logger.error(f"Dividend top error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/dividend/upcoming', methods=['GET'])
+        @require_api_key
+        def dividend_upcoming():
+            """Get upcoming dividends."""
+            try:
+                days = int(request.args.get('days', 7))
+                
+                if not DIVIDEND_AVAILABLE:
+                    return jsonify({'error': 'Dividend module not available'}), 503
+                
+                if dividend.df.empty:
+                    dividend.fetch()
+                
+                upcoming = dividend.get_upcoming(days)
+                
+                return jsonify({
+                    'status': 'success',
+                    'count': len(upcoming),
+                    'data': upcoming.to_dict('records') if not upcoming.empty else [],
+                    'days': days,
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                logger.error(f"Dividend upcoming error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/dividend/screen', methods=['POST'])
+        @require_api_key
+        def dividend_screen():
+            """Screen dividends by criteria."""
+            try:
+                data = request.json or {}
+                min_dividend = data.get('min_dividend')
+                sectors = data.get('sectors')
+                exclude_etf = data.get('exclude_etf', True)
+                
+                if not DIVIDEND_AVAILABLE:
+                    return jsonify({'error': 'Dividend module not available'}), 503
+                
+                if dividend.df.empty:
+                    dividend.fetch()
+                
+                screened = dividend.screen(
+                    min_dividend=min_dividend,
+                    sectors=sectors,
+                    exclude_etf=exclude_etf
+                )
+                
+                return jsonify({
+                    'status': 'success',
+                    'count': len(screened),
+                    'data': screened.to_dict('records') if not screened.empty else [],
+                    'filters': {
+                        'min_dividend': min_dividend,
+                        'sectors': sectors,
+                        'exclude_etf': exclude_etf,
+                    },
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                logger.error(f"Dividend screen error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/dividend/alerts', methods=['GET'])
+        @require_api_key
+        def dividend_alerts():
+            """Get dividend alerts."""
+            try:
+                days_before = int(request.args.get('days_before', 3))
+                
+                if not DIVIDEND_AVAILABLE:
+                    return jsonify({'error': 'Dividend module not available'}), 503
+                
+                if dividend.df.empty:
+                    dividend.fetch()
+                
+                alerts = dividend.check_alerts(days_before)
+                
+                return jsonify({
+                    'status': 'success',
+                    'count': len(alerts),
+                    'data': alerts,
+                    'days_before': days_before,
+                    'summary': dividend.get_alert_summary(),
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                logger.error(f"Dividend alerts error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/dividend/stats', methods=['GET'])
+        @require_api_key
+        def dividend_stats():
+            """Get dividend statistics."""
+            try:
+                if not DIVIDEND_AVAILABLE:
+                    return jsonify({'error': 'Dividend module not available'}), 503
+                
+                if dividend.df.empty:
+                    dividend.fetch()
+                
+                stats = dividend.get_statistics()
+                
+                return jsonify({
+                    'status': 'success',
+                    'statistics': stats,
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                logger.error(f"Dividend stats error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/dividend/sectors', methods=['GET'])
+        @require_api_key
+        def dividend_sectors():
+            """Get dividend summary by sector."""
+            try:
+                if not DIVIDEND_AVAILABLE:
+                    return jsonify({'error': 'Dividend module not available'}), 503
+                
+                if dividend.df.empty:
+                    dividend.fetch()
+                
+                summary = dividend.get_sector_summary()
+                
+                return jsonify({
+                    'status': 'success',
+                    'data': summary.to_dict('records') if not summary.empty else [],
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                logger.error(f"Dividend sectors error: {e}")
+                return jsonify({'error': str(e)}), 500
 
         # ============================================================
         # AI ENDPOINTS - DEEPSEEK INTEGRATION
@@ -505,7 +667,6 @@ def start_api_server(bot_instance):
                 temperature = data.get('temperature', 0.7)
                 max_tokens = data.get('max_tokens', 2048)
                 
-                # Get context from knowledge engine
                 context = None
                 if KNOWLEDGE_AVAILABLE:
                     relevant = knowledge.search(question, max_results=5)
@@ -516,7 +677,6 @@ def start_api_server(bot_instance):
                         ])
                 
                 if not DEEPSEEK_ENABLED:
-                    # Fallback response if AI is disabled
                     return jsonify({
                         'question': question,
                         'answer': f"I'm a cognitive trading bot. I can help with market analysis, trading strategies, and financial insights. Your question: '{question}'\n\n📚 Context from knowledge: {len(relevant) if KNOWLEDGE_AVAILABLE else 0} relevant items found.",
@@ -556,6 +716,9 @@ def start_api_server(bot_instance):
         def ai_brain_reflection():
             """Get brain reflection with AI enhancement."""
             try:
+                if not BRAIN_AVAILABLE:
+                    return jsonify({'error': 'Brain module not available'}), 503
+                
                 topic = request.args.get('topic')
                 
                 if not DEEPSEEK_ENABLED:
@@ -593,150 +756,11 @@ def start_api_server(bot_instance):
         def ai_brain_status():
             """Get brain AI status."""
             try:
+                if not BRAIN_AVAILABLE:
+                    return jsonify({'error': 'Brain module not available'}), 503
+                
                 from core.brain import brain
                 return jsonify(brain.get_ai_status())
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-
-        @app.route('/api/ai/scanner/analyze', methods=['POST'])
-        @require_api_key
-        def ai_scanner_analyze():
-            """Analyze market with AI."""
-            try:
-                data = request.json or {}
-                pair = data.get('pair', 'BTC/USD')
-                
-                if not DEEPSEEK_ENABLED:
-                    return jsonify({
-                        'error': 'AI is not enabled. Please set DEEPSEEK_API_KEY.',
-                        'ai_enabled': False
-                    }), 400
-                
-                from core.scanner import scanner
-                result = scanner.analyze_with_ai(pair)
-                
-                return jsonify({
-                    'status': result.get('status'),
-                    'pair': result.get('pair'),
-                    'analysis': result.get('analysis'),
-                    'price': result.get('price'),
-                    'signal': result.get('signal'),
-                    'confidence': result.get('confidence'),
-                    'timestamp': result.get('timestamp')
-                })
-            except Exception as e:
-                logger.error(f"Scanner AI analysis error: {e}")
-                return jsonify({'error': str(e)}), 500
-
-        @app.route('/api/ai/scanner/sentiment', methods=['GET'])
-        @require_api_key
-        def ai_scanner_sentiment():
-            """Get market sentiment with AI."""
-            try:
-                pair = request.args.get('pair', 'BTC/USD')
-                
-                if not DEEPSEEK_ENABLED:
-                    return jsonify({
-                        'error': 'AI is not enabled. Please set DEEPSEEK_API_KEY.',
-                        'ai_enabled': False
-                    }), 400
-                
-                from core.scanner import scanner
-                result = scanner.get_market_sentiment_ai(pair)
-                
-                return jsonify({
-                    'status': result.get('status'),
-                    'pair': result.get('pair'),
-                    'sentiment': result.get('sentiment'),
-                    'confidence': result.get('confidence'),
-                    'price': result.get('price'),
-                    'timestamp': result.get('timestamp')
-                })
-            except Exception as e:
-                logger.error(f"Scanner sentiment error: {e}")
-                return jsonify({'error': str(e)}), 500
-
-        @app.route('/api/ai/signal/validate', methods=['POST'])
-        @require_api_key
-        def ai_signal_validate():
-            """Validate trading signal with AI."""
-            try:
-                data = request.json
-                signal = data.get('signal', {})
-                
-                if not signal:
-                    return jsonify({'error': 'Signal data required'}), 400
-                
-                if not DEEPSEEK_ENABLED:
-                    return jsonify({
-                        'error': 'AI is not enabled. Please set DEEPSEEK_API_KEY.',
-                        'ai_enabled': False
-                    }), 400
-                
-                from core.signal_engine import signal_engine
-                result = signal_engine.validate_with_ai(signal)
-                
-                return jsonify({
-                    'original_signal': signal,
-                    'ai_validation': result.get('ai_validation'),
-                    'ai_validation_score': result.get('ai_validation_score'),
-                    'ai_validated': result.get('ai_validated', False),
-                    'ai_status': result.get('ai_status'),
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                logger.error(f"AI signal validation error: {e}")
-                return jsonify({'error': str(e)}), 500
-
-        @app.route('/api/ai/strategy/generate', methods=['POST'])
-        @require_api_key
-        def ai_generate_strategy():
-            """Generate trading strategy with AI."""
-            try:
-                data = request.json
-                pair = data.get('pair', 'BTC/USD')
-                risk_level = data.get('risk_level', 'moderate')
-                timeframe = data.get('timeframe', '1h')
-                market_data = data.get('market_data', {})
-                
-                if not DEEPSEEK_ENABLED:
-                    return jsonify({
-                        'error': 'AI is not enabled. Please set DEEPSEEK_API_KEY.',
-                        'ai_enabled': False
-                    }), 400
-                
-                from core.bot import bot_instance
-                result = bot_instance.generate_strategy_with_ai(
-                    pair=pair,
-                    market_data=market_data,
-                    risk_level=risk_level,
-                    timeframe=timeframe
-                )
-                
-                return jsonify({
-                    'status': result.get('status'),
-                    'pair': result.get('pair'),
-                    'strategy': result.get('strategy'),
-                    'entry': result.get('entry'),
-                    'take_profit': result.get('take_profit'),
-                    'stop_loss': result.get('stop_loss'),
-                    'risk_reward': result.get('risk_reward'),
-                    'position_size': result.get('position_size'),
-                    'recommendation': result.get('recommendation'),
-                    'risk_level': risk_level,
-                    'timestamp': result.get('timestamp')
-                })
-            except Exception as e:
-                logger.error(f"AI strategy error: {e}")
-                return jsonify({'error': str(e)}), 500
-
-        @app.route('/api/ai/bot/status', methods=['GET'])
-        @require_api_key
-        def ai_bot_status():
-            """Get bot AI status."""
-            try:
-                from core.bot import bot_instance
-                return jsonify(bot_instance.get_ai_status())
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
 
@@ -760,7 +784,6 @@ def start_api_server(bot_instance):
                 
                 from core.deepseek import deepseek_ai
                 
-                # Get context from knowledge
                 context = None
                 if KNOWLEDGE_AVAILABLE:
                     relevant = knowledge.search(message, max_results=3)
@@ -879,13 +902,12 @@ def start_api_server(bot_instance):
         @app.route('/api/health', methods=['GET'])
         def api_health():
             try:
-                status = bot_instance.get_status() if bot_instance else {}
                 return jsonify({
                     "status": "healthy",
-                    "bot": status,
                     "uptime": int(time.time() - _startup_time),
                     "version": APP_VERSION,
                     "knowledge_items": len(knowledge.all()) if KNOWLEDGE_AVAILABLE else 0,
+                    "dividend_available": DIVIDEND_AVAILABLE,
                     "ai_enabled": DEEPSEEK_ENABLED,
                     "timestamp": datetime.now().isoformat()
                 })
@@ -896,14 +918,22 @@ def start_api_server(bot_instance):
         @require_api_key
         def api_status():
             try:
-                status = bot_instance.get_status() if bot_instance else {}
+                dividend_stats = {}
+                if DIVIDEND_AVAILABLE and not dividend.df.empty:
+                    dividend_stats = dividend.get_statistics()
+                
                 return jsonify({
                     "status": "online",
-                    "bot": status,
                     "version": APP_VERSION,
                     "mode": MODE,
                     "knowledge_items": len(knowledge.all()) if KNOWLEDGE_AVAILABLE else 0,
+                    "dividend": {
+                        "available": DIVIDEND_AVAILABLE,
+                        "items": len(dividend.df) if DIVIDEND_AVAILABLE else 0,
+                        "last_update": dividend.last_update.isoformat() if DIVIDEND_AVAILABLE and dividend.last_update else None,
+                    },
                     "ai_enabled": DEEPSEEK_ENABLED,
+                    "telegram": TELEGRAM_CONFIGURED,
                     "timestamp": datetime.now().isoformat()
                 })
             except Exception as e:
@@ -932,144 +962,12 @@ def start_api_server(bot_instance):
                     "uptime": int(time.time() - _startup_time),
                     "health_score": health_score,
                     "knowledge_items": len(knowledge.all()) if KNOWLEDGE_AVAILABLE else 0,
+                    "dividend_items": len(dividend.df) if DIVIDEND_AVAILABLE else 0,
                     "ai_enabled": DEEPSEEK_ENABLED,
                     "timestamp": datetime.now().isoformat()
                 })
             except Exception as e:
                 return jsonify({"error": str(e)}), 500
-
-        @app.route('/api/engine/start', methods=['POST'])
-        @require_api_key
-        def start_engine():
-            global engine_running
-            try:
-                if engine_running:
-                    return jsonify({'status': 'already_running', 'running': True})
-                engine_running = True
-                if bot_instance and hasattr(bot_instance, 'start'):
-                    bot_instance.start()
-                logger.info("🚀 Engine started")
-                return jsonify({'status': 'success', 'running': True})
-            except Exception as e:
-                logger.error(f"Start engine error: {e}")
-                return jsonify({'error': str(e)}), 500
-
-        @app.route('/api/engine/stop', methods=['POST'])
-        @require_api_key
-        def stop_engine():
-            global engine_running
-            try:
-                if not engine_running:
-                    return jsonify({'status': 'already_stopped', 'running': False})
-                engine_running = False
-                if bot_instance and hasattr(bot_instance, 'stop'):
-                    bot_instance.stop()
-                logger.info("🛑 Engine stopped")
-                return jsonify({'status': 'success', 'running': False})
-            except Exception as e:
-                logger.error(f"Stop engine error: {e}")
-                return jsonify({'error': str(e)}), 500
-
-        @app.route('/api/engine/status', methods=['GET'])
-        @require_api_key
-        def get_engine_status():
-            try:
-                return jsonify({
-                    'running': engine_running,
-                    'mode': MODE,
-                    'state': 'RUNNING' if engine_running else 'IDLE',
-                    'uptime': int(time.time() - _startup_time),
-                    'knowledge_items': len(knowledge.all()) if KNOWLEDGE_AVAILABLE else 0,
-                    'ai_enabled': DEEPSEEK_ENABLED
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-
-        @app.route('/api/signals', methods=['GET'])
-        @require_api_key
-        def api_signals():
-            try:
-                signals = []
-                if bot_instance and hasattr(bot_instance, 'get_signals'):
-                    signals = bot_instance.get_signals()
-                return jsonify({
-                    'signals': signals,
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 500
-
-        @app.route('/api/patterns', methods=['GET'])
-        @require_api_key
-        def get_patterns():
-            try:
-                patterns = []
-                
-                if KNOWLEDGE_AVAILABLE:
-                    results = knowledge.search('pattern', max_results=50)
-                    for item in results:
-                        if hasattr(item, 'to_dict'):
-                            patterns.append({
-                                'id': item.id,
-                                'name': item.content[:50],
-                                'type': 'CANDLESTICK',
-                                'bias': 'NEUTRAL',
-                                'confidence': item.confidence,
-                                'timeframe': '1h',
-                                'pair': 'BTC/USDT',
-                                'description': item.content[:100],
-                                'reliability': item.confidence,
-                                'occurrence': item.access_count,
-                                'detected_at': item.created_at,
-                                'strength': 'MODERATE' if item.confidence > 70 else 'WEAK',
-                                'volume_confirmation': True,
-                                'price': 78882.0
-                            })
-                
-                if not patterns:
-                    patterns = [
-                        {
-                            'id': 'pat_001',
-                            'name': 'Bullish Engulfing',
-                            'type': 'CANDLESTICK',
-                            'bias': 'BULLISH',
-                            'confidence': 88,
-                            'timeframe': '1h',
-                            'pair': 'BTC/USDT',
-                            'description': 'Large bullish candle completely engulfs prior bearish candle body.',
-                            'reliability': 84,
-                            'occurrence': 142,
-                            'detected_at': datetime.now().isoformat(),
-                            'strength': 'STRONG',
-                            'volume_confirmation': True,
-                            'price': 78882.0
-                        },
-                        {
-                            'id': 'pat_002',
-                            'name': 'Morning Star',
-                            'type': 'CANDLESTICK',
-                            'bias': 'BULLISH',
-                            'confidence': 82,
-                            'timeframe': '4h',
-                            'pair': 'ETH/USDT',
-                            'description': '3-candle bullish reversal formation.',
-                            'reliability': 80,
-                            'occurrence': 98,
-                            'detected_at': datetime.now().isoformat(),
-                            'strength': 'STRONG',
-                            'volume_confirmation': True,
-                            'price': 3120.50
-                        }
-                    ]
-                
-                return jsonify({
-                    'patterns': patterns,
-                    'total': len(patterns),
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                logger.error(f"Patterns error: {e}")
-                return jsonify({'error': str(e)}), 500
 
         @app.route('/api/diagnostics', methods=['GET'])
         @require_api_key
@@ -1091,6 +989,7 @@ def start_api_server(bot_instance):
                         'status': 'healthy' if health_score >= 70 else 'degraded',
                         'uptime': int(time.time() - _startup_time),
                         'knowledge_items': len(knowledge.all()) if KNOWLEDGE_AVAILABLE else 0,
+                        'dividend_items': len(dividend.df) if DIVIDEND_AVAILABLE else 0,
                         'cpu': cpu,
                         'ram': round(mem.used / (1024**3), 2),
                         'ram_percent': mem.percent,
@@ -1099,39 +998,17 @@ def start_api_server(bot_instance):
                     },
                     'components': {
                         'backend': {'status': 'online', 'version': APP_VERSION},
-                        'brain': {'status': 'online' if brain else 'offline'},
                         'knowledge': {'status': 'online' if KNOWLEDGE_AVAILABLE else 'offline'},
+                        'dividend': {'status': 'online' if DIVIDEND_AVAILABLE else 'offline'},
                         'watchdog': {'status': 'online' if WATCHDOG_AVAILABLE else 'offline'},
-                        'scanner': {'status': 'online' if engine_running else 'idle'},
                         'websocket': {'status': 'online'},
-                        'ai': {'status': 'online' if DEEPSEEK_ENABLED else 'offline'}
+                        'ai': {'status': 'online' if DEEPSEEK_ENABLED else 'offline'},
+                        'telegram': {'status': 'online' if TELEGRAM_CONFIGURED else 'offline'}
                     },
                     'timestamp': datetime.now().isoformat()
                 })
             except Exception as e:
                 logger.error(f"Diagnostics error: {e}")
-                return jsonify({'error': str(e)}), 500
-
-        @app.route('/api/predictions', methods=['GET'])
-        @require_api_key
-        def api_predictions():
-            try:
-                if engine_running:
-                    return jsonify([{
-                        "pair": "BTC/USDT",
-                        "current_price": 78882.0,
-                        "direction": "DOWN",
-                        "confidence": random.randint(65, 85),
-                        "target_price": 76310.45,
-                        "change_percent": -3.26,
-                        "regime": "RANGE_ACCUMULATION",
-                        "rsi": 49.3,
-                        "volatility": 0.032,
-                        "method": "Ensemble v4.0 (Momentum + Fibonacci)",
-                        "timestamp": datetime.now().isoformat()
-                    }])
-                return jsonify([])
-            except Exception as e:
                 return jsonify({'error': str(e)}), 500
 
         @app.route('/api/telegram/status', methods=['GET'])
@@ -1197,6 +1074,7 @@ def start_api_server(bot_instance):
         
         logger.info(f"✅ API Server running on http://{API_HOST}:{API_PORT}")
         logger.info(f"   📚 Knowledge Engine: {'ONLINE' if KNOWLEDGE_AVAILABLE else 'OFFLINE'}")
+        logger.info(f"   💰 Dividend Hunter: {'ONLINE' if DIVIDEND_AVAILABLE else 'OFFLINE'}")
         logger.info(f"   🤖 AI: {'ENABLED' if DEEPSEEK_ENABLED else 'DISABLED'}")
         logger.info(f"   📡 WebSocket: /socket.io/")
         
@@ -1214,7 +1092,7 @@ def start_api_server(bot_instance):
 # ============================================================
 
 def main_headless():
-    global brain_instance, bot_instance, engine_running
+    global engine_running
     
     logger.info("=" * 60)
     logger.info(f"  🧠 {APP_NAME} - COGNITIVE MIRROR ENGINE v{APP_VERSION}")
@@ -1222,36 +1100,8 @@ def main_headless():
     logger.info(f"  AI: {'ENABLED' if DEEPSEEK_ENABLED else 'DISABLED'}")
     logger.info("=" * 60)
     
-    logger.info("Initializing Cognitive Brain...")
-    try:
-        brain_instance = Brain()
-        logger.info("✅ Brain initialized")
-    except Exception as e:
-        logger.error(f"❌ Brain init error: {e}")
-        sys.exit(1)
-    
-    logger.info("Initializing Trading Bot...")
-    try:
-        bot_instance = TradingBot(
-            brain_instance=brain_instance,
-            exchange_instance=exchange
-        )
-        logger.info("✅ Trading Bot initialized")
-    except Exception as e:
-        logger.error(f"❌ Bot init error: {e}")
-        sys.exit(1)
-    
-    # Auto-start engine
-    try:
-        if bot_instance and hasattr(bot_instance, 'start'):
-            bot_instance.start()
-            engine_running = True
-            logger.info("🚀 Engine auto-started")
-    except Exception as e:
-        logger.warning(f"⚠️ Auto-start failed: {e}")
-    
     # Start API Server
-    api_started = start_api_server(bot_instance)
+    api_started = start_api_server()
     
     # ============================================================
     # START SCHEDULERS
@@ -1286,8 +1136,8 @@ def main_headless():
     logger.info("  ✅ SYSTEM READY")
     logger.info("=" * 60)
     logger.info(f"  Mode        : {MODE}")
-    logger.info(f"  Engine      : {'RUNNING' if engine_running else 'IDLE'}")
     logger.info(f"  Knowledge   : {len(knowledge.all()) if KNOWLEDGE_AVAILABLE else 0} items")
+    logger.info(f"  Dividend    : {'ONLINE' if DIVIDEND_AVAILABLE else 'OFFLINE'}")
     logger.info(f"  AI          : {'ENABLED' if DEEPSEEK_ENABLED else 'DISABLED'}")
     logger.info(f"  API Server  : {'ON' if api_started else 'OFF'}")
     logger.info(f"  Telegram    : {'CONFIGURED' if TELEGRAM_CONFIGURED else 'NOT'}")
@@ -1303,8 +1153,6 @@ def main_headless():
         _graceful_shutdown = True
     
     logger.info("Shutting down...")
-    if bot_instance and hasattr(bot_instance, 'stop'):
-        bot_instance.stop()
     
     logger.info(f"✅ {APP_NAME} stopped.")
     return 0
