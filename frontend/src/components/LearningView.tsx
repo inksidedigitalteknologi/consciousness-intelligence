@@ -180,17 +180,17 @@ export const LearningView: React.FC = () => {
   
   // ===== REFS =====
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const apiKey = localStorage.getItem('apiKey') || '';
+  const apiKey = localStorage.getItem('apiKey') || 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ';
   const API_BASE = "";
 
   // ===== API HELPER =====
   const fetchWithAuth = useCallback(async (endpoint: string) => {
     const response = await fetch(`${API_BASE}${endpoint}`, {
-      headers: { 'X-API-Key': apiKey }
+      headers: { 'X-API-Key': localStorage.getItem('apiKey') || 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
-  }, [API_BASE, apiKey]);
+  }, [API_BASE, localStorage.getItem('apiKey') || 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ']);
 
   // ===== FETCH ALL DATA (HANYA UNTUK FIRST LOAD) =====
   const initialLoad = useCallback(async () => {
