@@ -1410,6 +1410,155 @@ def start_api_server():
                 return jsonify({'error': str(e)}), 500
 
         # ============================================================
+        # CONFIG ENDPOINTS - Terintegrasi dengan config.py
+        # ============================================================
+
+        @app.route('/api/config', methods=['GET'])
+        @require_api_key
+        def get_config():
+            try:
+                import config as cfg
+                return jsonify({
+                    'app_name': cfg.APP_NAME,
+                    'app_version': cfg.APP_VERSION,
+                    'app_author': cfg.APP_AUTHOR,
+                    'exchange_name': cfg.EXCHANGE_NAME,
+                    'exchange_type': cfg.EXCHANGE_TYPE,
+                    'coingecko_rate_limit': cfg.COINGECKO_RATE_LIMIT,
+                    'request_delay': cfg.REQUEST_DELAY,
+                    'cache_ttl_seconds': cfg.CACHE_TTL_SECONDS,
+                    'max_markets': cfg.MAX_MARKETS,
+                    'default_pairs': cfg.DEFAULT_PAIRS,
+                    'default_timeframes': cfg.DEFAULT_TIMEFRAMES,
+                    'main_timeframe': cfg.MAIN_TIMEFRAME,
+                    'scan_interval_seconds': cfg.SCAN_INTERVAL_SECONDS,
+                    'max_workers': cfg.MAX_WORKERS,
+                    'scanner_batch_size': cfg.SCANNER_BATCH_SIZE,
+                    'scanner_batch_delay': cfg.SCANNER_BATCH_DELAY,
+                    'min_mtf_alignment': cfg.MIN_MTF_ALIGNMENT,
+                    'min_signal_strength': cfg.MIN_SIGNAL_STRENGTH,
+                    'min_signal_confidence': cfg.MIN_SIGNAL_CONFIDENCE,
+                    'signal_cooldown_seconds': cfg.SIGNAL_COOLDOWN_SECONDS,
+                    'max_signals_per_scan': cfg.MAX_SIGNALS_PER_SCAN,
+                    'default_risk_percent': cfg.DEFAULT_RISK_PERCENT,
+                    'default_risk_reward': cfg.DEFAULT_RISK_REWARD,
+                    'max_position_size': cfg.MAX_POSITION_SIZE,
+                    'min_position_size': cfg.MIN_POSITION_SIZE,
+                    'max_daily_trades': cfg.MAX_DAILY_TRADES,
+                    'max_open_positions': cfg.MAX_OPEN_POSITIONS,
+                    'max_drawdown_percent': cfg.MAX_DRAWDOWN_PERCENT,
+                    'stop_loss_percent': cfg.STOP_LOSS_PERCENT,
+                    'take_profit_percent': cfg.TAKE_PROFIT_PERCENT,
+                    'trading_enabled': cfg.TRADING_ENABLED,
+                    'paper_trading': cfg.PAPER_TRADING,
+                    'auto_trade': cfg.AUTO_TRADE,
+                    'telegram_enabled': cfg.TELEGRAM_ENABLED,
+                    'telegram_configured': bool(cfg.TELEGRAM_BOT_TOKEN and cfg.TELEGRAM_CHAT_ID),
+                    'learning_enabled': cfg.LEARNING_ENABLED,
+                    'learning_interval_seconds': cfg.LEARNING_INTERVAL_SECONDS,
+                    'learning_auto_start': cfg.LEARNING_AUTO_START,
+                    'learning_max_history': cfg.LEARNING_MAX_HISTORY,
+                    'prediction_enabled': cfg.PREDICTION_ENABLED,
+                    'prediction_horizon': cfg.PREDICTION_HORIZON,
+                    'prediction_min_confidence': cfg.PREDICTION_MIN_CONFIDENCE,
+                    'health_check_interval': cfg.HEALTH_CHECK_INTERVAL,
+                    'health_min_score': cfg.HEALTH_MIN_SCORE,
+                    'health_critical_score': cfg.HEALTH_CRITICAL_SCORE,
+                    'debug_mode': cfg.DEBUG_MODE,
+                    'log_level': cfg.LOG_LEVEL,
+                    'max_threads': cfg.MAX_THREADS,
+                    'thread_pool_size': cfg.THREAD_POOL_SIZE,
+                    'api_timeout': cfg.API_TIMEOUT,
+                    'backend_status': 'online',
+                    'knowledge_items': len(knowledge.all()) if KNOWLEDGE_AVAILABLE else 0,
+                    'dividend_items': len(dividend.df) if DIVIDEND_AVAILABLE and dividend else 0,
+                    'ai_enabled': DEEPSEEK_ENABLED,
+                    'uptime_seconds': int(time.time() - _startup_time),
+                })
+            except Exception as e:
+                logger.error(f"Config error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/config/default', methods=['GET'])
+        @require_api_key
+        def get_default_config():
+            try:
+                import config as cfg
+                return jsonify({
+                    'app_name': cfg.APP_NAME,
+                    'app_version': cfg.APP_VERSION,
+                    'app_author': cfg.APP_AUTHOR,
+                    'exchange_name': cfg.EXCHANGE_NAME,
+                    'exchange_type': cfg.EXCHANGE_TYPE,
+                    'coingecko_rate_limit': cfg.COINGECKO_RATE_LIMIT,
+                    'request_delay': cfg.REQUEST_DELAY,
+                    'cache_ttl_seconds': cfg.CACHE_TTL_SECONDS,
+                    'max_markets': cfg.MAX_MARKETS,
+                    'default_pairs': cfg.DEFAULT_PAIRS,
+                    'default_timeframes': cfg.DEFAULT_TIMEFRAMES,
+                    'main_timeframe': cfg.MAIN_TIMEFRAME,
+                    'scan_interval_seconds': cfg.SCAN_INTERVAL_SECONDS,
+                    'max_workers': cfg.MAX_WORKERS,
+                    'min_signal_strength': cfg.MIN_SIGNAL_STRENGTH,
+                    'min_signal_confidence': cfg.MIN_SIGNAL_CONFIDENCE,
+                    'default_risk_percent': cfg.DEFAULT_RISK_PERCENT,
+                    'default_risk_reward': cfg.DEFAULT_RISK_REWARD,
+                    'max_position_size': cfg.MAX_POSITION_SIZE,
+                    'trading_enabled': cfg.TRADING_ENABLED,
+                    'paper_trading': cfg.PAPER_TRADING,
+                    'telegram_enabled': cfg.TELEGRAM_ENABLED,
+                    'learning_enabled': cfg.LEARNING_ENABLED,
+                    'prediction_enabled': cfg.PREDICTION_ENABLED,
+                    'debug_mode': cfg.DEBUG_MODE,
+                    'log_level': cfg.LOG_LEVEL,
+                    'max_threads': cfg.MAX_THREADS,
+                    'api_timeout': cfg.API_TIMEOUT,
+                })
+            except Exception as e:
+                logger.error(f"Default config error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/config', methods=['POST'])
+        @require_api_key
+        def update_config():
+            try:
+                data = request.json
+                if not data:
+                    return jsonify({'error': 'No data provided'}), 400
+
+                import config as cfg
+                import re
+                from pathlib import Path
+
+                config_file = Path(__file__).resolve().parent / 'config.py'
+                with open(config_file, 'r') as f:
+                    content = f.read()
+
+                updated = []
+                for key, value in data.items():
+                    upper_key = key.upper()
+                    if hasattr(cfg, upper_key):
+                        setattr(cfg, upper_key, value)
+                        if isinstance(value, str):
+                            repr_value = f"'{value}'"
+                        else:
+                            repr_value = repr(value)
+                        pattern = rf'^{upper_key}\s*=\s*[^\n]+'
+                        replacement = f'{upper_key} = {repr_value}'
+                        if re.search(pattern, content, re.MULTILINE):
+                            content = re.sub(pattern, replacement, content, flags=re.MULTILINE)
+                        updated.append(key)
+
+                with open(config_file, 'w') as f:
+                    f.write(content)
+
+                logger.info(f"Config updated: {len(updated)} keys")
+                return jsonify({'status': 'success', 'updated': updated})
+            except Exception as e:
+                logger.error(f"Config update error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        # ============================================================
         # TELEGRAM ENDPOINTS
         # ============================================================
 

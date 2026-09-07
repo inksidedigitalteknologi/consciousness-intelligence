@@ -33,9 +33,9 @@ for dir_path in [DATA_DIR, LOG_DIR, DATABASE_DIR, CACHE_DIR, BACKUP_DIR, REPORTS
 # 2. APLIKASI & IDENTITAS
 # ============================================================
 
-APP_NAME = "INKSIDEDIGITAL CONSCIOUSNESS INTELLIGENCE"
-APP_VERSION = "2.0.0"
-APP_AUTHOR = "Inkside Digital"
+APP_NAME = 'INKSIDEDIGITAL CONSCIOUSNESS INTELLIGENCE'
+APP_VERSION = '2.0.0'
+APP_AUTHOR = 'Inkside Digital'
 BUILD_DATE = "2026-09-05"
 
 # Versi komponen
@@ -65,28 +65,27 @@ SIGNAL_LOG_FILE = LOG_DIR / f"signals_{datetime.now().strftime('%Y%m%d')}.log"
 # 4. EXCHANGE - COINGECKO (FREE, NO API KEY)
 # ============================================================
 
-EXCHANGE_NAME = "CoinGecko"
-EXCHANGE_TYPE = "coingecko"
+EXCHANGE_NAME = 'CoinGecko'
+EXCHANGE_TYPE = 'coingecko'
 COINGECKO_API_BASE = "https://api.coingecko.com/api/v3"
 COINGECKO_API_KEY = os.getenv("COINGECKO_API_KEY", "")
 
 # Rate Limiting - AMAN
-COINGECKO_RATE_LIMIT = 30        # Max 30 requests per minute (free tier)
+COINGECKO_RATE_LIMIT = 30
 COINGECKO_RATE_LIMIT_SECONDS = 60
-REQUEST_DELAY = 2.0              # Delay antar request (detik) - AMAN
+REQUEST_DELAY = 2
 REQUEST_TIMEOUT = 15
 REQUEST_RETRY_COUNT = 3
 REQUEST_RETRY_DELAY = 5
 REQUEST_BACKOFF_MULTIPLIER = 2
 
 # Cache
-CACHE_TTL_SECONDS = 120          # 2 menit cache
+CACHE_TTL_SECONDS = 120
 OHLCV_LIMIT = 100                # Kurangi jumlah candle
-MAX_MARKETS = 15                 # Maksimum pair
+MAX_MARKETS = 15
 
 # ============================================================
 # 5. MARKET & PAIRS (DIKURANGI UNTUK HINDARI RATE LIMIT)
-# ============================================================
 
 DEFAULT_PAIRS = [
     "BTC/USD",
@@ -94,16 +93,23 @@ DEFAULT_PAIRS = [
     "SOL/USD",
     "XRP/USD",
     "BNB/USD",
-    # Tambahkan sesuai kebutuhan, tapi hati-hati rate limit
 ]
 
 DEFAULT_TIMEFRAMES = [
-    "1h",   # Primary
-    "4h",   # Medium-long
-    "1d",   # Long-term
+    "1h",
+    "4h",
+    "1d",
 ]
 
 MAIN_TIMEFRAME = "1h"
+SCALP_TIMEFRAME = "15m"
+SWING_TIMEFRAME = "4h"
+LONG_TIMEFRAME = "1d"
+# ============================================================
+
+
+
+MAIN_TIMEFRAME = '1h'
 SCALP_TIMEFRAME = "15m"
 SWING_TIMEFRAME = "4h"
 LONG_TIMEFRAME = "1d"
@@ -112,25 +118,25 @@ LONG_TIMEFRAME = "1d"
 # 6. SCANNER SETTINGS - OPTIMAL UNTUK RATE LIMIT
 # ============================================================
 
-SCAN_INTERVAL_SECONDS = 600      # 10 menit
-MAX_WORKERS = 2                  # Kurangi parallel request
+SCAN_INTERVAL_SECONDS = 600
+MAX_WORKERS = 2
 MAX_RETRIES = 2
 USE_CLOSED_CANDLE = True
 CACHE_OHLCV = True
 
-SCANNER_BATCH_SIZE = 2           # Batch kecil
-SCANNER_BATCH_DELAY = 5.0        # Delay antar batch (detik)
+SCANNER_BATCH_SIZE = 2
+SCANNER_BATCH_DELAY = 5
 SCANNER_TIMEOUT = 60
 
 # ============================================================
 # 7. SIGNAL SETTINGS - SELEKTIF & STABIL
 # ============================================================
 
-MIN_MTF_ALIGNMENT = 2            # Minimal 2 timeframe align
+MIN_MTF_ALIGNMENT = 2
 MIN_SIGNAL_STRENGTH = 60
 MIN_SIGNAL_CONFIDENCE = 60
 SEND_STARTUP_SIGNALS = False
-SIGNAL_COOLDOWN_SECONDS = 7200   # 2 jam cooldown per pair
+SIGNAL_COOLDOWN_SECONDS = 7200
 MAX_SIGNALS_PER_SCAN = 2
 MIN_SIGNAL_QUALITY = 50
 
@@ -190,15 +196,15 @@ VOLUME_SPIKE_MULTIPLIER = 1.5
 # 10. RISK MANAGEMENT
 # ============================================================
 
-DEFAULT_RISK_PERCENT = 1.0
-DEFAULT_RISK_REWARD = 3.0
-MAX_POSITION_SIZE = 10.0
-MIN_POSITION_SIZE = 5.0
+DEFAULT_RISK_PERCENT = 1
+DEFAULT_RISK_REWARD = 3
+MAX_POSITION_SIZE = 10
+MIN_POSITION_SIZE = 5
 MAX_DAILY_TRADES = 10
 MAX_OPEN_POSITIONS = 5
-MAX_DRAWDOWN_PERCENT = 20.0
-STOP_LOSS_PERCENT = 5.0
-TAKE_PROFIT_PERCENT = 15.0
+MAX_DRAWDOWN_PERCENT = 20
+STOP_LOSS_PERCENT = 5
+TAKE_PROFIT_PERCENT = 15
 
 # ============================================================
 # 11. TRADING MODE - PAPER TRADING (AMAN)
@@ -244,7 +250,7 @@ TELEGRAM_COMMANDS = {
 # 13. LOGGING
 # ============================================================
 
-LOG_LEVEL = "INFO"
+LOG_LEVEL = 'INFO'
 LOG_FILE_LEVEL = "DEBUG"
 CONSOLE_LEVEL = "INFO"
 ENABLE_FILE_LOG = True
@@ -273,7 +279,7 @@ LEARNING_MAX_HISTORY = 500
 # ============================================================
 
 PREDICTION_ENABLED = True
-PREDICTION_HORIZON = [5, 15, 30, 60]  # Minutes
+PREDICTION_HORIZON = [5, 15, 30, 60]
 PREDICTION_MIN_CONFIDENCE = 0.6
 PREDICTION_MAX_HISTORY = 1000
 
@@ -284,8 +290,8 @@ PREDICTION_MAX_HISTORY = 1000
 HEALTH_CHECK_INTERVAL = 60
 HEALTH_METRICS_PERSIST = True
 HEALTH_ALERT_ON_DEGRADE = True
-HEALTH_MIN_SCORE = 80.0
-HEALTH_CRITICAL_SCORE = 50.0
+HEALTH_MIN_SCORE = 80
+HEALTH_CRITICAL_SCORE = 50
 
 # ============================================================
 # 17. PERFORMANCE METRICS
@@ -323,7 +329,7 @@ THREAD_POOL_SIZE = 5
 QUEUE_SIZE = 50
 
 GLOBAL_TIMEOUT = 120
-API_TIMEOUT = 15
+API_TIMEOUT = 10
 DB_TIMEOUT = 10
 
 # ============================================================
