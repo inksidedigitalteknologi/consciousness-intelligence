@@ -1,4 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+// ============================================================
+// INKSIDE DIGITAL - APP.tsx v3.0.0 (REVISED)
+// More Robust & Production-Ready
+// ============================================================
+
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { BottomNav } from './components/BottomNav';
@@ -35,33 +40,17 @@ import { inksideAPI, StatusResponse, Signal as APISignal, BrainStateResponse, Pe
 import { WebSocketProvider, useWebSocket, useWebSocketChannel, useWebSocketStatus } from './contexts/WebSocketContext';
 
 // ============================================================
-// LOCALSTORAGE KEYS
+// CONSTANTS
 // ============================================================
 
 const PAGE_STORAGE_KEY = 'inkside_current_page';
+const API_KEY = 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ';
+const REFRESH_INTERVAL = 30000; // 30 seconds
+const MAX_RETRY_COUNT = 5;
+const RETRY_DELAY = 2000; // 2 seconds
 
 // ============================================================
-// HELPER FUNCTIONS
-// ============================================================
-
-const loadCurrentPage = (): NavigationPage => {
-  try {
-    const saved = localStorage.getItem(PAGE_STORAGE_KEY);
-    if (saved && saved !== 'undefined' && saved !== 'null') {
-      return saved as NavigationPage;
-    }
-  } catch {}
-  return 'Dashboard';
-};
-
-const saveCurrentPage = (page: NavigationPage) => {
-  try {
-    localStorage.setItem(PAGE_STORAGE_KEY, page);
-  } catch {}
-};
-
-// ============================================================
-// SYSTEM METRICS INTERFACE
+// TYPES
 // ============================================================
 
 interface SystemMetrics {
@@ -83,47 +72,30 @@ interface SystemMetrics {
 }
 
 // ============================================================
-// LOADING SCREEN COMPONENT
+// HELPERS
 // ============================================================
 
-const LoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading Inkside Digital...' }) => (
-  <div className="flex h-screen w-screen bg-[#0B0F14] items-center justify-center">
-    <div className="text-center">
-      <div className="text-4xl mb-4 animate-pulse">🧠</div>
-      <div className="text-white text-xl font-light">{message}</div>
-      <div className="text-gray-500 text-sm mt-2 animate-pulse">Menghubungkan ke backend...</div>
-      <div className="mt-4 w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto"></div>
-    </div>
-  </div>
-);
+const loadCurrentPage = (): NavigationPage => {
+  try {
+    const saved = localStorage.getItem(PAGE_STORAGE_KEY);
+    if (saved && saved !== 'undefined' && saved !== 'null') {
+      return saved as NavigationPage;
+    }
+  } catch (_error) {
+    // Silent fail
+  }
+  return 'Dashboard';
+};
 
-// ============================================================
-// ERROR SCREEN COMPONENT
-// ============================================================
+const saveCurrentPage = (page: NavigationPage): void => {
+  try {
+    localStorage.setItem(PAGE_STORAGE_KEY, page);
+  } catch (_error) {
+    // Silent fail
+  }
+};
 
-const ErrorScreen: React.FC<{ error: string; onRetry: () => void }> = ({ error, onRetry }) => (
-  <div className="flex h-screen w-screen bg-[#0B0F14] items-center justify-center">
-    <div className="text-center max-w-md p-8 rounded-2xl bg-red-500/10 border border-red-500/30">
-      <div className="text-4xl mb-4">❌</div>
-      <div className="text-red-400 text-lg font-medium">{error}</div>
-      <p className="text-gray-400 text-sm mt-2">
-        Pastikan backend berjalan di port 5001 dan API Key benar.
-      </p>
-      <button
-        onClick={onRetry}
-        className="mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200"
-      >
-        🔄 Retry
-      </button>
-    </div>
-  </div>
-);
-
-// ============================================================
-// DEFAULT SYSTEM METRICS
-// ============================================================
-
-const defaultSystemMetrics: SystemMetrics = {
+const defaultSystemMetrics = (): SystemMetrics => ({
   cpu: 0,
   ram: 0,
   ram_percent: 0,
@@ -139,7 +111,55 @@ const defaultSystemMetrics: SystemMetrics = {
   risk_level: '--',
   health_score: 0,
   last_update: new Date().toISOString(),
+});
+
+const generateId = (prefix: string = ''): string => {
+  return `${prefix}${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 };
+
+// ============================================================
+// LOADING SCREEN
+// ============================================================
+
+const LoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading Inkside Digital...' }) => (
+  <div className="flex h-screen w-screen bg-[#0B0F14] items-center justify-center">
+    <div className="text-center">
+      <div className="text-4xl mb-4 animate-pulse">🧠</div>
+      <div className="text-white text-xl font-light">{message}</div>
+      <div className="text-gray-500 text-sm mt-2 animate-pulse">Menghubungkan ke backend...</div>
+      <div className="mt-4 w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto" />
+    </div>
+  </div>
+);
+
+// ============================================================
+// ERROR SCREEN
+// ============================================================
+
+const ErrorScreen: React.FC<{ error: string; onRetry: () => void; retryCount?: number }> = ({
+  error,
+  onRetry,
+  retryCount = 0,
+}) => (
+  <div className="flex h-screen w-screen bg-[#0B0F14] items-center justify-center">
+    <div className="text-center max-w-md p-8 rounded-2xl bg-red-500/10 border border-red-500/30">
+      <div className="text-4xl mb-4">❌</div>
+      <div className="text-red-400 text-lg font-medium">{error}</div>
+      <p className="text-gray-400 text-sm mt-2">
+        Pastikan backend berjalan di port 5000 dan API Key benar.
+      </p>
+      {retryCount > 0 && (
+        <p className="text-gray-500 text-xs mt-1">Percobaan ulang: {retryCount}</p>
+      )}
+      <button
+        onClick={onRetry}
+        className="mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200"
+      >
+        🔄 Retry
+      </button>
+    </div>
+  </div>
+);
 
 // ============================================================
 // MAIN APP CONTENT
@@ -149,10 +169,10 @@ function AppContent() {
   // ============================================================
   // NAVIGATION STATE
   // ============================================================
-  
+
   const [currentPage, setCurrentPage] = useState<NavigationPage>(loadCurrentPage);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
+
   useEffect(() => {
     saveCurrentPage(currentPage);
   }, [currentPage]);
@@ -160,12 +180,12 @@ function AppContent() {
   // ============================================================
   // WEBSOCKET
   // ============================================================
-  
+
   const { isConnected, reconnectAttempts, getConnectionStatus } = useWebSocket();
-  
+
   useWebSocketChannel('metrics', (data) => {
-    if (data.type === 'system_metrics') {
-      setSystemMetrics(prev => ({
+    if (data?.type === 'system_metrics' && data?.payload) {
+      setSystemMetrics((prev) => ({
         ...prev,
         ...data.payload,
         last_update: new Date().toISOString(),
@@ -174,18 +194,18 @@ function AppContent() {
   });
 
   useWebSocketChannel('status', (data) => {
-    if (data.type === 'engine_status') {
-      setEngineRunning(data.payload.running || false);
-      setLearningActive(data.payload.learning || false);
-      setCycleCount(data.payload.cycles || 0);
+    if (data?.type === 'engine_status' && data?.payload) {
+      setEngineRunning(data.payload.running ?? true);
+      setLearningActive(data.payload.learning ?? false);
+      setCycleCount(data.payload.cycles ?? 0);
     }
   });
 
   useWebSocketChannel('signals', (data) => {
-    if (data.type === 'signal_update') {
+    if (data?.type === 'signal_update' && data?.payload) {
       const mapped = mapSignalData([data.payload]);
-      setRealSignals(prev => {
-        const filtered = prev.filter(s => s.pair !== data.payload.pair);
+      setRealSignals((prev) => {
+        const filtered = prev.filter((s) => s.pair !== data.payload.pair);
         return [...filtered, ...mapped];
       });
     }
@@ -194,17 +214,18 @@ function AppContent() {
   // ============================================================
   // STATE
   // ============================================================
-  
+
   const [apiStatus, setApiStatus] = useState<StatusResponse | null>(null);
   const [realSignals, setRealSignals] = useState<any[]>([]);
   const [brainState, setBrainState] = useState<BrainStateResponse | null>(null);
   const [performance, setPerformance] = useState<PerformanceResponse | null>(null);
+
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  
-  const [engineRunning, setEngineRunning] = useState(true); // ✅ ALWAYS TRUE
+
+  const [engineRunning, setEngineRunning] = useState(true);
   const [learningActive, setLearningActive] = useState(false);
   const [cycleCount, setCycleCount] = useState(0);
   const [consciousnessLevel, setConsciousnessLevel] = useState(0.5);
@@ -222,19 +243,28 @@ function AppContent() {
   const [watchlistCount, setWatchlistCount] = useState(0);
 
   // ============================================================
+  // REFS
+  // ============================================================
+
+  const isMounted = useRef(true);
+  const isFetching = useRef(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // ============================================================
   // HELPERS
   // ============================================================
-  
+
   const mapSignalData = useCallback((apiSignals: any[]): any[] => {
     if (!apiSignals || apiSignals.length === 0) return [];
+
     return apiSignals.map((s, index) => ({
-      pair: s.pair || '',
+      pair: s.pair || 'UNKNOWN',
       signal: s.signal || 'HOLD',
       confidence: s.confidence || 0,
       price: s.price || 0,
       strength: s.strength || 'NEUTRAL',
       timestamp: s.timestamp || new Date().toISOString(),
-      id: `sig-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 6)}`,
+      id: generateId('sig-'),
       entry: s.price || 0,
       stopLoss: s.price ? Math.round(s.price * 0.95 * 100) / 100 : 0,
       tp1: s.price ? Math.round(s.price * 1.05 * 100) / 100 : 0,
@@ -246,12 +276,12 @@ function AppContent() {
         '15m': s.signal === 'BUY' ? 'BULLISH' : s.signal === 'SELL' ? 'BEARISH' : 'NEUTRAL',
         '1h': s.signal === 'BUY' ? 'BULLISH' : s.signal === 'SELL' ? 'BEARISH' : 'NEUTRAL',
         '4h': 'NEUTRAL',
-        '1d': 'NEUTRAL'
+        '1d': 'NEUTRAL',
       },
       reasons: [
         `Signal generated by cognitive engine for ${s.pair}`,
         `Confidence: ${s.confidence}%`,
-        `Strength: ${s.strength || 'NEUTRAL'}`
+        `Strength: ${s.strength || 'NEUTRAL'}`,
       ],
       riskLevel: s.confidence > 80 ? 'LOW' : s.confidence > 60 ? 'MEDIUM' : 'HIGH',
       trend: s.signal === 'BUY' ? 'BULLISH' : s.signal === 'SELL' ? 'BEARISH' : 'NEUTRAL',
@@ -259,104 +289,201 @@ function AppContent() {
     }));
   }, []);
 
-  const fetchSystemMetrics = useCallback(async () => {
+  const fetchSystemMetrics = useCallback(async (): Promise<void> => {
+    if (!isMounted.current) return;
+
     try {
-      const response = await fetch('/api/system/metrics');
-      if (response.ok) {
-        const data = await response.json();
-        setSystemMetrics({
-          cpu: data.cpu || 0,
-          ram: data.ram || 0,
-          ram_percent: data.ram_percent || 0,
-          disk_percent: data.disk_percent || 0,
-          uptime: data.uptime || 0,
-          memory_count: data.memory_count || 0,
-          knowledge_count: data.knowledge_count || 0,
-          pnl: data.pnl || 0,
-          win_rate: data.win_rate || 0,
-          total_trades: data.total_trades || 0,
-          prediction_accuracy: data.prediction_accuracy || 0,
-          open_positions: data.open_positions || 0,
-          risk_level: data.risk_level || '--',
-          health_score: data.health_score || 0,
-          last_update: new Date().toISOString(),
-        });
+      const response = await fetch('/api/system/metrics', {
+        headers: { 'X-API-Key': API_KEY },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
       }
-    } catch (error) {
-      console.error('Failed to fetch system metrics:', error);
+
+      const data = await response.json();
+
+      if (isMounted.current) {
+        setSystemMetrics((prev) => ({
+          ...prev,
+          cpu: data.cpu ?? 0,
+          ram: data.ram ?? 0,
+          ram_percent: data.ram_percent ?? 0,
+          disk_percent: data.disk_percent ?? 0,
+          uptime: data.uptime ?? 0,
+          memory_count: data.memory_count ?? 0,
+          knowledge_count: data.knowledge_count ?? 0,
+          pnl: data.pnl ?? 0,
+          win_rate: data.win_rate ?? 0,
+          total_trades: data.total_trades ?? 0,
+          prediction_accuracy: data.prediction_accuracy ?? 0,
+          open_positions: data.open_positions ?? 0,
+          risk_level: data.risk_level ?? '--',
+          health_score: data.health_score ?? 0,
+          last_update: new Date().toISOString(),
+        }));
+      }
+    } catch (_error) {
+      // Silent fail - metrics are not critical
+      console.debug('Failed to fetch system metrics');
     }
   }, []);
 
-  const fetchRealData = useCallback(async (showRefresh: boolean = false) => {
+  const fetchKnowledge = useCallback(async (): Promise<void> => {
+    if (!isMounted.current || isFetching.current) return;
+
+    isFetching.current = true;
+
     try {
-      if (showRefresh) setIsRefreshing(true);
-      setError(null);
-      
-      const [statusData, signalsData, brainData, perfData] = await Promise.all([
-        inksideAPI.getStatus(),
-        inksideAPI.getSignals(),
-        inksideAPI.getBrainState(),
-        inksideAPI.getPerformance(),
-      ]);
-      
-      setApiStatus(statusData);
-      setRealSignals(mapSignalData(signalsData.signals || []));
-      setBrainState(brainData);
-      setPerformance(perfData);
-      
-      if (statusData?.bot) {
-        setEngineRunning(true); // ✅ ALWAYS TRUE
-        setLearningActive(statusData.bot.consciousness || false);
-        setCycleCount(statusData.bot.results || 0);
-        if (brainData?.brain) {
-          setConsciousnessLevel(brainData.brain.health / 100 || 0.5);
+      console.log('📚 Fetching knowledge items...');
+
+      const response = await fetch('/api/knowledge/all', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': API_KEY,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('📦 Knowledge API response:', data);
+
+      const items = data.items || [];
+
+      if (isMounted.current) {
+        setKnowledgeList(items);
+        setSystemMetrics((prev) => ({
+          ...prev,
+          knowledge_count: data.total || items.length,
+        }));
+        console.log(`✅ Set knowledgeList with ${items.length} items`);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching knowledge:', error);
+      if (isMounted.current) {
+        setError('Failed to fetch knowledge data.');
+      }
+    } finally {
+      if (isMounted.current) {
+        isFetching.current = false;
+      }
+    }
+  }, []);
+
+  const fetchRealData = useCallback(
+    async (showRefresh: boolean = false): Promise<void> => {
+      if (!isMounted.current || isFetching.current) return;
+
+      isFetching.current = true;
+
+      if (showRefresh && isMounted.current) {
+        setIsRefreshing(true);
+      }
+
+      try {
+        if (isMounted.current) {
+          setError(null);
+        }
+
+        const [statusData, signalsData, brainData, perfData] = await Promise.all([
+          inksideAPI.getStatus(),
+          inksideAPI.getSignals(),
+          inksideAPI.getBrainState(),
+          inksideAPI.getPerformance(),
+        ]);
+
+        if (!isMounted.current) return;
+
+        setApiStatus(statusData);
+        setRealSignals(mapSignalData(signalsData.signals || []));
+        setBrainState(brainData);
+        setPerformance(perfData);
+
+        if (statusData?.bot) {
+          setEngineRunning(true);
+          setLearningActive(statusData.bot.consciousness || false);
+          setCycleCount(statusData.bot.results || 0);
+
+          if (brainData?.brain) {
+            setConsciousnessLevel(brainData.brain.health / 100 || 0.5);
+          }
+        }
+
+        // Fetch knowledge in parallel
+        await Promise.all([fetchSystemMetrics(), fetchKnowledge()]);
+
+        if (isMounted.current) {
+          setRetryCount(0);
+        }
+      } catch (err) {
+        console.error('Failed to fetch real data:', err);
+
+        if (isMounted.current) {
+          setError('Gagal mengambil data dari backend. Pastikan backend berjalan di port 5000.');
+          setRetryCount((prev) => prev + 1);
+        }
+      } finally {
+        if (isMounted.current) {
+          if (showRefresh) {
+            setIsRefreshing(false);
+          }
+          isFetching.current = false;
         }
       }
-      
-      await fetchSystemMetrics();
-      setRetryCount(0);
-    } catch (err) {
-      console.error('Failed to fetch real data:', err);
-      setError('Gagal mengambil data dari backend. Pastikan backend berjalan di port 5001.');
-      setRetryCount(prev => prev + 1);
-    } finally {
-      if (showRefresh) setIsRefreshing(false);
-    }
-  }, [mapSignalData, fetchSystemMetrics]);
+    },
+    [mapSignalData, fetchSystemMetrics, fetchKnowledge]
+  );
 
   // ============================================================
-  // INIT
+  // INITIALIZATION
   // ============================================================
-  
+
   useEffect(() => {
-    let mounted = true;
-    const init = async () => {
-      if (!mounted) return;
+    isMounted.current = true;
+
+    const init = async (): Promise<void> => {
+      if (!isMounted.current) return;
+
       setIsInitialLoading(true);
       await fetchRealData(false);
-      if (mounted) setIsInitialLoading(false);
+
+      if (isMounted.current) {
+        setIsInitialLoading(false);
+      }
     };
+
     init();
-    
-    const interval = setInterval(() => {
-      if (mounted) fetchRealData(false);
-    }, 30000);
-    
+
+    // Set up refresh interval
+    intervalRef.current = setInterval(() => {
+      if (isMounted.current && !isFetching.current) {
+        fetchRealData(false);
+      }
+    }, REFRESH_INTERVAL);
+
+    // Cleanup
     return () => {
-      mounted = false;
-      clearInterval(interval);
+      isMounted.current = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
-  }, [fetchRealData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount
 
   // ============================================================
-  // HANDLERS - TOMBOL START/STOP DIHAPUS
+  // HANDLERS
   // ============================================================
-  
-  // ❌ handleToggleEngine DIHAPUS - engine selalu running
-  
-  const handleRefreshData = useCallback(() => {
+
+  const handleRefreshData = useCallback((): void => {
     fetchRealData(true);
-    setLogs(prevLogs => [
+
+    setLogs((prevLogs) => [
       {
         id: Date.now(),
         timestamp: Date.now(),
@@ -368,34 +495,41 @@ function AppContent() {
     ]);
   }, [fetchRealData]);
 
-  const handleAddKnowledge = useCallback((item: Partial<KnowledgeItem>) => {
-    const newItem: KnowledgeItem = {
-      id: `kb-${Date.now()}`,
-      content: item.content || '',
-      category: item.category || 'General',
-      type: item.type || 'fact',
-      confidence: item.confidence || 85,
-      importance: item.importance || 0.8,
-      tags: item.tags || ['manual'],
-      status: 'active',
-      createdAt: item.createdAt || new Date().toISOString(),
-    };
-    setKnowledgeList(prev => [newItem, ...prev]);
-    setLogs(prevLogs => [
-      {
-        id: Date.now(),
-        timestamp: Date.now(),
-        level: 'SUCCESS',
-        message: `Added new knowledge item: "${newItem.content.substring(0, 50)}..."`,
-        source: 'Knowledge',
-      },
-      ...prevLogs.slice(0, 99),
-    ]);
-  }, []);
+  const handleAddKnowledge = useCallback(
+    (item: Partial<KnowledgeItem>): void => {
+      const newItem: KnowledgeItem = {
+        id: generateId('kb-'),
+        content: item.content || '',
+        category: item.category || 'General',
+        type: item.type || 'fact',
+        confidence: item.confidence || 85,
+        importance: item.importance || 0.8,
+        tags: item.tags || ['manual'],
+        status: 'active',
+        createdAt: item.createdAt || new Date().toISOString(),
+        ai_enhanced: false,
+      };
 
-  const handleClosePosition = useCallback((id: string) => {
-    setPositions(prev => prev.filter(p => p.id !== id));
-    setLogs(prevLogs => [
+      setKnowledgeList((prev) => [newItem, ...prev]);
+
+      setLogs((prevLogs) => [
+        {
+          id: Date.now(),
+          timestamp: Date.now(),
+          level: 'SUCCESS',
+          message: `Added new knowledge item: "${newItem.content.substring(0, 50)}..."`,
+          source: 'Knowledge',
+        },
+        ...prevLogs.slice(0, 99),
+      ]);
+    },
+    []
+  );
+
+  const handleClosePosition = useCallback((id: string): void => {
+    setPositions((prev) => prev.filter((p) => p.id !== id));
+
+    setLogs((prevLogs) => [
       {
         id: Date.now(),
         timestamp: Date.now(),
@@ -407,33 +541,28 @@ function AppContent() {
     ]);
   }, []);
 
+  const handleRetry = useCallback((): void => {
+    setRetryCount(0);
+    fetchRealData(true);
+  }, [fetchRealData]);
+
   // ============================================================
   // RENDER
   // ============================================================
-  
+
   if (isInitialLoading) {
     return <LoadingScreen message="Loading Inkside Digital..." />;
   }
 
-  if (error && retryCount > 3) {
-    return (
-      <ErrorScreen 
-        error={error} 
-        onRetry={() => {
-          setRetryCount(0);
-          fetchRealData(true);
-        }} 
-      />
-    );
+  if (error && retryCount > MAX_RETRY_COUNT) {
+    return <ErrorScreen error={error} onRetry={handleRetry} retryCount={retryCount} />;
   }
 
   const connectionStatus = getConnectionStatus();
-  
+
   return (
     <div className="flex flex-col h-screen w-screen bg-[#0B0F14] text-[#E8EDF2] overflow-hidden font-sans">
-      {/* Main Layout: Sidebar + Content */}
       <div className="flex flex-1 min-h-0">
-        {/* Sidebar */}
         <Sidebar
           currentPage={currentPage}
           onPageChange={setCurrentPage}
@@ -449,12 +578,13 @@ function AppContent() {
           onClose={() => setIsSidebarOpen(false)}
         />
 
-        {/* Main Content */}
         <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
           <TopBar
             currentPage={currentPage}
             engineRunning={engineRunning}
-            onToggleEngine={() => {}} // ✅ EMPTY - ENGINE ALWAYS RUNNING
+            onToggleEngine={() => {
+              // Engine always running - no-op
+            }}
             telegramConfigured={telegramConfigured}
             onRefreshData={handleRefreshData}
             isRefreshing={isRefreshing}
@@ -465,18 +595,17 @@ function AppContent() {
             systemMode="PAPER"
             riskLevel={systemMetrics.risk_level}
             watchlistCount={watchlistCount}
-            engineState="RUNNING" // ✅ ALWAYS RUNNING
-            isToggling={false} // ✅ ALWAYS FALSE
+            engineState="RUNNING"
+            isToggling={false}
             onOpenSidebar={() => setIsSidebarOpen(true)}
             onNavigateWatchlist={() => setCurrentPage('Watchlist')}
           />
 
           <main className="flex-1 overflow-y-auto p-4 sm:p-6 pb-20 sm:pb-6 scrollbar-thin scrollbar-thumb-[#26313D] scrollbar-track-transparent">
-            
             {currentPage === 'Dashboard' && (
               <DashboardView
                 tickers={tickers}
-                signals={realSignals.length > 0 ? realSignals as any : signals}
+                signals={realSignals.length > 0 ? (realSignals as any) : signals}
                 insights={insights}
                 engineRunning={engineRunning}
                 learningActive={learningActive}
@@ -514,7 +643,7 @@ function AppContent() {
             {currentPage === 'Watchlist' && (
               <WatchlistView
                 tickers={tickers}
-                signals={realSignals.length > 0 ? realSignals as any : signals}
+                signals={realSignals.length > 0 ? (realSignals as any) : signals}
                 onNavigateToTrading={(pair: string) => {
                   setCurrentPage('Trading');
                   localStorage.setItem('inkside_selected_pair', pair);
@@ -528,11 +657,18 @@ function AppContent() {
             )}
 
             {currentPage === 'Signals' && (
-              <SignalsView signals={realSignals.length > 0 ? realSignals as any : signals} wsConnected={isConnected} />
+              <SignalsView
+                signals={realSignals.length > 0 ? (realSignals as any) : signals}
+                wsConnected={isConnected}
+              />
             )}
 
             {currentPage === 'Learning' && (
-              <LearningView learningActive={learningActive} cycleCount={cycleCount} wsConnected={isConnected} />
+              <LearningView
+                learningActive={learningActive}
+                cycleCount={cycleCount}
+                wsConnected={isConnected}
+              />
             )}
 
             {currentPage === 'Memory' && <MemoryView wsConnected={isConnected} />}
@@ -541,17 +677,27 @@ function AppContent() {
             {currentPage === 'Decision' && <DecisionView wsConnected={isConnected} />}
 
             {currentPage === 'Knowledge' && (
-              <KnowledgeView knowledgeList={knowledgeList} onAddKnowledge={handleAddKnowledge} wsConnected={isConnected} />
+              <KnowledgeView
+                knowledgeList={knowledgeList}
+                onAddKnowledge={handleAddKnowledge}
+                wsConnected={isConnected}
+              />
             )}
 
             {currentPage === 'Health' && (
-              <HealthView components={components} healthScore={systemMetrics.health_score || 95} wsConnected={isConnected} />
+              <HealthView
+                components={components}
+                healthScore={systemMetrics.health_score || 95}
+                wsConnected={isConnected}
+              />
             )}
 
             {currentPage === 'Trading' && (
               <TradingControlView
                 engineRunning={engineRunning}
-                onToggleEngine={() => {}} // ✅ EMPTY - ENGINE ALWAYS RUNNING
+                onToggleEngine={() => {
+                  // Engine always running - no-op
+                }}
                 positions={positions}
                 onClosePosition={handleClosePosition}
                 wsConnected={isConnected}
@@ -568,12 +714,10 @@ function AppContent() {
 
             {currentPage === 'Diagnostics' && <DiagnosticsView wsConnected={isConnected} />}
             {currentPage === 'Settings' && <SettingsView wsConnected={isConnected} />}
-            
           </main>
         </div>
       </div>
 
-      {/* Bottom Navigation (Mobile Only) */}
       <BottomNav
         currentPage={currentPage}
         onPageChange={setCurrentPage}
@@ -591,7 +735,7 @@ function AppContent() {
 // MAIN APP WITH WEBSOCKET PROVIDER
 // ============================================================
 
-export default function App() {
+export default function App(): React.ReactElement {
   return (
     <WebSocketProvider>
       <AppContent />
