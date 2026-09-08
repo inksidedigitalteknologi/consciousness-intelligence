@@ -1178,28 +1178,6 @@ def start_api_server():
                 return jsonify({'error': str(e)}), 500
 
         # ============================================================
-        # KNOWLEDGE ALL ENDPOINT
-        # ============================================================
-
-        @app.route('/api/knowledge/all', methods=['GET'])
-        @require_api_key
-        def knowledge_all():
-            """Get all knowledge items"""
-            try:
-                if not KNOWLEDGE_AVAILABLE:
-                    return jsonify({'error': 'Knowledge engine not available'}), 503
-                
-                items = knowledge.all()
-                return jsonify({
-                    'items': [item.to_dict() for item in items],
-                    'total': len(items),
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                logger.error(f"Knowledge all error: {e}")
-                return jsonify({'error': str(e)}), 500
-
-        # ============================================================
         # COGNITIVE MIRROR - REAL REFLECTION ENDPOINTS
         # ============================================================
 

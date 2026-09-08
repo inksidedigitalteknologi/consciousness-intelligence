@@ -1,9 +1,9 @@
 // ============================================================
-// INKSIDE DIGITAL - APP.tsx v3.0.0
-// Robust & Production-Ready
+// INKSIDE DIGITAL - APP.tsx v3.0.0 (REVISED)
+// More Robust & Production-Ready
 // ============================================================
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { BottomNav } from './components/BottomNav';
@@ -45,8 +45,9 @@ import { WebSocketProvider, useWebSocket, useWebSocketChannel, useWebSocketStatu
 
 const PAGE_STORAGE_KEY = 'inkside_current_page';
 const API_KEY = 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ';
-const REFRESH_INTERVAL = 30000;
+const REFRESH_INTERVAL = 30000; // 30 seconds
 const MAX_RETRY_COUNT = 5;
+const RETRY_DELAY = 2000; // 2 seconds
 
 // ============================================================
 // TYPES
@@ -80,7 +81,7 @@ const loadCurrentPage = (): NavigationPage => {
     if (saved && saved !== 'undefined' && saved !== 'null') {
       return saved as NavigationPage;
     }
-  } catch {
+  } catch (_error) {
     // Silent fail
   }
   return 'Dashboard';
@@ -89,7 +90,7 @@ const loadCurrentPage = (): NavigationPage => {
 const saveCurrentPage = (page: NavigationPage): void => {
   try {
     localStorage.setItem(PAGE_STORAGE_KEY, page);
-  } catch {
+  } catch (_error) {
     // Silent fail
   }
 };
@@ -166,7 +167,7 @@ const ErrorScreen: React.FC<{ error: string; onRetry: () => void; retryCount?: n
 
 function AppContent() {
   // ============================================================
-  // NAVIGATION
+  // NAVIGATION STATE
   // ============================================================
 
   const [currentPage, setCurrentPage] = useState<NavigationPage>(loadCurrentPage);
@@ -256,7 +257,7 @@ function AppContent() {
   const mapSignalData = useCallback((apiSignals: any[]): any[] => {
     if (!apiSignals || apiSignals.length === 0) return [];
 
-    return apiSignals.map((s) => ({
+    return apiSignals.map((s, index) => ({
       pair: s.pair || 'UNKNOWN',
       signal: s.signal || 'HOLD',
       confidence: s.confidence || 0,
@@ -322,41 +323,54 @@ function AppContent() {
           last_update: new Date().toISOString(),
         }));
       }
-    } catch {
+    } catch (_error) {
       // Silent fail - metrics are not critical
       console.debug('Failed to fetch system metrics');
     }
   }, []);
 
   const fetchKnowledge = useCallback(async (): Promise<void> => {
-    console.log("📚 Fetching knowledge items...");
-    
+    if (!isMounted.current || isFetching.current) return;
+
+    isFetching.current = true;
+
     try {
-      const response = await fetch("/api/knowledge/all", {
-        method: "GET",
+      console.log('📚 Fetching knowledge items...');
+
+      const response = await fetch('/api/knowledge/all', {
+        method: 'GET',
         headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": API_KEY,
+          'Content-Type': 'application/json',
+          'X-API-Key': API_KEY,
         },
       });
 
       if (!response.ok) {
-        console.error(`❌ Knowledge API error: ${response.status}`);
-        return;
+        throw new Error(`HTTP ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("📦 Knowledge data:", data);
+      console.log('📦 Knowledge API response:', data);
 
       const items = data.items || [];
-      setKnowledgeList(items);
-      setSystemMetrics((prev) => ({
-        ...prev,
-        knowledge_count: data.total || items.length,
-      }));
-      console.log(`✅ Set knowledgeList with ${items.length} items`);
+
+      if (isMounted.current) {
+        setKnowledgeList(items);
+        setSystemMetrics((prev) => ({
+          ...prev,
+          knowledge_count: data.total || items.length,
+        }));
+        console.log(`✅ Set knowledgeList with ${items.length} items`);
+      }
     } catch (error) {
-      console.error("❌ Error fetching knowledge:", error);
+      console.error('❌ Error fetching knowledge:', error);
+      if (isMounted.current) {
+        setError('Failed to fetch knowledge data.');
+      }
+    } finally {
+      if (isMounted.current) {
+        isFetching.current = false;
+      }
     }
   }, []);
 
@@ -399,7 +413,7 @@ function AppContent() {
           }
         }
 
-        // Fetch system metrics & knowledge
+        // Fetch knowledge in parallel
         await Promise.all([fetchSystemMetrics(), fetchKnowledge()]);
 
         if (isMounted.current) {
@@ -444,12 +458,14 @@ function AppContent() {
 
     init();
 
+    // Set up refresh interval
     intervalRef.current = setInterval(() => {
       if (isMounted.current && !isFetching.current) {
         fetchRealData(false);
       }
     }, REFRESH_INTERVAL);
 
+    // Cleanup
     return () => {
       isMounted.current = false;
       if (intervalRef.current) {
@@ -457,7 +473,8 @@ function AppContent() {
         intervalRef.current = null;
       }
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount
 
   // ============================================================
   // HANDLERS
@@ -565,7 +582,9 @@ function AppContent() {
           <TopBar
             currentPage={currentPage}
             engineRunning={engineRunning}
-            onToggleEngine={() => {}}
+            onToggleEngine={() => {
+              // Engine always running - no-op
+            }}
             telegramConfigured={telegramConfigured}
             onRefreshData={handleRefreshData}
             isRefreshing={isRefreshing}
@@ -676,7 +695,9 @@ function AppContent() {
             {currentPage === 'Trading' && (
               <TradingControlView
                 engineRunning={engineRunning}
-                onToggleEngine={() => {}}
+                onToggleEngine={() => {
+                  // Engine always running - no-op
+                }}
                 positions={positions}
                 onClosePosition={handleClosePosition}
                 wsConnected={isConnected}

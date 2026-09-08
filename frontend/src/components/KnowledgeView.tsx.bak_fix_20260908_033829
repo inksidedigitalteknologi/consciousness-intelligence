@@ -243,6 +243,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
 
   // ---- Q&A with AI ----
   const handleAsk = useCallback(async () => {
+    if (!question.trim()) {
       setQaError('Please enter a question.');
       return;
     }
@@ -253,7 +254,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
 
     try {
       const keywords = question.toLowerCase().split(' ');
-      let matches = [];
+      let matches: { item: KnowledgeItem; score: number }[] = [];
 
       for (const item of knowledgeList) {
         let score = 0;
@@ -290,58 +291,22 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
           if (data.ai_enabled && data.answer) {
             setQaAnswer(data.answer);
             setQaSources(topMatches.map(m => m.item));
-            
-            // AUTO-SAVE TO KNOWLEDGE BASE
-            if (autoSave) {
-              try {
-                const newItem = {
-                  content: 'Q: ' + question + '\nA: ' + data.answer,
-                  category: 'QA',
-                  type: 'qa',
-                  confidence: 85,
-                  importance: 0.7,
-                  tags: ['qa', 'ai-generated'],
-                  status: 'active',
-                  source: 'ai_chat',
-                  ai_enhanced: true,
-                };
-                const apiKey = localStorage.getItem('apiKey') || 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ';
-                const saveResponse = await fetch('/api/knowledge/add', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'X-API-Key': apiKey,
-                  },
-                  body: JSON.stringify(newItem),
-                });
-                if (saveResponse.ok) {
-                  const savedData = await saveResponse.json();
-                  if (savedData.item) {
-                    onAddKnowledge(savedData.item);
-                  } else {
-                    onAddKnowledge(newItem);
-                  }
-                  setNotification({ type: 'success', message: '✅ AI answer saved to knowledge base!' });
-                } else {
-                  onAddKnowledge(newItem);
-                }
-              } catch (saveError) {
-                console.warn('Auto-save failed:', saveError);
-                const fallbackItem = {
-                  content: 'Q: ' + question + '\nA: ' + data.answer,
-                  category: 'QA',
-                  type: 'qa',
-                  confidence: 85,
-                  importance: 0.7,
-                  tags: ['qa', 'ai-generated'],
-                  status: 'active',
-                  source: 'ai_chat',
-                  ai_enhanced: true,
-                };
-                onAddKnowledge(fallbackItem);
-              }
+            // Auto-save to knowledge base
+            if (autoSave && topMatches.length === 0) {
+              const newItem = {
+                content: `Q: ${question}\nA: ${data.answer}`,
+                category: 'QA',
+                type: 'qa' as const,
+                confidence: 85,
+                importance: 0.7,
+                tags: ['qa', 'ai-generated', ...question.toLowerCase().split(' ').slice(0, 3)],
+                status: 'active' as const,
+                source: 'ai_chat',
+                ai_enhanced: true,
+              };
+              onAddKnowledge(newItem);
+              setNotification({ type: 'success', message: '✅ AI answer saved to knowledge base!' });
             }
-            
             setIsAnswering(false);
             return;
           }
@@ -354,43 +319,10 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
       if (topMatches.length > 0) {
         const bestMatch = topMatches[0];
         const answer = bestMatch.item.ai_summary || bestMatch.item.content;
-        let response = '📚 **Best match** (confidence: ' + bestMatch.score + ')\n\n' + answer;
+        let response = `📚 **Best match** (confidence: ${bestMatch.score})\n\n${answer}`;
         if (topMatches.length > 1) {
-          response += '\n\n📖 **Related entries:**\n';
+          response += `\n\n📖 **Related entries:**\n`;
           topMatches.slice(1, 3).forEach((m, i) => {
-            const preview = m.item.content.substring(0, 60) + '...';
-            response += (i + 1) + '. ' + preview + '\n';
-          });
-        }
-        setQaAnswer(response);
-        setQaSources(topMatches.map(m => m.item));
-        
-        if (autoSave) {
-          const fallbackItem = {
-            content: 'Q: ' + question + '\nA: ' + response,
-            category: 'QA',
-            type: 'qa',
-            confidence: 80,
-            importance: 0.6,
-            tags: ['qa', 'local-match'],
-            status: 'active',
-            source: 'local_knowledge',
-            ai_enhanced: false,
-          };
-          onAddKnowledge(fallbackItem);
-          setNotification({ type: 'success', message: '✅ Q&A saved from local knowledge!' });
-        }
-      } else {
-        setQaSources([]);
-      }
-    } catch (error) {
-      setQaError('Failed to process your question.');
-      console.error('Q&A error:', error);
-    } finally {
-      setIsAnswering(false);
-    }
-  }, [question, knowledgeList, autoSave, onAddKnowledge]);
-
             const preview = m.item.content.substring(0, 60) + '...';
             response += `${i + 1}. ${preview}\n`;
           });
@@ -1510,7 +1442,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
                     )}
                     <div className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      <span>{item.created_at || item.createdAt ? new Date(item.created_at || item.createdAt).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" }) : "No date"}</span>
+                      <span>{new Date(item.createdAt).toLocaleDateString()}</span>
                     </div>
                     {item.source && (
                       <span className="text-[#5F6B78]">📎 {item.source}</span>

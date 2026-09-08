@@ -1178,28 +1178,6 @@ def start_api_server():
                 return jsonify({'error': str(e)}), 500
 
         # ============================================================
-        # KNOWLEDGE ALL ENDPOINT
-        # ============================================================
-
-        @app.route('/api/knowledge/all', methods=['GET'])
-        @require_api_key
-        def knowledge_all():
-            """Get all knowledge items"""
-            try:
-                if not KNOWLEDGE_AVAILABLE:
-                    return jsonify({'error': 'Knowledge engine not available'}), 503
-                
-                items = knowledge.all()
-                return jsonify({
-                    'items': [item.to_dict() for item in items],
-                    'total': len(items),
-                    'timestamp': datetime.now().isoformat()
-                })
-            except Exception as e:
-                logger.error(f"Knowledge all error: {e}")
-                return jsonify({'error': str(e)}), 500
-
-        # ============================================================
         # COGNITIVE MIRROR - REAL REFLECTION ENDPOINTS
         # ============================================================
 
@@ -1432,12 +1410,15 @@ def start_api_server():
                 return jsonify({'error': str(e)}), 500
 
         # ============================================================
+
+        # ============================================================
         # CONFIG ENDPOINTS - Terintegrasi dengan config.py
         # ============================================================
 
         @app.route('/api/config', methods=['GET'])
         @require_api_key
         def get_config():
+            """Get current configuration from config.py"""
             try:
                 import config as cfg
                 return jsonify({
@@ -1504,6 +1485,7 @@ def start_api_server():
         @app.route('/api/config/default', methods=['GET'])
         @require_api_key
         def get_default_config():
+            """Get default configuration"""
             try:
                 import config as cfg
                 return jsonify({
@@ -1543,6 +1525,7 @@ def start_api_server():
         @app.route('/api/config', methods=['POST'])
         @require_api_key
         def update_config():
+            """Update configuration"""
             try:
                 data = request.json
                 if not data:
@@ -1565,7 +1548,8 @@ def start_api_server():
                             repr_value = f"'{value}'"
                         else:
                             repr_value = repr(value)
-                        pattern = rf'^{upper_key}\s*=\s*[^\n]+'
+                        pattern = rf'^{upper_key}s*=s*[^
+]+'
                         replacement = f'{upper_key} = {repr_value}'
                         if re.search(pattern, content, re.MULTILINE):
                             content = re.sub(pattern, replacement, content, flags=re.MULTILINE)
@@ -1580,7 +1564,6 @@ def start_api_server():
                 logger.error(f"Config update error: {e}")
                 return jsonify({'error': str(e)}), 500
 
-        # ============================================================
         # TELEGRAM ENDPOINTS
         # ============================================================
 
@@ -2083,15 +2066,3 @@ def main_headless():
 # ============================================================
 # ENTRY POINT
 # ============================================================
-
-if __name__ == "__main__":
-    try:
-        exit_code = main_headless()
-        sys.exit(exit_code)
-    except KeyboardInterrupt:
-        logger.info("Bot stopped by user")
-        sys.exit(0)
-    except Exception as e:
-        logger.error(f"Fatal error: {e}")
-        traceback.print_exc()
-        sys.exit(1)
