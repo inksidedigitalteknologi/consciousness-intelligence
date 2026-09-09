@@ -676,5 +676,70 @@ function AppContent() {
             {currentPage === 'Pattern' && <PatternView wsConnected={isConnected} />}
             {currentPage === 'Prediction' && <PredictionView wsConnected={isConnected} />}
             {currentPage === 'Decision' && <DecisionView wsConnected={isConnected} />}
+
+            {currentPage === "Knowledge" && (
+              <KnowledgeView
+                knowledgeList={knowledgeList}
+                onAddKnowledge={handleAddKnowledge}
+                onUpdateKnowledge={handleUpdateKnowledge}
+                onDeleteKnowledge={handleDeleteKnowledge}
+                wsConnected={isConnected}
+              />
+            )}
+
+            {currentPage === 'Health' && (
+              <HealthView
+                components={components}
+                healthScore={systemMetrics.health_score || 95}
+                wsConnected={isConnected}
+              />
+            )}
+
+            {currentPage === 'Trading' && (
+              <TradingControlView
+                engineRunning={engineRunning}
+                onToggleEngine={() => {}}
+                positions={positions}
+                onClosePosition={handleClosePosition}
+                wsConnected={isConnected}
+              />
+            )}
+
+            {currentPage === 'Telegram' && (
+              <TelegramView
+                isConfigured={telegramConfigured}
+                onSaveConfig={() => setTelegramConfigured(true)}
+                wsConnected={isConnected}
+              />
+            )}
+
+            {currentPage === 'Diagnostics' && <DiagnosticsView wsConnected={isConnected} />}
+            {currentPage === 'Settings' && <SettingsView wsConnected={isConnected} />}
+          </main>
+        </div>
+      </div>
+
+      <BottomNav
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+        onOpenMenu={() => setIsSidebarOpen(true)}
+        watchlistCount={watchlistCount}
+        engineRunning={engineRunning}
+        wsConnected={isConnected}
+        healthScore={systemMetrics.health_score}
+      />
+    </div>
+  );
 }
 
+// ============================================================
+// MAIN APP WITH WEBSOCKET PROVIDER
+// ============================================================
+
+export default function App(): React.ReactElement {
+  return (
+    <WebSocketProvider>
+      <AppContent />
+    </WebSocketProvider>
+  );
+}

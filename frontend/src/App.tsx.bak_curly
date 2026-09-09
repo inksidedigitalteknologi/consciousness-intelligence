@@ -676,5 +676,4 @@ function AppContent() {
             {currentPage === 'Pattern' && <PatternView wsConnected={isConnected} />}
             {currentPage === 'Prediction' && <PredictionView wsConnected={isConnected} />}
             {currentPage === 'Decision' && <DecisionView wsConnected={isConnected} />}
-}
 
