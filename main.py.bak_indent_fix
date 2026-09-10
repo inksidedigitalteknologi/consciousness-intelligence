@@ -924,7 +924,7 @@ def start_api_server():
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
 
-        @app.route('/api/ai/ask', methods=['POST'])
+                @app.route('/api/ai/ask', methods=['POST'])
         @require_api_key
         def ai_ask():
             try:
@@ -934,24 +934,25 @@ def start_api_server():
                 if not question:
                     return jsonify({'error': 'Question is required'}), 400
                 
-                system_prompt = data.get('system_prompt', 'default')
-                conversation_id = data.get('conversation_id')
-                temperature = data.get('temperature', 0.7)
-                max_tokens = data.get('max_tokens', 2048)
+                # Get system prompt
+                prompt_name = data.get('system_prompt', 'knowledge_qa')
+                from core.prompts.system_prompts import get_system_prompt
+                system_prompt = get_system_prompt(prompt_name)
                 
+                # Context from knowledge base
                 context = None
                 if KNOWLEDGE_AVAILABLE:
-                    relevant = knowledge.search(question, max_results=5)
+                    relevant = knowledge.search(question, max_results=3)
                     if relevant:
                         context = "\n\n".join([
-                            f"[{item.category}] {item.content}"
+                            f"[{item.category}] {item.content[:300]}"
                             for item in relevant
                         ])
                 
                 if not DEEPSEEK_ENABLED:
                     return jsonify({
                         'question': question,
-                        'answer': f"I'm a cognitive trading bot. I can help with market analysis, trading strategies, and financial insights. Your question: '{question}'\n\n📚 Context from knowledge: {len(relevant) if KNOWLEDGE_AVAILABLE else 0} relevant items found.",
+                        'answer': f"Q: {question}\nA: [AI disabled]",
                         'ai_enabled': False,
                         'context_used': bool(context),
                         'timestamp': datetime.now().isoformat()
@@ -963,26 +964,42 @@ def start_api_server():
                     question=question,
                     system_prompt=system_prompt,
                     context=context,
-                    temperature=temperature,
-                    max_tokens=max_tokens
+                    temperature=0.3,
+                    max_tokens=500,
                 )
                 
                 if isinstance(result, str):
-                    return jsonify({
-                        'question': question,
-                        'answer': result,
-                        'ai_enabled': True,
-                        'context_used': bool(context),
-                        'timestamp': datetime.now().isoformat()
-                    })
+                    answer = result
+                elif hasattr(result, 'answer'):
+                    answer = result.answer
+                elif isinstance(result, dict):
+                    answer = result.get('answer', str(result))
                 else:
-                    return jsonify(result.to_dict())
+                    answer = str(result)
+                
+                if len(answer) > 800:
+                    truncated = answer[:800]
+                    last_period = truncated.rfind('.')
+                    if last_period > 400:
+                        answer = truncated[:last_period + 1] + " [diringkas]"
+                    else:
+                        answer = truncated + "... [diringkas]"
+                
+                return jsonify({
+                    'question': question,
+                    'answer': answer,
+                    'ai_enabled': True,
+                    'context_used': bool(context),
+                    'prompt_used': prompt_name,
+                    'answer_length': len(answer),
+                    'timestamp': datetime.now().isoformat()
+                })
                 
             except Exception as e:
                 logger.error(f"AI ask error: {e}")
                 return jsonify({'error': str(e)}), 500
 
-        @app.route('/api/ai/chat', methods=['POST'])
+@app.route('/api/ai/chat', methods=['POST'])
         @require_api_key
         def ai_chat():
             try:

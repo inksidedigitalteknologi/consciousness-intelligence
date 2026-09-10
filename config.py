@@ -36,12 +36,10 @@ for dir_path in [DATA_DIR, LOG_DIR, DATABASE_DIR, CACHE_DIR, BACKUP_DIR, REPORTS
 APP_NAME = 'INKSIDEDIGITAL CONSCIOUSNESS INTELLIGENCE'
 APP_VERSION = '2.0.0'
 APP_AUTHOR = 'Inkside Digital'
-BUILD_DATE = "2026-09-05"
 
 # Versi komponen
 COGNITIVE_ENGINE_VERSION = "4.4"
 SIGNAL_ENGINE_VERSION = "2.2"
-COINGECKO_VERSION = "1.0.0"
 
 # ============================================================
 # 3. FILE PATHS (Referensi file penting)
@@ -62,17 +60,14 @@ ERROR_LOG_FILE = LOG_DIR / f"error_{datetime.now().strftime('%Y%m%d')}.log"
 SIGNAL_LOG_FILE = LOG_DIR / f"signals_{datetime.now().strftime('%Y%m%d')}.log"
 
 # ============================================================
-# 4. EXCHANGE - COINGECKO (FREE, NO API KEY)
+# 4. EXCHANGE - KRAKEN
 # ============================================================
 
-EXCHANGE_NAME = 'CoinGecko'
-EXCHANGE_TYPE = 'coingecko'
-COINGECKO_API_BASE = "https://api.coingecko.com/api/v3"
-COINGECKO_API_KEY = os.getenv("COINGECKO_API_KEY", "")
+EXCHANGE_NAME = 'Kraken'
+EXCHANGE_TYPE = 'kraken'
+KRAKEN_API_BASE = "https://api.kraken.com"
 
-# Rate Limiting - AMAN
-COINGECKO_RATE_LIMIT = 30
-COINGECKO_RATE_LIMIT_SECONDS = 60
+# Rate Limiting
 REQUEST_DELAY = 2
 REQUEST_TIMEOUT = 15
 REQUEST_RETRY_COUNT = 3
@@ -81,11 +76,12 @@ REQUEST_BACKOFF_MULTIPLIER = 2
 
 # Cache
 CACHE_TTL_SECONDS = 120
-OHLCV_LIMIT = 100                # Kurangi jumlah candle
+OHLCV_LIMIT = 100
 MAX_MARKETS = 15
 
 # ============================================================
-# 5. MARKET & PAIRS (DIKURANGI UNTUK HINDARI RATE LIMIT)
+# 5. MARKET & PAIRS
+# ============================================================
 
 DEFAULT_PAIRS = [
     "BTC/USD",
@@ -105,17 +101,9 @@ MAIN_TIMEFRAME = "1h"
 SCALP_TIMEFRAME = "15m"
 SWING_TIMEFRAME = "4h"
 LONG_TIMEFRAME = "1d"
-# ============================================================
-
-
-
-MAIN_TIMEFRAME = '1h'
-SCALP_TIMEFRAME = "15m"
-SWING_TIMEFRAME = "4h"
-LONG_TIMEFRAME = "1d"
 
 # ============================================================
-# 6. SCANNER SETTINGS - OPTIMAL UNTUK RATE LIMIT
+# 6. SCANNER SETTINGS
 # ============================================================
 
 SCAN_INTERVAL_SECONDS = 600
@@ -129,7 +117,7 @@ SCANNER_BATCH_DELAY = 5
 SCANNER_TIMEOUT = 60
 
 # ============================================================
-# 7. SIGNAL SETTINGS - SELEKTIF & STABIL
+# 7. SIGNAL SETTINGS
 # ============================================================
 
 MIN_MTF_ALIGNMENT = 2
@@ -213,8 +201,6 @@ TAKE_PROFIT_PERCENT = 15
 TRADING_ENABLED = False
 PAPER_TRADING = True
 AUTO_TRADE = False
-DEMO_MODE = False
-TEST_MODE = False
 
 ORDER_TYPE = "market"
 ORDER_TIF = "GTC"
@@ -231,21 +217,6 @@ TELEGRAM_TIMEOUT = 15
 TELEGRAM_RETRY_COUNT = 3
 TELEGRAM_RETRY_DELAY = 2
 
-# Telegram Commands (dari repositori)
-TELEGRAM_COMMANDS = {
-    "/start": "System overview",
-    "/health": "Health check",
-    "/performance": "Trading performance",
-    "/signals": "Live signals",
-    "/pnl": "Profit/Loss report",
-    "/brain": "Brain status",
-    "/modules": "Module status",
-    "/daily": "Daily report",
-    "/risk": "Risk assessment",
-    "/trade": "Quick trade action",
-    "/refresh": "Refresh data",
-}
-
 # ============================================================
 # 13. LOGGING
 # ============================================================
@@ -259,11 +230,6 @@ LOG_FORMAT = "%(asctime)s | %(levelname)-8s | %(name)-20s | %(message)s"
 LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 LOG_MAX_SIZE_MB = 100
 LOG_BACKUP_COUNT = 5
-
-ENABLE_SIGNAL_LOGGING = True
-ENABLE_TRADE_LOGGING = True
-ENABLE_ERROR_LOGGING = True
-ENABLE_PERFORMANCE_LOGGING = True
 
 # ============================================================
 # 14. LEARNING ENGINE
@@ -321,8 +287,6 @@ DEBUG_MODE = False
 ENABLE_PROFILING = False
 ENABLE_TRACING = False
 ENABLE_METRICS = True
-AUTO_RESTART = False
-RESTART_DELAY = 10
 
 MAX_THREADS = 10
 THREAD_POOL_SIZE = 5
@@ -333,7 +297,65 @@ API_TIMEOUT = 10
 DB_TIMEOUT = 10
 
 # ============================================================
-# 19. API ENDPOINTS (Referensi dari repositori)
+# 19. AI CONFIGURATION (DeepSeek)
+# ============================================================
+
+DEEPSEEK_ENABLED = os.getenv("DEEPSEEK_ENABLED", "false").lower() == "true"
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+DEEPSEEK_MODEL = "deepseek-chat"
+DEEPSEEK_TEMPERATURE = 0.3
+DEEPSEEK_MAX_TOKENS = 500
+
+# ============================================================
+# 20. KNOWLEDGE BASE
+# ============================================================
+
+KNOWLEDGE_MAX_ITEMS = 100000
+KNOWLEDGE_AUTO_SAVE = True
+KNOWLEDGE_AI_ENHANCEMENT = True
+KNOWLEDGE_MIN_CONFIDENCE = 0.5
+
+# Auto-Crawl Sources
+AUTO_CRAWL_SOURCES = [
+    "https://id.wikipedia.org/wiki/Bitcoin",
+    "https://id.wikipedia.org/wiki/Ethereum",
+    "https://id.wikipedia.org/wiki/Kecerdasan_buatan",
+    "https://id.wikipedia.org/wiki/Blockchain",
+    "https://id.wikipedia.org/wiki/Investasi",
+]
+
+AUTO_CRAWL_INTERVAL_HOURS = 6
+
+# ============================================================
+# 21. ERROR DETECTION
+# ============================================================
+
+ERROR_DETECTION_ENABLED = True
+ERROR_LOG_DIR = LOG_DIR / "errors"
+ERROR_MAX_HISTORY = 1000
+ERROR_NOTIFICATION_ENABLED = True
+
+# Recovery
+ERROR_AUTO_RECOVERY = True
+ERROR_MAX_RECOVERY_ATTEMPTS = 3
+
+# ============================================================
+# 22. AI PROMPTS
+# ============================================================
+
+AI_PROMPT_ACTIVE = "knowledge_qa"
+AI_PROMPTS_AVAILABLE = ["default", "knowledge_qa", "trading", "analysis"]
+
+# ============================================================
+# 23. COGNITIVE MIRROR
+# ============================================================
+
+COGNITIVE_MIRROR_ENABLED = True
+COGNITIVE_MIRROR_REFRESH_INTERVAL = 30
+COGNITIVE_MIRROR_MAX_REFLECTIONS = 50
+
+# ============================================================
+# 24. API ENDPOINTS (Referensi)
 # ============================================================
 
 API_PUBLIC_ENDPOINTS = {
@@ -345,50 +367,27 @@ API_PROTECTED_ENDPOINTS = {
     "/api/performance": "Trading performance",
     "/api/brain/state": "Cognitive Brain state",
     "/api/signals": "Live signals",
-    "/api/predictions": "Real predictions",
-    "/api/predictions/metrics": "Prediction metrics",
-    "/api/predictions/monte_carlo": "Monte Carlo simulation",
-    "/api/engine/start": "Start trading engine",
-    "/api/engine/stop": "Stop trading engine",
-    "/api/engine/status": "Engine status",
     "/api/system/metrics": "CPU, RAM, uptime, health score",
     "/api/watchdog/status": "Watchdog status",
-    "/api/watchdog/snapshot": "Watchdog snapshot",
-    "/api/telegram/webhook": "Webhook receiver",
-    "/api/telegram/set_webhook": "Set webhook URL",
-    "/api/telegram/get_webhook": "Webhook info",
+    "/api/telegram/status": "Telegram status",
     # AI Endpoints
     "/api/ai/status": "AI integration status",
     "/api/ai/ask": "Ask AI a question",
-    "/api/ai/analyze": "Market analysis with AI",
-    "/api/ai/strategy": "Generate trading strategy with AI",
-    "/api/ai/brain/reflection": "Brain reflection with AI",
-    "/api/ai/signal/validate": "Validate signal with AI",
     "/api/ai/chat": "Chat with AI",
+    "/api/ai/prompts": "List AI prompts",
+    # Knowledge Endpoints
+    "/api/knowledge/all": "Get all knowledge",
+    "/api/knowledge/add": "Add knowledge",
+    "/api/knowledge/search": "Search knowledge",
+    "/api/knowledge/stats": "Knowledge statistics",
+    # Cognitive Mirror
+    "/api/cognitive-mirror/metrics": "Cognitive metrics",
+    "/api/cognitive-mirror/reflections": "Neural reflections",
+    "/api/cognitive-mirror/narrative": "Cognitive narrative",
 }
 
 # ============================================================
-# 20. COINGECKO PAIR MAPPING
-# ============================================================
-
-PAIR_TO_COINGECKO = {
-    "BTC/USD": "bitcoin",
-    "ETH/USD": "ethereum",
-    "SOL/USD": "solana",
-    "XRP/USD": "ripple",
-    "ADA/USD": "cardano",
-    "LTC/USD": "litecoin",
-    "BNB/USD": "binancecoin",
-    "DOT/USD": "polkadot",
-    "LINK/USD": "chainlink",
-    "AVAX/USD": "avalanche-2",
-    "MATIC/USD": "matic-network",
-}
-
-COINGECKO_TO_PAIR = {v: k for k, v in PAIR_TO_COINGECKO.items()}
-
-# ============================================================
-# 21. COLORS & EMOJIS
+# 25. COLORS & EMOJIS
 # ============================================================
 
 COLORS = {
@@ -436,7 +435,7 @@ EMOJIS = {
 }
 
 # ============================================================
-# 22. INTELLIGENCE MODULES (Referensi dari repositori)
+# 26. INTELLIGENCE MODULES
 # ============================================================
 
 INTELLIGENCE_MODULES = {
@@ -473,7 +472,7 @@ INTELLIGENCE_MODULES = {
 }
 
 # ============================================================
-# 23. UTILITY FUNCTIONS
+# 27. UTILITY FUNCTIONS
 # ============================================================
 
 def validate_config() -> List[str]:
@@ -522,30 +521,8 @@ def get_config_summary() -> Dict[str, Any]:
         "learning_enabled": LEARNING_ENABLED,
         "prediction_enabled": PREDICTION_ENABLED,
         "health_min_score": HEALTH_MIN_SCORE,
+        "ai_enabled": DEEPSEEK_ENABLED,
     }
-
-
-def load_config_from_file(config_path: Path) -> Optional[Dict]:
-    """Load konfigurasi dari file JSON."""
-    try:
-        import json
-        with open(config_path, 'r') as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"Error loading config: {e}")
-        return None
-
-
-def save_config_to_file(config: Dict, config_path: Path) -> bool:
-    """Simpan konfigurasi ke file JSON."""
-    try:
-        import json
-        with open(config_path, 'w') as f:
-            json.dump(config, f, indent=2)
-        return True
-    except Exception as e:
-        print(f"Error saving config: {e}")
-        return False
 
 
 def apply_env_overrides() -> Dict[str, Any]:
@@ -569,6 +546,12 @@ def apply_env_overrides() -> Dict[str, Any]:
         overrides["DEBUG_MODE"] = os.getenv("DEBUG_MODE").lower() == "true"
     if os.getenv("LOG_LEVEL"):
         overrides["LOG_LEVEL"] = os.getenv("LOG_LEVEL")
+    
+    # AI
+    if os.getenv("DEEPSEEK_ENABLED"):
+        overrides["DEEPSEEK_ENABLED"] = os.getenv("DEEPSEEK_ENABLED").lower() == "true"
+    if os.getenv("DEEPSEEK_API_KEY"):
+        overrides["DEEPSEEK_API_KEY"] = os.getenv("DEEPSEEK_API_KEY")
     
     return overrides
 
@@ -601,6 +584,8 @@ if __name__ == "__main__":
     print(f"  Paper Trading: {PAPER_TRADING}")
     print(f"  Debug Mode  : {DEBUG_MODE}")
     print(f"  Log Level   : {LOG_LEVEL}")
+    print(f"  AI Enabled  : {DEEPSEEK_ENABLED}")
+    print(f"  Auto-Crawl  : {len(AUTO_CRAWL_SOURCES)} sources")
     print("=" * 70)
     
     issues = validate_config()
@@ -612,120 +597,3 @@ if __name__ == "__main__":
         print("\n✅ Configuration validated successfully")
     
     print("=" * 70)
-
-
-# ============================================================
-# EXPORTS - SEMUA KONFIGURASI TERSEDIA
-# ============================================================
-
-__all__ = [
-    # App
-    'APP_NAME', 'APP_VERSION', 'APP_AUTHOR', 'BUILD_DATE',
-    'COGNITIVE_ENGINE_VERSION', 'SIGNAL_ENGINE_VERSION', 'COINGECKO_VERSION',
-    
-    # Path
-    'BASE_DIR', 'DATA_DIR', 'LOG_DIR', 'DATABASE_DIR', 'CACHE_DIR',
-    'BACKUP_DIR', 'REPORTS_DIR',
-    
-    # Files
-    'SETTINGS_FILE', 'WATCHLIST_FILE', 'HISTORY_FILE', 'TRADES_FILE',
-    'PERFORMANCE_FILE', 'LEARNING_STATE_FILE', 'KNOWLEDGE_GRAPH_FILE',
-    'PATTERN_DATABASE_FILE', 'LOG_FILE', 'ERROR_LOG_FILE', 'SIGNAL_LOG_FILE',
-    
-    # Exchange
-    'EXCHANGE_NAME', 'EXCHANGE_TYPE', 'COINGECKO_API_BASE',
-    'COINGECKO_RATE_LIMIT', 'COINGECKO_RATE_LIMIT_SECONDS',
-    'REQUEST_DELAY', 'REQUEST_TIMEOUT', 'REQUEST_RETRY_COUNT',
-    'REQUEST_RETRY_DELAY', 'REQUEST_BACKOFF_MULTIPLIER',
-    'CACHE_TTL_SECONDS', 'OHLCV_LIMIT', 'MAX_MARKETS',
-    
-    # Market
-    'DEFAULT_PAIRS', 'DEFAULT_TIMEFRAMES', 'MAIN_TIMEFRAME',
-    'SCALP_TIMEFRAME', 'SWING_TIMEFRAME', 'LONG_TIMEFRAME',
-    
-    # Scanner
-    'SCAN_INTERVAL_SECONDS', 'MAX_WORKERS', 'MAX_RETRIES',
-    'USE_CLOSED_CANDLE', 'CACHE_OHLCV', 'SCANNER_BATCH_SIZE',
-    'SCANNER_BATCH_DELAY', 'SCANNER_TIMEOUT',
-    
-    # Signal
-    'MIN_MTF_ALIGNMENT', 'MIN_SIGNAL_STRENGTH', 'MIN_SIGNAL_CONFIDENCE',
-    'SEND_STARTUP_SIGNALS', 'SIGNAL_COOLDOWN_SECONDS',
-    'MAX_SIGNALS_PER_SCAN', 'MIN_SIGNAL_QUALITY',
-    'QUALITY_WEAK', 'QUALITY_NEUTRAL', 'QUALITY_STRONG', 'QUALITY_VERY_STRONG',
-    'SIGNAL_HOLD', 'SIGNAL_BUY', 'SIGNAL_SELL', 'SIGNAL_MONITOR', 'SIGNAL_EXIT',
-    
-    # Timeframes
-    'TIMEFRAME_WEIGHTS',
-    
-    # Indicators
-    'RSI_PERIOD', 'RSI_OVERBOUGHT', 'RSI_OVERSOLD',
-    'MACD_FAST', 'MACD_SLOW', 'MACD_SIGNAL',
-    'MA_FAST', 'MA_MEDIUM', 'MA_SLOW', 'MA_VERY_SLOW',
-    'BB_PERIOD', 'BB_STD_DEV',
-    'ATR_PERIOD', 'ATR_SL_MULTIPLIER',
-    'TP1_ATR_MULTIPLIER', 'TP2_ATR_MULTIPLIER', 'TP3_ATR_MULTIPLIER',
-    'VOLUME_MA_PERIOD', 'VOLUME_SPIKE_MULTIPLIER',
-    
-    # Risk
-    'DEFAULT_RISK_PERCENT', 'DEFAULT_RISK_REWARD',
-    'MAX_POSITION_SIZE', 'MIN_POSITION_SIZE',
-    'MAX_DAILY_TRADES', 'MAX_OPEN_POSITIONS',
-    'MAX_DRAWDOWN_PERCENT', 'STOP_LOSS_PERCENT', 'TAKE_PROFIT_PERCENT',
-    
-    # Trading
-    'TRADING_ENABLED', 'PAPER_TRADING', 'AUTO_TRADE',
-    'DEMO_MODE', 'TEST_MODE', 'ORDER_TYPE', 'ORDER_TIF', 'ORDER_LEVERAGE',
-    
-    # Telegram
-    'TELEGRAM_ENABLED', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID',
-    'TELEGRAM_TIMEOUT', 'TELEGRAM_RETRY_COUNT', 'TELEGRAM_RETRY_DELAY',
-    'TELEGRAM_COMMANDS',
-    
-    # Logging
-    'LOG_LEVEL', 'LOG_FILE_LEVEL', 'CONSOLE_LEVEL',
-    'ENABLE_FILE_LOG', 'ENABLE_CONSOLE_LOG',
-    'LOG_FORMAT', 'LOG_DATE_FORMAT', 'LOG_MAX_SIZE_MB', 'LOG_BACKUP_COUNT',
-    'ENABLE_SIGNAL_LOGGING', 'ENABLE_TRADE_LOGGING',
-    'ENABLE_ERROR_LOGGING', 'ENABLE_PERFORMANCE_LOGGING',
-    
-    # Learning
-    'LEARNING_ENABLED', 'LEARNING_INTERVAL_SECONDS',
-    'LEARNING_AUTO_START', 'LEARNING_MAX_HISTORY',
-    
-    # Prediction
-    'PREDICTION_ENABLED', 'PREDICTION_HORIZON',
-    'PREDICTION_MIN_CONFIDENCE', 'PREDICTION_MAX_HISTORY',
-    
-    # Health
-    'HEALTH_CHECK_INTERVAL', 'HEALTH_METRICS_PERSIST',
-    'HEALTH_ALERT_ON_DEGRADE', 'HEALTH_MIN_SCORE', 'HEALTH_CRITICAL_SCORE',
-    
-    # Performance
-    'TRACK_PERFORMANCE', 'PERFORMANCE_UPDATE_INTERVAL',
-    'PERFORMANCE_PERSIST_INTERVAL', 'MAX_PERFORMANCE_HISTORY',
-    'METRICS_TRACKED',
-    
-    # System
-    'DEBUG_MODE', 'ENABLE_PROFILING', 'ENABLE_TRACING',
-    'ENABLE_METRICS', 'AUTO_RESTART', 'RESTART_DELAY',
-    'MAX_THREADS', 'THREAD_POOL_SIZE', 'QUEUE_SIZE',
-    'GLOBAL_TIMEOUT', 'API_TIMEOUT', 'DB_TIMEOUT',
-    
-    # API
-    'API_PUBLIC_ENDPOINTS', 'API_PROTECTED_ENDPOINTS',
-    
-    # CoinGecko Mapping
-    'PAIR_TO_COINGECKO', 'COINGECKO_TO_PAIR',
-    
-    # Colors & Emojis
-    'COLORS', 'EMOJIS',
-    
-    # Intelligence Modules
-    'INTELLIGENCE_MODULES',
-    
-    # Utilities
-    'validate_config', 'get_config_summary',
-    'load_config_from_file', 'save_config_to_file',
-    'apply_env_overrides',
-]
