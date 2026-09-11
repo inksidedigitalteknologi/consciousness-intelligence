@@ -46,6 +46,7 @@ class ConsciousnessState(Enum):
     """Consciousness operational states."""
     INITIALIZING = "INITIALIZING"
     IDLE = "IDLE"
+    PROCESSING = "PROCESSING"
     PERCEIVING = "PERCEIVING"
     AWARING = "AWARING"
     PATTERNING = "PATTERNING"

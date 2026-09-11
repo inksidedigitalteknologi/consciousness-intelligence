@@ -251,6 +251,32 @@ class Brain:
         # RANDOM SEED
         random.seed(int(time.time()))
 
+        # SELF MODEL — persistence diri
+        try:
+            from core.self_model import self_model as _global_self_model
+            self.self_model = _global_self_model
+            # Sync cycles dari self_model
+            saved_cycles = self.self_model.get_age_cycles()
+            if saved_cycles > 0:
+                self.cycles = saved_cycles
+                self.metrics["total_cycles"] = saved_cycles
+                # Restore metrik kumulatif dari self_model
+                saved_metrics = self.self_model.get_metrics()
+                self.successful_cycles = saved_metrics.get("successful_cycles", 0)
+                self.metrics["successful_cycles"] = self.successful_cycles
+                self.metrics["decision_count"] = saved_metrics.get("decision_count", 0)
+                self.metrics["learning_count"] = saved_metrics.get("learning_count", 0)
+                self.metrics["prediction_count"] = saved_metrics.get("prediction_count", 0)
+                logger.info(f"🧬 Self model loaded — cycles={saved_cycles}, "
+                           f"decisions={self.metrics['decision_count']}, "
+                           f"successful={self.successful_cycles}")
+            # Sync emotion
+            self.current_emotion = self.self_model.get_emotion()
+        except Exception as e:
+            logger.warning(f"Self model tidak tersedia: {e}")
+            self.self_model = None
+            self.current_emotion = "CALM"
+
         # FINALIZE
         self.state = BrainState.IDLE
         self._log_module_status()
@@ -513,20 +539,67 @@ class Brain:
                 cognitive_state.patterns = self._recognize_patterns(cognitive_state.perception)
                 cognitive_state.learning = self._learn(cognitive_state.perception, cognitive_state.patterns)
                 cognitive_state.reasoning = self._reason(cognitive_state)
-                cognitive_state.knowledge = self._update_knowledge(cognitive_state)
                 cognitive_state.awareness = self._reflect_consciousness(cognitive_state)
                 cognitive_state.prediction = self._predict(cognitive_state)
                 cognitive_state.decision = self._decide(cognitive_state)
+                cognitive_state.knowledge = self._update_knowledge(cognitive_state)
                 cognitive_state.feedback = self._prepare_feedback(cognitive_state)
 
                 self.last_result = self._cognitive_state_to_dict(cognitive_state)
+                # Increment success SEBELUM _update_metrics
+                # supaya success_rate dihitung dengan nilai terbaru
+                self.successful_cycles += 1
+                self.metrics["successful_cycles"] += 1
+
+                # Update self model
+                if self.self_model is not None:
+                    try:
+                        self.self_model.increment_cycle()
+                        # Sync emotion dari awareness
+                        aw = cognitive_state.awareness or {}
+                        if isinstance(aw, dict):
+                            em = aw.get("emotion")
+                            # Emotion bisa dict atau string
+                            if isinstance(em, dict):
+                                em = em.get("state") or em.get("name") or "CALM"
+                            if em and isinstance(em, str):
+                                self.self_model.set_emotion(em)
+                                self.current_emotion = em
+                        # Milestone
+                        cyc = self.cycles
+                        if cyc in (10, 50, 100, 500, 1000, 5000, 10000):
+                            self.self_model.add_milestone(f"reached_cycle_{cyc}")
+                        # Catat experience penting (decision berubah / error / AI)
+                        dec = cognitive_state.decision or {}
+                        if isinstance(dec, dict):
+                            action = dec.get("action")
+                            last_action = getattr(self, "_last_recorded_action", None)
+                            if action and action != last_action:
+                                self.self_model.record_experience(
+                                    event=f"decision_{action}",
+                                    details=dec.get("reason", "")[:150],
+                                    emotion=self.current_emotion,
+                                )
+                                self._last_recorded_action = action
+                        # Save setiap 10 cycle atau milestone
+                        # Save metrics + self_model
+                        self.self_model.save_metrics({
+                            "successful_cycles": self.successful_cycles,
+                            "decision_count": self.metrics.get("decision_count", 0),
+                            "error_count": self.errors,
+                            "learning_count": self.metrics.get("learning_count", 0),
+                            "prediction_count": self.metrics.get("prediction_count", 0),
+                        })
+                        if cyc == 1 or cyc % 2 == 0:
+                            self.self_model.save()
+                    except Exception as e:
+                        logger.debug(f"Self model update error: {e}")
+
                 self._update_metrics(start_time)
                 self._store_history(cognitive_state)
                 self._update_goals(cognitive_state)
 
                 self.state = BrainState.ACTIVE
-                self.successful_cycles += 1
-                self.metrics["successful_cycles"] += 1
 
                 return self.last_result
 
@@ -849,9 +922,87 @@ class Brain:
     def _update_knowledge(self, state: CognitiveState) -> Dict[str, Any]:
         try:
             if self.knowledge is not None:
-                result = self.execute(self.knowledge, "update", state)
-                if result is not None:
-                    return result
+                state_dict = self._cognitive_state_to_dict(state)
+
+                # Ekstrak konten meaningful dari state
+                perception = state_dict.get("perception", {}) or {}
+                reasoning = state_dict.get("reasoning", {}) or {}
+                decision = state_dict.get("decision", {}) or {}
+                raw_input = state_dict.get("input", {}) or {}
+
+                # Bangun konten naratif dari observasi ini
+                content_parts = []
+                if isinstance(perception, dict):
+                    p_type = perception.get("type", "unknown")
+                    p_sent = perception.get("sentiment", "neutral")
+                    p_concepts = perception.get("concepts", [])
+                    content_parts.append(f"Observation type: {p_type}, sentiment: {p_sent}")
+                    if p_concepts:
+                        content_parts.append(f"Concepts: {', '.join(str(c) for c in p_concepts[:5])}")
+
+                if isinstance(reasoning, dict):
+                    r_trend = reasoning.get("trend") or reasoning.get("context")
+                    if r_trend:
+                        content_parts.append(f"Reasoning: {r_trend}")
+
+                if isinstance(decision, dict):
+                    d_action = decision.get("action")
+                    d_conf = decision.get("confidence")
+                    if d_action:
+                        content_parts.append(f"Decision: {d_action} (conf {d_conf}%)")
+
+                if isinstance(raw_input, dict):
+                    inp_str = str(raw_input)[:150]
+                    content_parts.append(f"Input: {inp_str}")
+
+                content = " | ".join(content_parts)
+
+                # Skip kalau konten terlalu pendek
+                if not content or len(content) < 30:
+                    return {
+                        "updated": False,
+                        "reason": "content too short, skipped",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+
+                # Panggil knowledge.add() dengan signature benar
+                confidence_val = 50.0
+                if isinstance(perception, dict):
+                    c = perception.get("confidence")
+                    if isinstance(c, (int, float)):
+                        # perception confidence 0.0-1.0 → skala 0-100
+                        confidence_val = c * 100 if c <= 1.0 else c
+
+                tags = ["brain", "auto-observe"]
+                if isinstance(perception, dict) and perception.get("concepts"):
+                    tags.extend([str(c) for c in perception["concepts"][:3]])
+
+                item_id = self.execute(
+                    self.knowledge, "add",
+                    content=content,
+                    category="Cognitive Observation",
+                    type="observation",
+                    tags=tags,
+                    source="brain",
+                    confidence=confidence_val,
+                    importance=0.5,
+                    enhance_with_ai=False,
+                )
+
+                if item_id:
+                    return {
+                        "updated": True,
+                        "item_id": str(item_id),
+                        "timestamp": datetime.now().isoformat(),
+                        "source": "knowledge.add",
+                        "content_preview": content[:100],
+                    }
+
+                return {
+                    "updated": False,
+                    "reason": "knowledge.add returned None",
+                    "timestamp": datetime.now().isoformat(),
+                }
 
             knowledge_builder = safe_import("core.learning.knowledge_builder", "knowledge_builder")
             if knowledge_builder is not None:
@@ -872,20 +1023,12 @@ class Brain:
     def _reflect_consciousness(self, state: CognitiveState) -> Dict[str, Any]:
         try:
             if self.consciousness is not None:
-                if hasattr(self.consciousness, "reflect"):
-                    result = self.execute(self.consciousness, "reflect", state)
-                    if result is not None:
-                        return result
-                elif hasattr(self.consciousness, "process"):
-                    result = self.execute(self.consciousness, "process", state)
-                    if result is not None:
-                        return result
-
-            consciousness_module = safe_import("core.learning.consciousness", "consciousness")
-            if consciousness_module is not None:
-                result = self.execute(consciousness_module, "reflect", state)
-                if result is not None:
-                    return result
+                state_dict = self._cognitive_state_to_dict(state)
+                for method_name in ("reflect", "process", "analyze", "update"):
+                    if hasattr(self.consciousness, method_name):
+                        result = self.execute(self.consciousness, method_name, state_dict)
+                        if result is not None:
+                            return result
 
             states = ["ACTIVE", "FOCUSED", "CURIOUS", "REFLECTING", "CALM"]
             emotions = ["CALM", "FOCUSED", "CURIOUS", "CAUTIOUS", "CONFIDENT"]
@@ -915,9 +1058,10 @@ class Brain:
 
     def _predict(self, state: CognitiveState) -> Dict[str, Any]:
         try:
-            prediction_module = safe_import("core.learning.prediction", "prediction")
+            prediction_module = safe_import("core.learning.prediction", "prediction_engine")
             if prediction_module is not None:
-                result = self.execute(prediction_module, "predict", state)
+                state_dict = self._cognitive_state_to_dict(state)
+                result = self.execute(prediction_module, "predict", state_dict)
                 if result is not None:
                     self.metrics["prediction_count"] += 1
                     return result
@@ -954,18 +1098,50 @@ class Brain:
         try:
             intelligence = self._market_intelligence(state)
 
-            decision_engine = safe_import("core.learning.decision_engine", "decision_engine")
-            if decision_engine is not None:
-                result = self.execute(decision_engine, "decide", state, intelligence)
-                if result is not None:
-                    self.metrics["decision_count"] += 1
-                    return result
+            state_dict = self._cognitive_state_to_dict(state)
 
+            # Bangun payload dengan struktur yang DecisionEngine.decide() harapkan:
+            # analysis, prediction, semantic, insight, reasoning, context
+            payload = {
+                "analysis": state_dict.get("perception", {}),
+                "prediction": state_dict.get("prediction", {}),
+                "semantic": state_dict.get("patterns", {}),
+                "insight": state_dict.get("awareness", {}),
+                "reasoning": state_dict.get("reasoning", {}),
+                "context": {
+                    "memory": state_dict.get("memory", {}),
+                    "knowledge": state_dict.get("knowledge", {}),
+                    "input": state_dict.get("input", {}),
+                },
+                "state": state_dict,
+                "intelligence": intelligence,
+            }
+
+            # Coba decision_engine asli
+            decision_engine = safe_import("core.learning.decision_engine", "decision_engine")
+            if decision_engine is not None and hasattr(decision_engine, "decide"):
+                result = self.execute(decision_engine, "decide", payload)
+                if isinstance(result, dict):
+                    # decide() mengembalikan nested: {"decision": {"action": ..., ...}, ...}
+                    inner = result.get("decision")
+                    if isinstance(inner, dict) and inner.get("action"):
+                        self.metrics["decision_count"] += 1
+                        # Flatten: prioritaskan inner, tapi tetap simpan konteks
+                        merged = {**result, **inner}
+                        return merged
+                    # Fallback: kalau action di top-level
+                    if result.get("action"):
+                        self.metrics["decision_count"] += 1
+                        return result
+
+            # Coba strategy_engine
             if self.strategy_engine is not None:
-                result = self.execute(self.strategy_engine, "decide", state, intelligence)
-                if result is not None:
-                    self.metrics["decision_count"] += 1
-                    return result
+                for method_name in ("decide", "generate", "generate_bias", "analyze"):
+                    if hasattr(self.strategy_engine, method_name):
+                        result = self.execute(self.strategy_engine, method_name, payload)
+                        if isinstance(result, dict) and result:
+                            self.metrics["decision_count"] += 1
+                            return result
 
             return self._simple_decision(intelligence)
 
@@ -2085,9 +2261,9 @@ Berikan analisis yang jernih, reflektif, dan actionable.
         self.metrics["average_processing_time"] = avg_time
         self.metrics["total_processing_time"] += processing_time
 
-        if self.metrics["total_cycles"] > 0:
-            self.metrics["error_rate"] = (self.errors / self.metrics["total_cycles"]) * 100
-            self.metrics["success_rate"] = (self.metrics["successful_cycles"] / self.metrics["total_cycles"]) * 100
+        total = max(1, self.metrics["total_cycles"])
+        self.metrics["error_rate"] = min(100.0, (self.errors / total) * 100)
+        self.metrics["success_rate"] = min(100.0, (self.successful_cycles / total) * 100)
 
         if self.metrics["total_processing_time"] > 0:
             self.metrics["throughput"] = self.metrics["total_cycles"] / self.metrics["total_processing_time"]
@@ -2118,7 +2294,7 @@ Berikan analisis yang jernih, reflektif, dan actionable.
                     progress_increment = 0.5
 
             elif goal["name"] == "build_knowledge_base":
-                if state.knowledge and state.knowledge.get("updated", False):
+                if isinstance(state.knowledge, dict) and state.knowledge.get("updated", False):
                     progress_increment = 0.5
 
             elif goal["name"] == "achieve_market_mastery":
@@ -2484,6 +2660,9 @@ Berikan analisis yang jernih, reflektif, dan actionable.
     def shutdown(self) -> bool:
         try:
             self.stop()
+            if self.self_model is not None:
+                self.self_model.save(force=True)
+                logger.info("🧬 Self model saved on shutdown")
             logger.info("Brain shutdown completed.")
             return True
         except Exception as e:
@@ -2766,3 +2945,111 @@ __all__ = [
     "get_ai_status",
     "self_test",
 ]
+
+
+# ============================================================
+# MONKEY PATCH: AI REASON GENERATOR
+# Ditambahkan untuk integrasi DeepSeek — override method lama
+# ============================================================
+
+def _generate_reason_with_ai_v2(self, decision):
+    """Generate reason via DeepSeek. Fallback ke template kalau error. Cache 5 menit."""
+    try:
+        from core.deepseek import deepseek_ai as _ds
+        if not (DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED and _ds):
+            return decision.get("reason", "")
+    except ImportError:
+        return decision.get("reason", "")
+
+    if not hasattr(self, "_ai_reason_cache"):
+        self._ai_reason_cache = {}
+        self._ai_reason_ttl = 300
+        self._ai_reason_stats = {"hits": 0, "misses": 0, "errors": 0}
+
+    import hashlib, json as _json, time as _time
+    cache_input = {
+        "action": decision.get("action"),
+        "confidence": decision.get("confidence"),
+        "score": decision.get("score"),
+        "sentiment": decision.get("sentiment"),
+        "risk": decision.get("risk"),
+        "conflicts": decision.get("conflicts"),
+    }
+    try:
+        key = hashlib.md5(_json.dumps(cache_input, sort_keys=True, default=str).encode()).hexdigest()[:16]
+    except Exception:
+        key = str(id(cache_input))
+
+    now = _time.time()
+    cached = self._ai_reason_cache.get(key)
+    if cached and (now - cached["ts"]) < self._ai_reason_ttl:
+        self._ai_reason_stats["hits"] += 1
+        return cached["text"]
+
+    try:
+        prompt = (
+            f"Kamu analis trading profesional. Buat narasi 3-4 kalimat "
+            f"dalam Bahasa Indonesia (istilah teknis tetap Inggris) "
+            f"yang menjelaskan keputusan berikut:\n\n"
+            f"- Action    : {decision.get('action')}\n"
+            f"- Confidence: {decision.get('confidence')}%\n"
+            f"- Score     : {decision.get('score')}/100\n"
+            f"- Sentiment : {decision.get('sentiment')}\n"
+            f"- Risk      : {decision.get('risk')}\n"
+            f"- Conflicts : {decision.get('conflicts', {}).get('count', 0)}\n\n"
+            f"Jelaskan mengapa sistem memutuskan action ini dan apa yang "
+            f"perlu dipantau. Langsung ke inti, tanpa pembuka."
+        )
+        ai_text = _ds.ask(question=prompt, max_tokens=250, temperature=0.7)
+        if isinstance(ai_text, str) and len(ai_text.strip()) > 20:
+            self._ai_reason_cache[key] = {"text": ai_text.strip(), "ts": now}
+            self._ai_reason_stats["misses"] += 1
+            if len(self._ai_reason_cache) > 100:
+                oldest = sorted(self._ai_reason_cache.items(), key=lambda x: x[1]["ts"])[:20]
+                for k, _ in oldest:
+                    self._ai_reason_cache.pop(k, None)
+            return ai_text.strip()
+    except Exception as e:
+        logger.debug(f"AI reason error: {e}")
+        self._ai_reason_stats["errors"] += 1
+
+    return decision.get("reason", "")
+
+
+def _get_ai_reason_stats_v2(self):
+    """Statistik AI reason cache."""
+    if not hasattr(self, "_ai_reason_stats"):
+        return {"hits": 0, "misses": 0, "errors": 0, "cache_size": 0}
+    stats = dict(self._ai_reason_stats)
+    stats["cache_size"] = len(getattr(self, "_ai_reason_cache", {}))
+    return stats
+
+
+# Override ke class
+Brain._generate_reason_with_ai = _generate_reason_with_ai_v2
+Brain._get_ai_reason_stats = _get_ai_reason_stats_v2
+
+
+# ============================================================
+# MONKEY PATCH: _decide dengan AI reason
+# ============================================================
+
+_orig_decide = Brain._decide
+
+def _decide_with_ai_v2(self, state):
+    result = _orig_decide(self, state)
+    if isinstance(result, dict):
+        try:
+            ai_reason = self._generate_reason_with_ai(result)
+            if ai_reason and ai_reason != result.get("reason"):
+                result["reason"] = ai_reason
+                result["reason_source"] = "ai"
+            else:
+                result["reason_source"] = "template"
+        except Exception as e:
+            logger.debug(f"AI decide wrapper error: {e}")
+            result["reason_source"] = "template"
+    return result
+
+
+Brain._decide = _decide_with_ai_v2

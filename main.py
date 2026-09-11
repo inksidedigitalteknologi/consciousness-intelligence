@@ -629,6 +629,244 @@ def start_api_server():
             return api_brain_state()
 
         # ============================================================
+        # BRAIN PIPELINE — real stages + modules + meta
+        # ============================================================
+
+        @app.route('/api/brain/pipeline', methods=['GET'])
+        @require_api_key
+        def api_brain_pipeline():
+            try:
+                if not BRAIN_AVAILABLE or not brain:
+                    return jsonify({
+                        'error': 'Brain offline',
+                        'stages': [], 'modules': {}, 'meta': {},
+                        'timestamp': datetime.now().isoformat(),
+                    })
+
+                last = brain.last_result or {}
+
+                def stage_status(key):
+                    if not last:
+                        return 'IDLE'
+                    data = last.get(key, {})
+                    if isinstance(data, dict):
+                        if data.get('is_fallback'):
+                            return 'FALLBACK'
+                        if data.get('error'):
+                            return 'ERROR'
+                        if data.get('status') == 'SUCCESS':
+                            return 'ACTIVE'
+                        return 'ACTIVE' if data else 'IDLE'
+                    if data is True:
+                        return 'ACTIVE'
+                    if data is False or data is None:
+                        return 'OFFLINE'
+                    return 'ACTIVE'
+
+                stages = [
+                    {'name': 'Perception',           'key': 'perception',   'module': 'perception',        'status': stage_status('perception'),   'note': 'Multi-modal input processing'},
+                    {'name': 'Memory',               'key': 'memory',       'module': 'memory',            'status': stage_status('memory'),       'note': 'Short-term & working memory'},
+                    {'name': 'Pattern Recognition',  'key': 'patterns',     'module': 'pattern_engine',    'status': stage_status('patterns'),     'note': 'Universal pattern detection'},
+                    {'name': 'Learning',             'key': 'learning',     'module': 'learning_engine',   'status': stage_status('learning'),     'note': 'Continuous adaptation'},
+                    {'name': 'Reasoning',            'key': 'reasoning',    'module': 'reasoning',         'status': stage_status('reasoning'),    'note': 'Logical deduction & inference'},
+                    {'name': 'Knowledge',            'key': 'knowledge',    'module': 'knowledge',         'status': stage_status('knowledge'),    'note': 'Knowledge base update'},
+                    {'name': 'Consciousness',        'key': 'awareness',    'module': 'consciousness',     'status': stage_status('awareness'),    'note': 'Self-awareness & reflection'},
+                    {'name': 'Prediction',           'key': 'prediction',   'module': 'simulation_engine', 'status': stage_status('prediction'),   'note': 'Forward simulation'},
+                    {'name': 'Decision',             'key': 'decision',     'module': 'strategy_engine',   'status': stage_status('decision'),     'note': 'Multi-criteria decision'},
+                    {'name': 'Feedback',             'key': 'feedback',     'module': 'learning_engine',   'status': stage_status('feedback'),     'note': 'Feedback preparation'},
+                    {'name': 'Goals',                'key': 'metadata',     'module': 'goal_manager',      'status': 'ACTIVE' if brain.goals else 'IDLE', 'note': 'Goal tracking'},
+                ]
+
+                # Tambahkan reason_source info untuk stage Decision
+                dec = last.get('decision', {}) if isinstance(last.get('decision'), dict) else {}
+                for s in stages:
+                    if s['key'] == 'decision':
+                        s['reason_source'] = dec.get('reason_source', 'template')
+                        s['reason_preview'] = (dec.get('reason', '') or '')[:120]
+
+                modules = {
+                    'available': [k for k, v in brain.modules_available.items() if v],
+                    'unavailable': [k for k, v in brain.modules_available.items() if not v],
+                    'total': len(brain.modules_available),
+                    'loaded': brain.available_modules_count,
+                }
+
+                meta = {
+                    'cycles': brain.cycles,
+                    'errors': brain.errors,
+                    'state': brain.state.value,
+                    'success_rate': round(brain.metrics.get('success_rate', 0), 2),
+                    'error_rate': round(brain.metrics.get('error_rate', 0), 2),
+                    'avg_processing_ms': round(brain.metrics.get('average_processing_time', 0) * 1000, 2),
+                    'learning_count': brain.metrics.get('learning_count', 0),
+                    'prediction_count': brain.metrics.get('prediction_count', 0),
+                    'decision_count': brain.metrics.get('decision_count', 0),
+                    'health_score': round(brain.health_score, 2),
+                }
+
+                return jsonify({
+                    'stages': stages,
+                    'modules': modules,
+                    'meta': meta,
+                    'timestamp': datetime.now().isoformat(),
+                })
+
+            except Exception as e:
+                logger.error(f"Brain pipeline error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/brain/reflection', methods=['GET'])
+        @require_api_key
+        def api_brain_reflection():
+            try:
+                if not BRAIN_AVAILABLE or not brain:
+                    return jsonify({'error': 'Brain offline'}), 503
+                refl = brain.reflection()
+                return jsonify({
+                    'awareness': refl.get('awareness', 0.5),
+                    'emotion': refl.get('emotion', 'CALM'),
+                    'curiosity': refl.get('curiosity', 0.5),
+                    'insight_depth': refl.get('insight_depth', 0.5),
+                    'resilience': refl.get('resilience', 0.5),
+                    'focus': refl.get('focus', 0.5),
+                    'confidence': refl.get('confidence', 0.5),
+                    'stability': refl.get('stability', 'UNKNOWN'),
+                    'reflection_quality': refl.get('reflection_quality', 'UNKNOWN'),
+                    'insights': refl.get('insights', [])[:5],
+                    'source': refl.get('source', 'comprehensive'),
+                    'timestamp': datetime.now().isoformat(),
+                })
+            except Exception as e:
+                logger.error(f"Brain reflection error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/brain/self', methods=['GET'])
+        @require_api_key
+        def api_brain_self():
+            """Self-model + performa Inkside — semua data real."""
+            try:
+                if not BRAIN_AVAILABLE or not brain:
+                    return jsonify({'error': 'Brain offline'}), 503
+
+                # === Self model ===
+                sm = getattr(brain, 'self_model', None)
+                self_data = {
+                    'name': sm.get('name', 'Inkside') if sm else 'Inkside',
+                    'birth': sm.get('birth') if sm else None,
+                    'age_cycles': sm.get_age_cycles() if sm else brain.cycles,
+                    'age_days': sm.get_age_days() if sm else 0,
+                    'emotion': sm.get_emotion() if sm else 'CALM',
+                    'narrative': sm.get_narrative() if sm else '',
+                    'experiences_count': len(sm.get('experiences', [])) if sm else 0,
+                    'milestones_count': len(sm.get('milestones', [])) if sm else 0,
+                }
+
+                # === Brain metrics ===
+                metrics = {
+                    'cycles': brain.cycles,
+                    'success_rate': round(brain.metrics.get('success_rate', 0), 2),
+                    'error_rate': round(brain.metrics.get('error_rate', 0), 2),
+                    'decision_count': brain.metrics.get('decision_count', 0),
+                    'learning_count': brain.metrics.get('learning_count', 0),
+                    'prediction_count': brain.metrics.get('prediction_count', 0),
+                    'health_score': round(brain.health_score, 2),
+                }
+
+                # === Decision mix dari knowledge ===
+                decision_mix = {'BUY': 0, 'SELL': 0, 'HOLD': 0, 'OTHER': 0}
+                confidence_sum = 0.0
+                confidence_n = 0
+                ai_reason_count = 0
+                total_decisions_logged = 0
+
+                try:
+                    if KNOWLEDGE_AVAILABLE and knowledge:
+                        items = knowledge.all()
+                        import re as _re
+                        for it in items:
+                            tags = getattr(it, 'tags', []) or []
+                            if not any(t in tags for t in ['brain', 'auto-observe']):
+                                continue
+                            content = getattr(it, 'content', '') or ''
+                            m = _re.search(r'Decision:\s*(\w+)\s*\(conf\s*([\d.]+)%\)', content)
+                            if m:
+                                total_decisions_logged += 1
+                                action = m.group(1).upper()
+                                try:
+                                    conf = float(m.group(2))
+                                except ValueError:
+                                    conf = 0.0
+                                if action in decision_mix:
+                                    decision_mix[action] += 1
+                                else:
+                                    decision_mix['OTHER'] += 1
+                                confidence_sum += conf
+                                confidence_n += 1
+                except Exception as e:
+                    logger.debug(f"Decision mix error: {e}")
+
+                # === AI reason stats ===
+                ai_stats = {}
+                try:
+                    if hasattr(brain, '_get_ai_reason_stats'):
+                        ai_stats = brain._get_ai_reason_stats()
+                except Exception:
+                    pass
+
+                ai_usage = 0
+                if total_decisions_logged > 0:
+                    ai_usage = round((ai_stats.get('hits', 0) + ai_stats.get('misses', 0)) / total_decisions_logged * 100, 1)
+
+                performance = {
+                    'total_decisions_logged': total_decisions_logged,
+                    'decision_mix': decision_mix,
+                    'avg_confidence': round(confidence_sum / confidence_n, 2) if confidence_n > 0 else 0,
+                    'ai_reason_stats': ai_stats,
+                    'ai_usage_pct': ai_usage,
+                }
+
+                # === Knowledge growth ===
+                knowledge_data = {}
+                try:
+                    if KNOWLEDGE_AVAILABLE and knowledge:
+                        stats = knowledge.stats()
+                        knowledge_data = {
+                            'total': stats.total,
+                            'categories': len(stats.by_category) if hasattr(stats, 'by_category') else 0,
+                            'ai_enhanced': stats.ai_enhanced_count if hasattr(stats, 'ai_enhanced_count') else 0,
+                        }
+                except Exception:
+                    pass
+
+                return jsonify({
+                    'self': self_data,
+                    'metrics': metrics,
+                    'performance': performance,
+                    'knowledge': knowledge_data,
+                    'timestamp': datetime.now().isoformat(),
+                })
+            except Exception as e:
+                logger.error(f"Brain self error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/brain/ai/status', methods=['GET'])
+        @require_api_key
+        def api_brain_ai_status():
+            try:
+                ai_enabled = DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED
+                stats = {}
+                if BRAIN_AVAILABLE and brain and hasattr(brain, '_get_ai_reason_stats'):
+                    stats = brain._get_ai_reason_stats()
+                return jsonify({
+                    'enabled': ai_enabled,
+                    'model': 'deepseek-chat' if ai_enabled else None,
+                    'reason_stats': stats,
+                    'timestamp': datetime.now().isoformat(),
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        # ============================================================
         # PERFORMANCE ENDPOINTS
         # ============================================================
         
@@ -2052,6 +2290,74 @@ def start_consciousness_scheduler():
 # MAIN HEADLESS FUNCTION
 # ============================================================
 
+# ============================================================
+# BRAIN OBSERVE SCHEDULER
+# ============================================================
+
+def brain_observe_scheduler():
+    """Observe input tiap 60 detik. Input bervariasi (trading + non-trading)."""
+    logger.info("🧠 Brain Observe Scheduler started (60s interval)")
+    time.sleep(30)  # tunggu backend stabil dulu
+
+    # Sample input non-trading (termasuk reflection)
+    NON_TRADING_SAMPLES = [
+        {"question": "Apa itu machine learning?", "type": "query"},
+        {"event": "user_query", "source": "web", "priority": 0.6},
+        {"command": "analyze", "target": "text", "content": "Sample text for analysis"},
+        {"text": "Refleksi: apa yang dipelajari hari ini?", "type": "reflection"},
+        {"note": "Reflection checkpoint", "mood": "calm", "depth": "medium"},
+        {"prompt": "Reflect on recent decision patterns", "type": "reflection"},
+        {"prompt": "Tulis ringkasan tentang AI", "type": "creative"},
+        {"text": "Neural network adalah...", "category": "AI", "type": "knowledge"},
+    ]
+
+    # Sample input trading
+    TRADING_SAMPLES = [
+        {"symbol": "BTC/USD", "signal": "bullish", "confidence": 0.85},
+        {"symbol": "ETH/USD", "signal": "bearish", "confidence": 0.72},
+        {"symbol": "AAPL", "signal": "neutral", "confidence": 0.55},
+    ]
+
+    cycle_errors = 0
+
+    while not _shutdown_flag.is_set():
+        try:
+            if not (BRAIN_AVAILABLE and brain):
+                time.sleep(60)
+                continue
+
+            # Pilih input: 50% trading, 50% non-trading
+            if random.random() < 0.5:
+                data = dict(random.choice(TRADING_SAMPLES))
+                data["confidence"] = round(random.uniform(0.3, 0.95), 2)
+                data["signal"] = random.choice(["bullish", "bearish", "neutral"])
+            else:
+                data = dict(random.choice(NON_TRADING_SAMPLES))
+
+            # Observe
+            result = brain.observe(data)
+            dec = (result or {}).get("decision", {}) or {}
+            action = dec.get("action", "?")
+            source = dec.get("reason_source", "?")
+            inp_type = data.get("type") or ("market" if "symbol" in data else "generic")
+
+            logger.info(
+                f"🧠 Brain cycle #{brain.cycles} | input={inp_type} | "
+                f"action={action} | reason={source} | errors={brain.errors}"
+            )
+            cycle_errors = 0
+
+        except Exception as e:
+            cycle_errors += 1
+            logger.error(f"❌ Brain observe error (#{cycle_errors}): {e}")
+
+        # Interval 60 detik
+        for _ in range(60):
+            if _shutdown_flag.is_set():
+                break
+            time.sleep(1)
+
+
 def main_headless():
     global engine_running
 
@@ -2086,6 +2392,17 @@ def main_headless():
         logger.warning(f"⚠️ Auto-Cleanup failed: {e}")
 
     start_consciousness_scheduler()
+
+    # Brain Observe Scheduler — supaya pipeline hidup
+    try:
+        brain_observe_thread = threading.Thread(
+            target=brain_observe_scheduler, daemon=True
+        )
+        brain_observe_thread.start()
+        logger.info("✅ Brain Observe Scheduler started")
+    except Exception as e:
+        logger.warning(f"⚠️ Brain Observe Scheduler failed: {e}")
+
 
     logger.info("=" * 60)
     logger.info("  ✅ SYSTEM READY")

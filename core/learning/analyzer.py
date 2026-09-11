@@ -2362,3 +2362,8 @@ __all__ = [
 # END
 #
 # ============================================================
+# ============================================================
+# BRAIN COMPATIBILITY ALIAS
+# ============================================================
+# core/brain.py imports: safe_import("core.learning.analyzer", "analyzer")
+analyzer = learning_analyzer

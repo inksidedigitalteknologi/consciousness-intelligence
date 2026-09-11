@@ -371,50 +371,52 @@ class DecisionEngine:
         reasoning=None
     ):
 
-        values = []
+        # Weighted confidence: prioritaskan analysis (data real),
+        # kurangi bobot sumber default (prediction, reasoning).
+        weights = {
+            "analysis": 0.5,
+            "prediction": 0.2,
+            "insight": 0.2,
+            "reasoning": 0.1,
+        }
 
-        sources = [
-            analysis,
-            prediction,
-            insight,
-            reasoning
+        weighted_sum = 0.0
+        total_weight = 0.0
+
+        named_sources = [
+            ("analysis", analysis),
+            ("prediction", prediction),
+            ("insight", insight),
+            ("reasoning", reasoning),
         ]
 
-        for source in sources:
+        for name, source in named_sources:
 
-            if not isinstance(
-                source,
-                dict
-            ):
+            if not isinstance(source, dict):
                 continue
 
-            value = source.get(
-                "confidence"
-            )
+            value = source.get("confidence")
 
             if value is None:
+                value = source.get("score")
 
-                value = source.get(
-                    "score"
-                )
+            if isinstance(value, (int, float)):
 
-            if isinstance(
-                value,
-                (int, float)
-            ):
+                normalized = self.normalize_confidence(value)
 
-                values.append(
-                    self.normalize_confidence(
-                        value
-                    )
-                )
+                # Abaikan sumber dengan confidence sangat rendah (< 20)
+                if normalized < 20:
+                    continue
 
-        if not values:
+                w = weights.get(name, 0.25)
+                weighted_sum += normalized * w
+                total_weight += w
 
-            return 0.0
+        if total_weight == 0.0:
+            return 50.0  # default netral, bukan 0
 
         return round(
-            mean(values),
+            weighted_sum / total_weight,
             2
         )
 
@@ -1309,3 +1311,102 @@ __all__ = [
 # END
 #
 # ============================================================
+
+# ============================================================
+# MONKEY PATCH: generate_reason v2 (hybrid narrative)
+# Ditambahkan oleh patch — override method lama
+# ============================================================
+
+def _generate_reason_v2(self, action, sentiment, confidence, score, risk, conflicts):
+    """
+    Narasi hybrid: ringkasan paragraf + bullet detail.
+    Deterministik — tidak ada random.
+    """
+    buy_thr = getattr(self, "buy_threshold", 70)
+    sell_thr = getattr(self, "sell_threshold", 30)
+    min_conf = getattr(self, "min_confidence", 50)
+
+    header = (
+        f"{action} @ confidence {confidence:.1f}% "
+        f"(score {score:.1f}, risk {risk}). "
+    )
+
+    if sentiment == "positive":
+        ctx = "Sentimen pasar positive"
+    elif sentiment == "negative":
+        ctx = "Sentimen pasar negative"
+    else:
+        ctx = "Sentimen pasar netral"
+
+    if action == "BUY":
+        eval_sentence = (
+            f"Confidence berada di atas BUY threshold ({buy_thr}%), "
+            f"sehingga sistem merekomendasikan entry."
+        )
+    elif action == "SELL":
+        inv_score = 100 - score
+        eval_sentence = (
+            f"Sentimen negative dengan skor invers {inv_score:.1f} "
+            f"(100 - score) memenuhi SELL threshold ({sell_thr}) — "
+            f"sistem merekomendasikan exit."
+        )
+    elif action == "HOLD":
+        if confidence >= min_conf:
+            eval_sentence = (
+                f"Confidence di atas minimum ({min_conf}%) namun "
+                f"belum mencapai BUY threshold ({buy_thr}%) — "
+                f"sistem merekomendasikan menahan posisi."
+            )
+        else:
+            eval_sentence = (
+                f"Confidence di bawah minimum threshold ({min_conf}%) — "
+                f"tidak cukup kuat untuk entry. Sistem merekomendasikan HOLD."
+            )
+    else:
+        eval_sentence = (
+            f"Sistem merekomendasikan {action} sambil memantau konfirmasi lanjutan."
+        )
+
+    summary = f"{header}{ctx}. {eval_sentence}"
+
+    risk_desc = {
+        "LOW": "volatilitas terkendali",
+        "MEDIUM": "volatilitas moderat, perlu kehati-hatian",
+        "HIGH": "volatilitas tinggi, risiko signifikan",
+    }.get(risk, "level risiko tidak diketahui")
+
+    bullets = []
+    bullets.append(f"\u2022 Sentiment  : {sentiment}")
+    bullets.append(f"\u2022 Score      : {score:.1f} / 100")
+    bullets.append(
+        f"\u2022 Threshold  : buy={buy_thr}, sell={sell_thr}, "
+        f"min_conf={min_conf}"
+    )
+    bullets.append(f"\u2022 Risk       : {risk} — {risk_desc}")
+
+    if isinstance(conflicts, dict):
+        detected = conflicts.get("detected", False)
+        count = conflicts.get("count", 0)
+        types = conflicts.get("types", [])
+        if detected:
+            types_str = ", ".join(str(t) for t in types[:3]) if types else "unknown"
+            bullets.append(f"\u2022 Conflicts  : {count} terdeteksi ({types_str})")
+        else:
+            bullets.append("\u2022 Conflicts  : tidak ada konflik terdeteksi")
+    else:
+        bullets.append("\u2022 Conflicts  : N/A")
+
+    if action in ("BUY", "SELL"):
+        bullets.append(
+            f"\u2022 Action     : {action} — kondisi memenuhi syarat threshold"
+        )
+    elif action == "HOLD":
+        bullets.append("\u2022 Action     : HOLD — menunggu konfirmasi tambahan")
+    else:
+        bullets.append(f"\u2022 Action     : {action}")
+
+    return summary + "\n\n" + "\n".join(bullets)
+
+
+# Override method lama
+DecisionEngine.generate_reason = _generate_reason_v2

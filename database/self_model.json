@@ -1,0 +1,743 @@
+{
+  "name": "Inkside",
+  "birth": "2026-09-10T11:52:37.315946",
+  "version": "1.0",
+  "age": {
+    "cycles": 906,
+    "days": 0,
+    "first_seen": "2026-09-10T11:52:37.315946"
+  },
+  "identity": {
+    "type": "Cognitive Assistant",
+    "purpose": "Personal assistant with simulated consciousness",
+    "traits": [
+      "curious",
+      "calm",
+      "attentive"
+    ]
+  },
+  "user": {
+    "known_since": null,
+    "name": null,
+    "preferences": {},
+    "interaction_count": 0
+  },
+  "experiences": [
+    {
+      "cycle": 1,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
+      "timestamp": "2026-09-10T11:53:14.253344",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 15,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
+      "timestamp": "2026-09-10T12:07:15.623923",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 16,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
+      "timestamp": "2026-09-10T12:08:15.775475",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 49,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
+      "timestamp": "2026-09-10T12:41:18.729491",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 50,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
+      "timestamp": "2026-09-10T12:42:18.772318",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 51,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
+      "timestamp": "2026-09-10T12:43:18.870211",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 52,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
+      "timestamp": "2026-09-10T12:44:18.980639",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 61,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
+      "timestamp": "2026-09-10T12:53:19.803568",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 62,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
+      "timestamp": "2026-09-10T12:54:19.939352",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 80,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
+      "timestamp": "2026-09-10T13:12:21.794249",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 81,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
+      "timestamp": "2026-09-10T13:13:21.871527",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 98,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
+      "timestamp": "2026-09-10T13:30:23.256016",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 99,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
+      "timestamp": "2026-09-10T13:31:23.373604",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 136,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
+      "timestamp": "2026-09-10T14:08:26.429572",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 137,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
+      "timestamp": "2026-09-10T14:09:26.499268",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 155,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T14:27:16.347901",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 168,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T14:40:17.851882",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 169,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T14:41:17.937076",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 176,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T14:48:18.560003",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 177,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T14:49:18.691622",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 199,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T15:11:20.854378",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 200,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T15:12:20.943678",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 210,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T15:22:21.786573",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 211,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T15:23:21.860342",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 215,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T15:27:22.182599",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 216,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T15:28:22.266373",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 219,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T15:31:22.524207",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 220,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T15:32:22.589754",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 343,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T17:35:33.187648",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 344,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T17:36:33.803444",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 388,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T18:20:37.213061",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 389,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T18:21:37.266330",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 449,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T19:21:43.460227",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 450,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T19:22:43.600253",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 497,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T20:09:49.039034",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 498,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T20:10:49.170533",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 499,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T20:11:49.255490",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 500,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T20:12:49.330054",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 519,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T20:31:51.066675",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 520,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T20:32:51.233561",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 532,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T20:44:52.567429",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 533,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T20:45:52.657937",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 560,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T21:12:54.990609",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 561,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T21:13:55.088552",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 614,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T22:07:00.481849",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 616,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T22:09:00.664314",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 618,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T22:11:00.984668",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 619,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T22:12:01.055492",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 632,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T22:25:02.341403",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 633,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T22:26:02.380275",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 682,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T23:15:06.616434",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 683,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T23:16:06.666241",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 699,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T23:32:08.260144",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 700,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T23:33:08.371487",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 702,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T23:35:08.605874",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 703,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T23:36:08.760809",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 714,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T23:47:09.890936",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 715,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-10T23:48:10.010540",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 728,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-11T00:01:11.369028",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 729,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-11T00:02:11.477489",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 730,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-11T00:03:11.551225",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 751,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-11T00:24:13.209911",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 752,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-11T00:25:13.318784",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 759,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-11T00:32:14.145350",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 760,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-11T00:33:14.174461",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 775,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-11T00:48:15.417385",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 776,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-11T00:49:15.458352",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 810,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-11T01:23:18.981791",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 811,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
+      "timestamp": "2026-09-11T01:24:19.094602",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 813,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43% dengan score 50/100 menandakan sinyal bullish dan bearish masih berimbang, sehingga HOLD menjadi keputusan paling rasional diband",
+      "timestamp": "2026-09-11T01:26:23.578124",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 833,
+      "event": "decision_HOLD",
+      "details": "Sinyal saat ini tidak konklusif dengan Score 50.0/100 dan Confidence hanya 43.33%, sehingga tidak ada cukup edge untuk entry maupun exit posisi. Senti",
+      "timestamp": "2026-09-11T01:46:28.244264",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 837,
+      "event": "decision_BUY",
+      "details": "Sinyal saat ini tidak konklusif dengan Score 50.0/100 dan Confidence hanya 43.33%, sehingga tidak ada cukup edge untuk entry maupun exit posisi. Senti",
+      "timestamp": "2026-09-11T01:50:28.759860",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 838,
+      "event": "decision_HOLD",
+      "details": "Sinyal saat ini tidak konklusif dengan Score 50.0/100 dan Confidence hanya 43.33%, sehingga tidak ada cukup edge untuk entry maupun exit posisi. Senti",
+      "timestamp": "2026-09-11T01:51:28.902641",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 839,
+      "event": "decision_SELL",
+      "details": "Sinyal saat ini tidak konklusif dengan Score 50.0/100 dan Confidence hanya 43.33%, sehingga tidak ada cukup edge untuk entry maupun exit posisi. Senti",
+      "timestamp": "2026-09-11T01:52:29.038067",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 840,
+      "event": "decision_HOLD",
+      "details": "Sinyal saat ini tidak konklusif dengan Score 50.0/100 dan Confidence hanya 43.33%, sehingga tidak ada cukup edge untuk entry maupun exit posisi. Senti",
+      "timestamp": "2026-09-11T01:53:29.109950",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 851,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:04:54.972503",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 853,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:06:55.159525",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 854,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:07:55.328526",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 856,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:09:55.658303",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 857,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:10:55.727922",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 858,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:11:55.893115",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 861,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:14:56.184412",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 862,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:15:56.251901",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 866,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:19:56.613431",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 867,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:20:56.679337",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 872,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:25:57.350587",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 873,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:26:57.425409",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 876,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:29:57.846260",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 877,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:30:57.886961",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 888,
+      "event": "decision_BUY",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:41:58.774958",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 889,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:42:58.857855",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 892,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:45:59.250883",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 893,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:46:59.297315",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 897,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:50:59.719198",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 898,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:51:59.780639",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 900,
+      "event": "decision_SELL",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:53:59.966943",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 902,
+      "event": "decision_HOLD",
+      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
+      "timestamp": "2026-09-11T02:56:00.040913",
+      "emotion": "CALM"
+    }
+  ],
+  "milestones": [
+    {
+      "cycle": 0,
+      "event": "birth",
+      "timestamp": "2026-09-10T11:52:37.315946"
+    },
+    {
+      "cycle": 10,
+      "event": "reached_cycle_10",
+      "timestamp": "2026-09-10T12:02:15.084094"
+    },
+    {
+      "cycle": 50,
+      "event": "reached_cycle_50",
+      "timestamp": "2026-09-10T12:42:18.772296"
+    },
+    {
+      "cycle": 100,
+      "event": "reached_cycle_100",
+      "timestamp": "2026-09-10T13:32:23.490041"
+    },
+    {
+      "cycle": 500,
+      "event": "reached_cycle_500",
+      "timestamp": "2026-09-10T20:12:49.329968"
+    }
+  ],
+  "narrative": "Aku Inkside. Baru lahir. Belum tahu apa-apa. Akan belajar dari setiap cycle.",
+  "current_emotion": "CALM",
+  "last_save": "2026-09-11T03:00:00.564281",
+  "metrics": {
+    "successful_cycles": 906,
+    "decision_count": 906,
+    "error_count": 0,
+    "learning_count": 906,
+    "prediction_count": 906
+  }
+}

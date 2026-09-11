@@ -1227,3 +1227,8 @@ __all__ = [
 #
 # END
 # ============================================================
+# ============================================================
+# BRAIN COMPATIBILITY ALIAS
+# ============================================================
+# core/brain.py imports: safe_import("core.learning.simulation", "simulation")
+simulation = simulation_engine

@@ -1165,3 +1165,8 @@ __all__ = [
 # END
 #
 # ============================================================
+# ============================================================
+# BRAIN COMPATIBILITY ALIAS
+# ============================================================
+# core/brain.py imports: safe_import("core.learning.strategy", "strategy")
+strategy = strategy_engine
