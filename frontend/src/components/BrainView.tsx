@@ -419,11 +419,7 @@ export const BrainView: React.FC<BrainViewProps> = ({
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <span className="font-bold text-white text-xs">{s.name}</span>
-                                  {isDecision && s.reason_source === 'ai' && (
-                                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/20 font-bold">
-                                      ✨ AI
-                                    </span>
-                                  )}
+
                                 </div>
                                 <p className="text-[10px] text-[#8D9AAA] truncate">{s.note}</p>
                               </div>
@@ -664,11 +660,6 @@ export const BrainView: React.FC<BrainViewProps> = ({
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-4 h-4 text-purple-400" />
                     <span className="text-xs font-bold text-white uppercase tracking-wider">Latest Decision</span>
-                    {latestDecision.reason_source === 'ai' && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/20 font-bold">
-                        ✨ AI
-                      </span>
-                    )}
                   </div>
                   <div className="text-[11px] text-[#E8EDF2] leading-relaxed whitespace-pre-line">
                     {latestDecision.reason_preview}
@@ -706,12 +697,12 @@ export const BrainView: React.FC<BrainViewProps> = ({
                       <div className="text-[9px] text-[#5F6B78]">dari log</div>
                     </div>
                     <div className="p-2.5 rounded-lg bg-[#1A2530] border border-[#26313D]">
-                      <div className="text-[10px] text-[#8D9AAA]">AI Usage</div>
-                      <div className="text-sm font-bold text-purple-400 font-mono">
-                        {selfData.performance.ai_usage_pct.toFixed(0)}%
+                      <div className="text-[10px] text-[#8D9AAA]">Reason Mode</div>
+                      <div className="text-sm font-bold text-cyan-400 font-mono">
+                        TEMPLATE
                       </div>
                       <div className="text-[9px] text-[#5F6B78]">
-                        {selfData.performance.ai_reason_stats?.hits || 0} cache hits
+                        deterministic
                       </div>
                     </div>
                   </div>

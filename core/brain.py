@@ -1128,10 +1128,12 @@ class Brain:
                         self.metrics["decision_count"] += 1
                         # Flatten: prioritaskan inner, tapi tetap simpan konteks
                         merged = {**result, **inner}
+                        merged["reason_source"] = "template"
                         return merged
                     # Fallback: kalau action di top-level
                     if result.get("action"):
                         self.metrics["decision_count"] += 1
+                        result["reason_source"] = "template"
                         return result
 
             # Coba strategy_engine
@@ -3052,4 +3054,4 @@ def _decide_with_ai_v2(self, state):
     return result
 
 
-Brain._decide = _decide_with_ai_v2
+# Brain._decide = _decide_with_ai_v2  # DISABLED: template-only, hemat token
