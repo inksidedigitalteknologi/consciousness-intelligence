@@ -116,59 +116,79 @@ class DividendModule:
     def fetch(self, date: str = None, force: bool = False) -> pd.DataFrame:
         """
         Ambil data dividen dari Nasdaq API.
-
-        Args:
-            date: Tanggal dalam format YYYY-MM-DD (default: hari ini)
-            force: Force refresh meskipun ada cache
-
-        Returns:
-            DataFrame dengan data dividen
+        Kalau tanggal tidak ada data (weekend/holiday), cari tanggal kerja terdekat.
         """
         if date is None:
-            date = datetime.now().strftime("%Y-%m-%d")
+            base_date = datetime.now()
+        else:
+            try:
+                base_date = datetime.strptime(date, "%Y-%m-%d")
+            except Exception:
+                base_date = datetime.now()
 
-        cache_key = f"dividend_{date}"
+        if base_date.weekday() >= 5:
+            days_back = base_date.weekday() - 4
+            base_date = base_date - timedelta(days=days_back)
+
+        date_str = base_date.strftime("%Y-%m-%d")
+        cache_key = f"dividend_{date_str}"
+
         if not force and self._is_cache_valid(cache_key):
-            logger.info(f"📊 Using cached dividend data for {date}")
+            logger.info(f"[CACHE] Using cached dividend data for {date_str}")
             return self._cache[cache_key]
 
-        logger.info(f"📊 Fetching dividends for {date}...")
+        logger.info(f"[FETCH] Fetching dividends for {date_str}...")
 
-        try:
-            url = f"{NASDAQ_DIVIDEND_API}?date={date}"
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                "Accept": "application/json"
-            }
-            response = requests.get(url, headers=headers, timeout=15)
+        dates_to_try = [base_date]
+        for offset in range(1, 8):
+            dates_to_try.append(base_date - timedelta(days=offset))
+            dates_to_try.append(base_date + timedelta(days=offset))
 
-            if response.status_code == 200:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Origin": "https://www.nasdaq.com",
+            "Referer": "https://www.nasdaq.com/",
+        }
+
+        for try_date in dates_to_try:
+            if try_date.weekday() >= 5:
+                continue
+
+            try_date_str = try_date.strftime("%Y-%m-%d")
+
+            try:
+                url = f"{NASDAQ_DIVIDEND_API}?date={try_date_str}"
+                response = requests.get(url, headers=headers, timeout=15)
+
+                if response.status_code != 200:
+                    continue
+
                 data = response.json()
                 calendar = data.get('data', {}).get('calendar', {})
                 rows = calendar.get('rows', [])
-                
+
                 if not rows:
-                    logger.warning(f"No rows found for {date}, using fallback")
-                    return self._fallback_data(date)
-                
+                    continue
+
+                logger.info(f"[OK] Found {len(rows)} rows for {try_date_str}")
+
                 records = []
                 for item in rows:
-                    symbol = item.get('symbol', '')
-                    name = item.get('companyName', '')
-                    dividend = float(item.get('dividend_Rate', 0))
-                    ex_date_raw = item.get('dividend_Ex_Date', '')
-                    pay_date_raw = item.get('payment_Date', '')
-                    record_date_raw = item.get('record_Date', '')
-                    announcement_date_raw = item.get('announcement_Date', '')
-                    annual_dividend = float(item.get('indicated_Annual_Dividend', 0))
-                    
-                    ex_date = self._parse_date(ex_date_raw)
-                    pay_date = self._parse_date(pay_date_raw)
-                    record_date = self._parse_date(record_date_raw)
-                    announcement_date = self._parse_date(announcement_date_raw)
+                    symbol = item.get('symbol', '') or ''
+                    name = item.get('companyName', '') or ''
+                    dividend = float(item.get('dividend_Rate', 0) or 0)
+                    annual_dividend = float(item.get('indicated_Annual_Dividend', 0) or 0)
+
+                    ex_date = self._parse_date(item.get('dividend_Ex_Date', ''))
+                    pay_date = self._parse_date(item.get('payment_Date', ''))
+                    record_date = self._parse_date(item.get('record_Date', ''))
+                    announcement_date = self._parse_date(item.get('announcement_Date', ''))
+
                     sector = self._guess_sector(symbol, name)
                     frequency = self._guess_frequency(dividend, annual_dividend)
-                    
+
                     records.append({
                         'symbol': symbol,
                         'name': name,
@@ -181,30 +201,22 @@ class DividendModule:
                         'sector': sector,
                         'frequency': frequency,
                         'type': 'Cash',
-                        'source': 'nasdaq'
+                        'source': 'nasdaq',
                     })
-                
+
                 self.df = pd.DataFrame(records)
                 self.last_update = datetime.now()
                 self._set_cache(cache_key, self.df)
-                
-                # Run analysis
                 self._analyze_all()
-
-                logger.info(f"✅ Found {len(records)} dividends for {date}")
                 return self.df
 
-            else:
-                logger.warning(f"⚠️ API error {response.status_code}, using fallback data")
-                return self._fallback_data(date)
+            except Exception as e:
+                logger.warning(f"[WARN] Failed for {try_date_str}: {e}")
+                continue
 
-        except Exception as e:
-            logger.error(f"❌ Fetch error: {e}, using fallback data")
-            return self._fallback_data(date)
+        logger.warning(f"[WARN] No data for any date near {date_str}, using fallback")
+        return self._fallback_data(date_str)
 
-    # ============================================================
-    # COMPREHENSIVE ANALYSIS
-    # ============================================================
 
     def _analyze_all(self) -> None:
         """Analisis semua data dividen."""

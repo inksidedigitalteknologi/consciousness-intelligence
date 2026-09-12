@@ -46,7 +46,7 @@ import { WebSocketProvider, useWebSocket, useWebSocketChannel, useWebSocketStatu
 // ============================================================
 
 const PAGE_STORAGE_KEY = 'inkside_current_page';
-const API_KEY = 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ';
+const API_KEY = 'iks_612d40ce554b1670525355c85567f823';
 const REFRESH_INTERVAL = 30000;
 const MAX_RETRY_COUNT = 5;
 

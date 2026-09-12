@@ -1378,6 +1378,231 @@ def start_api_server():
                 return jsonify({'error': str(e)}), 500
 
         # ============================================================
+        # DIVIDEND HISTORY & TRAP DETECTOR
+        # ============================================================
+
+        @app.route('/api/dividend/history/<symbol>', methods=['GET'])
+        @require_api_key
+        def dividend_history_endpoint(symbol):
+            """Get dividend history for a symbol."""
+            try:
+                from core.dividend_history import get_dividend_history
+                result = get_dividend_history(symbol)
+                return jsonify({
+                    'status': 'success',
+                    'data': result,
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                logger.error(f"Dividend history error for {symbol}: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/dividend/trap-analysis/<symbol>', methods=['GET'])
+        @require_api_key
+        def dividend_trap_analysis_endpoint(symbol):
+            """Get dividend trap analysis for a symbol."""
+            try:
+                from core.dividend_trap import analyze_trap
+                result = analyze_trap(symbol)
+                return jsonify({
+                    'status': 'success',
+                    'data': result,
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                logger.error(f"Trap analysis error for {symbol}: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/dividend/trap-screener', methods=['POST'])
+        @require_api_key
+        def dividend_trap_screener_endpoint():
+            """Screen stocks by trap score."""
+            try:
+                data = request.get_json() or {}
+                symbols = data.get('symbols', [])
+                max_trap_score = int(data.get('max_trap_score', 100))
+                min_trap_score = int(data.get('min_trap_score', 0))
+                category_filter = data.get('category', None)
+
+                if not symbols:
+                    return jsonify({'error': 'symbols list is required'}), 400
+
+                from core.dividend_trap import DividendTrapDetector
+
+                results = []
+                for sym in symbols:
+                    try:
+                        d = DividendTrapDetector(sym)
+                        a = d.analyze()
+
+                        if not (min_trap_score <= a.trap_score <= max_trap_score):
+                            continue
+                        if category_filter and a.category != category_filter:
+                            continue
+
+                        results.append({
+                            'symbol': a.symbol,
+                            'name': a.name,
+                            'sector': a.sector,
+                            'trap_score': a.trap_score,
+                            'category': a.category,
+                            'recommendation': a.recommendation,
+                            'current_yield': a.current_yield,
+                            'payout_ratio': a.payout_ratio,
+                            'streak_years': a.streak_years,
+                            'cut_count': a.cut_count,
+                            'cagr_5y': a.cagr_5y,
+                            'cagr_10y': a.cagr_10y,
+                            'is_king': a.is_king,
+                            'is_aristocrat': a.is_aristocrat,
+                            'is_champion': a.is_champion,
+                            'red_flags_count': len(a.red_flags),
+                            'green_flags_count': len(a.green_flags),
+                            'red_flags': a.red_flags,
+                            'green_flags': a.green_flags,
+                        })
+                    except Exception as e:
+                        logger.warning(f"Trap screener skip {sym}: {e}")
+                        continue
+
+                results.sort(key=lambda x: x['trap_score'])
+
+                return jsonify({
+                    'status': 'success',
+                    'count': len(results),
+                    'data': results,
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                logger.error(f"Trap screener error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/dividend/trap-screener/top', methods=['GET'])
+        @require_api_key
+        def dividend_trap_screener_top():
+            """Screen top dividend stocks for trap analysis."""
+            try:
+                if not DIVIDEND_AVAILABLE or not dividend:
+                    return jsonify({'error': 'Dividend module not available'}), 503
+
+                if dividend.df.empty:
+                    dividend.fetch()
+
+                # Ambil top 20 dividend stocks
+                top_df = dividend.get_top(20)
+                if top_df.empty:
+                    return jsonify({'status': 'success', 'count': 0, 'data': []})
+
+                symbols = top_df['symbol'].tolist()
+
+                from core.dividend_trap import DividendTrapDetector
+                results = []
+                for sym in symbols:
+                    try:
+                        d = DividendTrapDetector(sym)
+                        a = d.analyze()
+                        results.append({
+                            'symbol': a.symbol,
+                            'name': a.name,
+                            'sector': a.sector,
+                            'trap_score': a.trap_score,
+                            'category': a.category,
+                            'recommendation': a.recommendation,
+                            'current_yield': a.current_yield,
+                            'payout_ratio': a.payout_ratio,
+                            'streak_years': a.streak_years,
+                            'cut_count': a.cut_count,
+                            'cagr_5y': a.cagr_5y,
+                            'cagr_10y': a.cagr_10y,
+                            'is_king': a.is_king,
+                            'is_aristocrat': a.is_aristocrat,
+                            'is_champion': a.is_champion,
+                            'red_flags_count': len(a.red_flags),
+                            'green_flags_count': len(a.green_flags),
+                            'red_flags': a.red_flags,
+                            'green_flags': a.green_flags,
+                        })
+                    except Exception as e:
+                        logger.warning(f"Trap screener top skip {sym}: {e}")
+                        continue
+
+                results.sort(key=lambda x: x['trap_score'])
+                return jsonify({
+                    'status': 'success',
+                    'count': len(results),
+                    'data': results,
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                logger.error(f"Trap screener top error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        # ============================================================
+        # DIVIDEND OPPORTUNITY (with Brain integration)
+        # ============================================================
+
+        @app.route('/api/dividend/opportunity/<symbol>', methods=['GET'])
+        @require_api_key
+        def dividend_opportunity_endpoint(symbol):
+            """Get dividend opportunity with brain analysis, timing, and strategy."""
+            try:
+                from core.dividend_brain import DividendBrain
+                from dataclasses import asdict
+
+                brain_instance = brain if BRAIN_AVAILABLE else None
+                db = DividendBrain(brain_instance)
+                result = db.analyze_opportunity(symbol)
+
+                return jsonify({
+                    'status': 'success',
+                    'data': asdict(result),
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                logger.error(f"Dividend opportunity error for {symbol}: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/dividend/opportunities', methods=['POST'])
+        @require_api_key
+        def dividend_opportunities_bulk():
+            """Get dividend opportunities for multiple symbols."""
+            try:
+                from core.dividend_brain import DividendBrain
+                from dataclasses import asdict
+
+                data = request.get_json() or {}
+                symbols = data.get('symbols', [])
+
+                if not symbols:
+                    return jsonify({'error': 'symbols list is required'}), 400
+
+                brain_instance = brain if BRAIN_AVAILABLE else None
+                db = DividendBrain(brain_instance)
+
+                results = []
+                for sym in symbols[:50]:  # max 50
+                    try:
+                        opp = db.analyze_opportunity(sym)
+                        results.append(asdict(opp))
+                    except Exception as e:
+                        logger.warning(f"Skip {sym}: {e}")
+                        continue
+
+                # Sort by strategy priority
+                priority = {'BUY_BEFORE_EX': 0, 'BUY_NOW': 1, 'WAIT': 2, 'SKIP': 3}
+                results.sort(key=lambda x: priority.get(x.get('strategy', 'WAIT'), 5))
+
+                return jsonify({
+                    'status': 'success',
+                    'count': len(results),
+                    'data': results,
+                    'timestamp': datetime.now().isoformat()
+                })
+            except Exception as e:
+                logger.error(f"Dividend opportunities bulk error: {e}")
+                return jsonify({'error': str(e)}), 500
+
+        # ============================================================
         # AI ENDPOINTS
         # ============================================================
 
