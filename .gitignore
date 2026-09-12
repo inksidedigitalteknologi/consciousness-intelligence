@@ -269,3 +269,10 @@ database/state_cache.json
 # Patch & deploy scripts
 *.patch
 frontend/deploy.sh
+
+# Backup files — jangan di-track
+*.bak
+*.bak.*
+*.bak_*
+*.backup
+*.old
