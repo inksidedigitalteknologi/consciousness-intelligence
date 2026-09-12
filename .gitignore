@@ -258,3 +258,5 @@ database/knowledge_backups/
 # Data files yang tidak perlu di-commit
 database/archive.json
 database/state_cache.json
+database/self_model.json
+database/knowledge_index.json
