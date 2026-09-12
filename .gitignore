@@ -225,10 +225,6 @@ database/backup/
 database/archive.json
 database/state_cache.json
 
-# Note: file berikut SENGAJA di-commit:
-# - database/knowledge.json        (knowledge base)
-# - database/knowledge_index.json  (index)
-# - database/self_model.json       (identitas Inkside)
 
 # Frontend build & dependencies (jangan di-commit)
 frontend/dist/
@@ -258,5 +254,18 @@ database/knowledge_backups/
 # Data files yang tidak perlu di-commit
 database/archive.json
 database/state_cache.json
-database/self_model.json
+*.patch
+frontend/deploy.sh
+
+# ============================================================
+# AUTO-GENERATED DATABASE FILES (jangan di-commit)
+# ============================================================
+database/knowledge.json
 database/knowledge_index.json
+database/self_model.json
+database/archive.json
+database/state_cache.json
+
+# Patch & deploy scripts
+*.patch
+frontend/deploy.sh
