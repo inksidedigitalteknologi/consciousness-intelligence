@@ -223,6 +223,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     { id: 'Dashboard' as NavigationPage, label: 'Home', icon: LayoutDashboard },
     { id: 'Watchlist' as NavigationPage, label: 'Watchlist', icon: Star, badge: watchlistCount },
     { id: 'Market' as NavigationPage, label: 'Market', icon: TrendingUp },
+    { id: 'IoT' as NavigationPage, label: 'IoT', icon: Radio },
     { id: 'Signals' as NavigationPage, label: 'Signals', icon: Radio },
     { id: 'Trading' as NavigationPage, label: 'Trade', icon: Zap },
   ], [watchlistCount]);

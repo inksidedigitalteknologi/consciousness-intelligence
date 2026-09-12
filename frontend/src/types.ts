@@ -169,6 +169,7 @@ export type NavigationPage =
   | 'Brain'
   | 'Reflection'
   | 'Market'
+  | 'MarketQuotes'
   | 'Watchlist'
   | 'Signals'
   | 'Learning'

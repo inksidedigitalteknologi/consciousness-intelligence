@@ -153,6 +153,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       collapsible: true,
       items: [
         { id: 'Market' as NavigationPage, label: 'Live Tickers', icon: TrendingUp },
+        { id: 'MarketQuotes' as NavigationPage, label: 'S&P 500 Quotes', icon: TrendingUp, isNew: true },
         { id: 'Signals' as NavigationPage, label: 'Signals Radar', icon: Radio, isNew: true },
         { id: 'Prediction' as NavigationPage, label: 'Predictions', icon: LineChart, isBeta: true },
         { id: 'Decision' as NavigationPage, label: 'Decision Engine', icon: Target },
@@ -166,6 +167,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'Knowledge' as NavigationPage, label: 'Knowledge Base', icon: BookOpen },
         { id: 'Health' as NavigationPage, label: 'System Health', icon: Activity },
         { id: 'Diagnostics' as NavigationPage, label: 'Diagnostics', icon: ShieldCheck },
+      ],
+    },
+    {
+      title: '🌐 IOT & DEVICES',
+      icon: Radio,
+      collapsible: true,
+      items: [
+        { id: 'IoT' as NavigationPage, label: 'IoT Devices', icon: Radio, isNew: true },
       ],
     },
     {

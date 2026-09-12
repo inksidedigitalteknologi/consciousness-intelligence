@@ -1,5 +1,5 @@
 // src/components/BrainView.tsx
-// INKSIDE DIGITAL - COGNITIVE BRAIN ENGINE v8.0
+// INKSIDE DIGITAL - COGNITIVE BRAIN ENGINE 
 // Pipeline + Reflection + Developer/Trader tabs
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -326,10 +326,10 @@ export const BrainView: React.FC<BrainViewProps> = ({
             <Brain className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-white tracking-wide">
-              Cognitive Brain Engine v8.0
+            <h2 className="text-lg font-bold text-white tracking-wide">
+              Cognitive Brain Engine
             </h2>
-            <p className="text-[11px] text-[#8D9AAA]">
+            <p className="text-xs text-[#8D9AAA]">
               Real pipeline · Cognitive reflection · Developer + Trader views
             </p>
           </div>
@@ -731,21 +731,7 @@ export const BrainView: React.FC<BrainViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Self Info */}
-                  <div className="mt-3 p-3 rounded-lg bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] text-[#8D9AAA]">Self</span>
-                      <span className="text-[10px] font-bold text-white">
-                        {selfData.self.name}
-                      </span>
-                      <span className="text-[9px] text-purple-400">
-                        {selfData.self.emotion}
-                      </span>
-                    </div>
-                    <div className="text-[10px] text-[#E8EDF2] italic leading-snug">
-                      "{selfData.self.narrative}"
-                    </div>
-                  </div>
+
                 </div>
               )}
 

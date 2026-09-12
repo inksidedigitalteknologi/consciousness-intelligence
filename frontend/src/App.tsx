@@ -24,6 +24,8 @@ import { PatternView } from './components/PatternView';
 import { PredictionView } from './components/PredictionView';
 import { DecisionView } from './components/DecisionView';
 import { DiagnosticsView } from './components/DiagnosticsView';
+import { MarketQuotesView } from './components/MarketQuotesView';
+import { IoTView } from './components/IoTView';
 
 import {
   NavigationPage,
@@ -629,6 +631,8 @@ function AppContent() {
               />
             )}
 
+            {currentPage === 'IoT' && <IoTView wsConnected={isConnected} />}
+
             {currentPage === 'Reflection' && (
               <ReflectionView
                 consciousnessLevel={consciousnessLevel}
@@ -639,6 +643,10 @@ function AppContent() {
 
             {currentPage === 'Market' && (
               <MarketView tickers={tickers} wsConnected={isConnected} />
+            )}
+
+            {currentPage === 'MarketQuotes' && (
+              <MarketQuotesView wsConnected={isConnected} />
             )}
 
             {currentPage === 'Watchlist' && (

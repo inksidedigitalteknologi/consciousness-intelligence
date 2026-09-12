@@ -790,8 +790,18 @@ export const LearningView: React.FC = () => {
             </div>
 
             {adaptiveEntries.length === 0 ? (
-              <div className="text-center py-8 text-[#5F6B78] text-sm">
-                {isRefreshing ? 'Loading adaptive weights...' : 'No adaptive weight data available.'}
+              <div className="text-center py-8 space-y-2">
+                <div className="text-[#8D9AAA] text-sm font-semibold">
+                  0 Adaptive Weights
+                </div>
+                <div className="text-[#5F6B78] text-xs">
+                  Engine belum diisi oleh Brain
+                </div>
+                <div className="text-[#5F6B78] text-[10px] max-w-md mx-auto">
+                  Adaptive weights akan muncul otomatis saat Brain memanggil 
+                  <code className="mx-1 px-1 bg-[#0B0F14] rounded text-purple-400">adaptive_engine.update()</code>
+                  di setiap cycle.
+                </div>
               </div>
             ) : (
               <div className="divide-y divide-[#26313D]/40 font-mono text-xs">
@@ -866,8 +876,17 @@ export const LearningView: React.FC = () => {
             </div>
 
             {questions.length === 0 ? (
-              <div className="text-center py-8 text-[#5F6B78] text-sm">
-                {isRefreshing ? 'Loading questions...' : 'No questions found.'}
+              <div className="text-center py-8 space-y-2">
+                <div className="text-[#8D9AAA] text-sm font-semibold">
+                  0 Questions
+                </div>
+                <div className="text-[#5F6B78] text-xs">
+                  Engine belum diisi oleh Brain
+                </div>
+                <div className="text-[#5F6B78] text-[10px] max-w-md mx-auto">
+                  Curiosity questions akan muncul saat Brain mendeteksi 
+                  knowledge gap di knowledge base.
+                </div>
               </div>
             ) : (
               <div className="space-y-3 font-mono text-xs">
@@ -919,8 +938,17 @@ export const LearningView: React.FC = () => {
             </div>
 
             {goals.length === 0 ? (
-              <div className="text-center py-8 text-[#5F6B78] text-sm">
-                {isRefreshing ? 'Loading goals...' : 'No goals found.'}
+              <div className="text-center py-8 space-y-2">
+                <div className="text-[#8D9AAA] text-sm font-semibold">
+                  0 Goals
+                </div>
+                <div className="text-[#5F6B78] text-xs">
+                  Engine belum diisi oleh Brain
+                </div>
+                <div className="text-[#5F6B78] text-[10px] max-w-md mx-auto">
+                  Goals akan muncul saat Brain generate dari learning gap 
+                  atau problem yang terdeteksi.
+                </div>
               </div>
             ) : (
               <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'} gap-4`}>
@@ -1172,8 +1200,18 @@ export const LearningView: React.FC = () => {
                 )}
               </div>
             ) : (
-              <div className="text-center py-8 text-[#5F6B78] text-sm">
-                {isRefreshing ? 'Loading knowledge graph...' : 'No knowledge graph data available.'}
+              <div className="text-center py-8 space-y-2">
+                <div className="text-[#8D9AAA] text-sm font-semibold">
+                  0 Concepts · 0 Relations
+                </div>
+                <div className="text-[#5F6B78] text-xs">
+                  Engine belum diisi oleh Brain
+                </div>
+                <div className="text-[#5F6B78] text-[10px] max-w-md mx-auto">
+                  Knowledge graph akan terbentuk saat Brain memanggil 
+                  <code className="mx-1 px-1 bg-[#0B0F14] rounded text-purple-400">knowledge_graph.add_node()</code>
+                  dari knowledge base.
+                </div>
               </div>
             )}
           </div>

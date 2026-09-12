@@ -740,6 +740,238 @@ def start_api_server():
                 logger.error(f"Brain reflection error: {e}")
                 return jsonify({'error': str(e)}), 500
 
+        # ============================================================
+        # MARKET QUOTES — S&P 500 via Nasdaq API
+        # ============================================================
+
+        import time as _time
+        import json as _json
+        from pathlib import Path as _Path
+
+        _market_cache = {
+            "data": None,
+            "timestamp": 0,
+            "ttl": 60,  # 60 detik
+        }
+
+        _sp500_cache = {"tickers": None, "timestamp": 0}
+
+        def _load_sp500():
+            """Load S&P 500 dari data/sp500.json dengan cache 1 jam."""
+            now = _time.time()
+            if _sp500_cache["tickers"] and (now - _sp500_cache["timestamp"]) < 3600:
+                return _sp500_cache["tickers"]
+            
+            try:
+                p = _Path("data/sp500.json")
+                if p.exists():
+                    data = _json.loads(p.read_text())
+                    _sp500_cache["tickers"] = data
+                    _sp500_cache["timestamp"] = now
+                    return data
+            except Exception as e:
+                logger.error(f"sp500 load error: {e}")
+            
+            return []
+
+        @app.route('/api/market/quotes', methods=['GET'])
+        @require_api_key
+        def api_market_quotes():
+            """Fetch S&P 500 quotes dari Nasdaq. Batch 100, cache 60 detik."""
+            try:
+                import requests as _req
+                
+                # Cek cache
+                now = _time.time()
+                if _market_cache["data"] and (now - _market_cache["timestamp"]) < _market_cache["ttl"]:
+                    cached = dict(_market_cache["data"])
+                    cached["cached"] = True
+                    cached["cache_age_sec"] = round(now - _market_cache["timestamp"], 1)
+                    return jsonify(cached)
+                
+                # Load sp500
+                tickers = _load_sp500()
+                if not tickers:
+                    return jsonify({
+                        'error': 'data/sp500.json tidak ditemukan',
+                        'records': [],
+                        'count': 0,
+                    }), 404
+                
+                headers = {
+                    "accept": "application/json, text/plain, */*",
+                    "origin": "https://www.nasdaq.com",
+                    "referer": "https://www.nasdaq.com/",
+                    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                }
+                
+                all_records = []
+                errors = []
+                batch_size = 100
+                total_batches = (len(tickers) + batch_size - 1) // batch_size
+                
+                for i in range(0, len(tickers), batch_size):
+                    batch = tickers[i:i+batch_size]
+                    query = "&".join([f"symbol={t['nasdaq_symbol']}" for t in batch])
+                    url = f"https://api.nasdaq.com/api/quote/basic?{query}"
+                    
+                    try:
+                        r = _req.get(url, headers=headers, timeout=15)
+                        if r.status_code == 200:
+                            resp = r.json()
+                            records = (resp.get("data") or {}).get("records") or []
+                            all_records.extend(records)
+                        else:
+                            errors.append(f"batch {i//batch_size + 1}: HTTP {r.status_code}")
+                    except Exception as e:
+                        errors.append(f"batch {i//batch_size + 1}: {e}")
+                    
+                    # Delay antar batch — hindari rate limit
+                    if i + batch_size < len(tickers):
+                        _time.sleep(0.5)
+                
+                result = {
+                    'date': _time.strftime('%Y-%m-%d'),
+                    'records': all_records,
+                    'count': len(all_records),
+                    'total_requested': len(tickers),
+                    'batches': total_batches,
+                    'errors': errors if errors else None,
+                    'timestamp': datetime.now().isoformat(),
+                    'cached': False,
+                }
+                
+                # Simpan ke cache
+                _market_cache["data"] = result
+                _market_cache["timestamp"] = now
+                
+                return jsonify(result)
+            except Exception as e:
+                logger.error(f"Market quotes error: {e}")
+                return jsonify({'error': str(e), 'records': []}), 500
+
+        @app.route('/api/market/status', methods=['GET'])
+        @require_api_key
+        def api_market_status():
+            """Status market — buka/tutup berdasarkan jam NYSE."""
+            try:
+                from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+                
+                # NYSE hours: 9:30-16:00 ET
+                # ET = UTC-4 (DST) atau UTC-5 (non-DST)
+                now_utc = _dt.now(_tz.utc)
+                # Simplified: pakai EDT (UTC-4) — Mar-Nov
+                now_et = now_utc - _td(hours=4)
+                
+                weekday = now_et.weekday()  # 0=Mon, 6=Sun
+                hour = now_et.hour
+                minute = now_et.minute
+                time_val = hour * 60 + minute
+                
+                # 9:30 = 570, 16:00 = 960
+                market_open = 570
+                market_close = 960
+                
+                is_weekday = weekday < 5
+                is_market_hours = market_open <= time_val < market_close
+                is_open = is_weekday and is_market_hours
+                
+                if is_open:
+                    status = "OPEN"
+                elif is_weekday and time_val < market_open:
+                    status = "PRE_MARKET"
+                elif is_weekday and time_val >= market_close:
+                    status = "AFTER_HOURS"
+                else:
+                    status = "CLOSED"
+                
+                return jsonify({
+                    'status': status,
+                    'is_open': is_open,
+                    'is_weekday': is_weekday,
+                    'time_utc': now_utc.isoformat(),
+                    'time_et': now_et.isoformat(),
+                    'market_open_et': '09:30',
+                    'market_close_et': '16:00',
+                    'timestamp': datetime.now().isoformat(),
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @app.route('/api/market/analyze/<symbol>', methods=['GET'])
+        @require_api_key
+        def api_market_analyze(symbol):
+            """Analisis market KOMPREHENSIF dengan Brain."""
+            try:
+                import requests as _req
+                from datetime import datetime as _dt, timedelta as _td
+                from core.market_brain import analyze_market_full
+                
+                symbol = symbol.upper()
+                
+                if not hasattr(api_market_analyze, '_cache'):
+                    api_market_analyze._cache = {}
+                
+                now = _time.time()
+                cached = api_market_analyze._cache.get(symbol)
+                if cached and (now - cached['ts']) < 300:
+                    result = dict(cached['data'])
+                    result['cached'] = True
+                    result['cache_age_sec'] = round(now - cached['ts'], 1)
+                    return jsonify(result)
+                
+                fromdate = (_dt.now() - _td(days=730)).strftime('%Y-%m-%d')
+                url = f"https://api.nasdaq.com/api/quote/{symbol}/historical?assetclass=stocks&fromdate={fromdate}&limit=9999"
+                
+                headers = {
+                    "accept": "application/json, text/plain, */*",
+                    "origin": "https://www.nasdaq.com",
+                    "referer": "https://www.nasdaq.com/",
+                    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                }
+                
+                r = _req.get(url, headers=headers, timeout=20)
+                data = r.json()
+                
+                if not data.get('data'):
+                    return jsonify({
+                        'error': f'{symbol} not found or no historical data',
+                        'symbol': symbol,
+                    }), 404
+                
+                rows = data['data'].get('tradesTable', {}).get('rows', [])
+                
+                if not rows:
+                    return jsonify({'error': 'No historical rows', 'symbol': symbol}), 404
+                
+                # Market context dari cache quotes
+                market_context = None
+                if _market_cache.get('data'):
+                    records = _market_cache['data'].get('records', [])
+                    if records:
+                        up = sum(1 for r in records if r.get('deltaIndicator') == 'up')
+                        down = sum(1 for r in records if r.get('deltaIndicator') == 'down')
+                        total = len(records)
+                        market_context = {
+                            'regime': 'BULLISH' if up > down * 1.5 else 'BEARISH' if down > up * 1.5 else 'NEUTRAL',
+                            'up_count': up,
+                            'down_count': down,
+                            'total': total,
+                        }
+                
+                result = analyze_market_full(symbol, rows, market_context)
+                result['cached'] = False
+                
+                api_market_analyze._cache[symbol] = {'ts': now, 'data': result}
+                
+                return jsonify(result)
+            except Exception as e:
+                import traceback
+                logger.error(f"Market analyze error: {e}")
+                logger.error(traceback.format_exc())
+                return jsonify({'error': str(e), 'symbol': symbol}), 500
+
+
         @app.route('/api/brain/self', methods=['GET'])
         @require_api_key
         def api_brain_self():
@@ -1939,20 +2171,57 @@ def start_api_server():
         # LEARNING ENDPOINTS
         # ============================================================
 
+        # ============================================================
+        # LEARNING ENDPOINTS — REAL (dari core.learning)
+        # ============================================================
+
         @app.route('/api/learning/stats', methods=['GET'])
         @require_api_key
         def api_learning_stats():
             try:
-                return jsonify({
-                    'total_questions': 0,
-                    'resolved_questions': 0,
-                    'active_modules': 0,
-                    'total_modules': 0,
-                    'learning_cycles': 0,
-                    'avg_accuracy': 0.0,
-                    'timestamp': datetime.now().isoformat()
-                })
+                stats = {
+                    'cycleCount': 0,
+                    'learningActive': False,
+                    'learningRate': 0.0,
+                    'decayRate': 0.0,
+                    'circuitBreakers': 0,
+                    'modulesCount': 0,
+                    'active_learning_sessions': 0,
+                    'timestamp': datetime.now().isoformat(),
+                }
+                
+                # Dari brain
+                if BRAIN_AVAILABLE and brain:
+                    stats['cycleCount'] = brain.cycles
+                    stats['learningActive'] = brain.metrics.get('learning_count', 0) > 0
+                    stats['modulesCount'] = brain.available_modules_count
+                
+                # Dari adaptive engine
+                try:
+                    from core.learning import adaptive_engine
+                    if adaptive_engine is not None:
+                        all_data = adaptive_engine.get_all()
+                        if isinstance(all_data, dict):
+                            stats['adaptive_entries'] = len(all_data)
+                        elif isinstance(all_data, list):
+                            stats['adaptive_entries'] = len(all_data)
+                        else:
+                            stats['adaptive_entries'] = 0
+                except Exception as e:
+                    stats['adaptive_error'] = str(e)
+                
+                # Dari curiosity engine
+                try:
+                    from core.learning import curiosity_engine
+                    if curiosity_engine is not None:
+                        qs = curiosity_engine.get_questions()
+                        stats['active_learning_sessions'] = len(qs) if qs else 0
+                except Exception as e:
+                    stats['curiosity_error'] = str(e)
+                
+                return jsonify(stats)
             except Exception as e:
+                logger.error(f"Learning stats error: {e}")
                 return jsonify({'error': str(e)}), 500
 
         @app.route('/api/learning/status', methods=['GET'])
@@ -1962,7 +2231,7 @@ def start_api_server():
                 return jsonify({
                     'learning': {
                         'active': DEEPSEEK_ENABLED,
-                        'cycles': 0,
+                        'cycles': brain.cycles if BRAIN_AVAILABLE and brain else 0,
                         'status': 'ACTIVE' if DEEPSEEK_ENABLED else 'INACTIVE'
                     },
                     'timestamp': datetime.now().isoformat()
@@ -1974,94 +2243,301 @@ def start_api_server():
         @require_api_key
         def api_learning_adaptive():
             try:
+                from core.learning import adaptive_engine
+                
+                if adaptive_engine is None:
+                    return jsonify({'entries': [], 'count': 0, 'error': 'adaptive_engine not loaded'})
+                
+                # Coba get_all()
+                entries_raw = adaptive_engine.get_all()
+                
+                entries = []
+                if isinstance(entries_raw, dict):
+                    for key, val in entries_raw.items():
+                        if hasattr(val, 'to_dict'):
+                            entry = val.to_dict()
+                        elif isinstance(val, dict):
+                            entry = val
+                        else:
+                            entry = {'key': key, 'value': str(val)}
+                        entry.setdefault('key', key)
+                        entries.append(entry)
+                elif isinstance(entries_raw, list):
+                    for item in entries_raw:
+                        if hasattr(item, 'to_dict'):
+                            entries.append(item.to_dict())
+                        elif isinstance(item, dict):
+                            entries.append(item)
+                
                 return jsonify({
-                    'pattern_weight': 0.4,
-                    'prediction_weight': 0.3,
-                    'sentiment_weight': 0.2,
-                    'momentum_weight': 0.1,
-                    'adaptation_rate': 0.05,
-                    'confidence_threshold': 0.7,
-                    'learning_rate': 0.01,
-                    'curiosity_level': 0.7 if DEEPSEEK_ENABLED else 0.0,
-                    'timestamp': datetime.now().isoformat()
+                    'entries': entries,
+                    'count': len(entries),
+                    'is_empty': len(entries) == 0,
+                    'message': 'Engine belum diisi oleh Brain' if len(entries) == 0 else None,
+                    'timestamp': datetime.now().isoformat(),
                 })
             except Exception as e:
-                return jsonify({'error': str(e)}), 500
+                logger.error(f"Adaptive error: {e}")
+                return jsonify({'entries': [], 'error': str(e), 'count': 0}), 500
 
         @app.route('/api/learning/curiosity', methods=['GET'])
         @require_api_key
         def api_learning_curiosity():
             try:
+                from core.learning import curiosity_engine
+                
+                if curiosity_engine is None:
+                    return jsonify({'questions': [], 'count': 0, 'error': 'curiosity_engine not loaded'})
+                
+                questions_raw = curiosity_engine.get_questions()
+                questions = []
+                if questions_raw:
+                    for q in questions_raw:
+                        if hasattr(q, 'to_dict'):
+                            questions.append(q.to_dict())
+                        elif isinstance(q, dict):
+                            questions.append(q)
+                        else:
+                            questions.append({'question': str(q)})
+                
+                stats = {}
+                try:
+                    stats = curiosity_engine.statistics() or {}
+                except Exception:
+                    pass
+                
                 return jsonify({
-                    'curiosity_level': 0.7 if DEEPSEEK_ENABLED else 0.0,
-                    'exploration_rate': 0.3,
-                    'discovery_count': 0,
-                    'timestamp': datetime.now().isoformat()
+                    'questions': questions,
+                    'count': len(questions),
+                    'statistics': stats,
+                    'is_empty': len(questions) == 0,
+                    'message': 'Engine belum diisi oleh Brain' if len(questions) == 0 else None,
+                    'timestamp': datetime.now().isoformat(),
                 })
             except Exception as e:
-                return jsonify({'error': str(e)}), 500
+                logger.error(f"Curiosity error: {e}")
+                return jsonify({'questions': [], 'error': str(e), 'count': 0}), 500
 
         @app.route('/api/learning/goals', methods=['GET'])
         @require_api_key
         def api_learning_goals():
             try:
+                from core.learning import goal_manager
+                
+                if goal_manager is None:
+                    return jsonify({'goals': [], 'count': 0, 'error': 'goal_manager not loaded'})
+                
+                # Ambil goals — pakai active_goals() dulu
+                goals_raw = []
+                
+                # Coba berbagai method
+                for method_name in ['active_goals', 'priority_goals', 'latest']:
+                    if hasattr(goal_manager, method_name):
+                        try:
+                            result = getattr(goal_manager, method_name)()
+                            if result:
+                                if isinstance(result, list):
+                                    goals_raw = result
+                                else:
+                                    goals_raw = [result]
+                                break
+                        except Exception as e:
+                            logger.debug(f"goal_manager.{method_name} error: {e}")
+                
+                goals = []
+                if goals_raw:
+                    for g in goals_raw:
+                        if hasattr(g, 'to_dict'):
+                            goals.append(g.to_dict())
+                        elif isinstance(g, dict):
+                            goals.append(g)
+                
                 return jsonify({
-                    'active_goals': [],
-                    'completed_goals': [],
-                    'timestamp': datetime.now().isoformat()
+                    'goals': goals,
+                    'count': len(goals),
+                    'is_empty': len(goals) == 0,
+                    'message': 'Engine belum diisi oleh Brain' if len(goals) == 0 else None,
+                    'timestamp': datetime.now().isoformat(),
                 })
             except Exception as e:
-                return jsonify({'error': str(e)}), 500
+                logger.error(f"Goals error: {e}")
+                return jsonify({'goals': [], 'error': str(e), 'count': 0}), 500
 
         @app.route('/api/learning/experience', methods=['GET'])
         @require_api_key
         def api_learning_experience():
             try:
-                experience_data = {
-                    'total_experiences': 0,
-                    'recent_experiences': [],
-                    'patterns_learned': 0,
-                    'insights_gained': 0,
-                    'timestamp': datetime.now().isoformat()
+                from core.learning import experience_engine
+                
+                if experience_engine is None:
+                    return jsonify({'total': 0, 'error': 'experience_engine not loaded'})
+                
+                # Stats dasar
+                stats = {
+                    'sensory_buffer': 0,
+                    'short_term': 0,
+                    'working_memory': 0,
+                    'permanent': 0,
+                    'total': 0,
                 }
-                if KNOWLEDGE_AVAILABLE:
-                    stats = knowledge.stats()
-                    experience_data['total_experiences'] = stats.total
-                    experience_data['patterns_learned'] = len(stats.by_category) if hasattr(stats, 'by_category') else 0
-                return jsonify(experience_data)
+                
+                try:
+                    count = experience_engine.count()
+                    stats['total'] = count if isinstance(count, int) else 0
+                except Exception:
+                    pass
+                
+                try:
+                    stage_counts = experience_engine.by_stage()
+                    if isinstance(stage_counts, dict):
+                        stats['sensory_buffer'] = stage_counts.get('sensory', 0)
+                        stats['short_term'] = stage_counts.get('short_term', 0)
+                        stats['working_memory'] = stage_counts.get('working', 0)
+                        stats['permanent'] = stage_counts.get('permanent', 0)
+                except Exception:
+                    pass
+                
+                # Fallback kalau knowledge base ada
+                if stats['total'] == 0 and KNOWLEDGE_AVAILABLE and knowledge:
+                    try:
+                        stats['total'] = knowledge.stats().total
+                    except Exception:
+                        pass
+                
+                return jsonify(stats)
             except Exception as e:
                 logger.error(f"Experience error: {e}")
-                return jsonify({'error': str(e)}), 500
+                return jsonify({'total': 0, 'error': str(e)}), 500
 
         @app.route('/api/learning/graph', methods=['GET'])
         @require_api_key
         def api_learning_graph():
             try:
+                from core.learning import knowledge_graph
+                
+                if knowledge_graph is None:
+                    return jsonify({
+                        'nodes': 0, 'edges': 0,
+                        'concepts': [], 'relations': [],
+                        'is_empty': True,
+                        'error': 'knowledge_graph not loaded'
+                    })
+                
+                # all() return {node_id: node_data}
+                all_data = knowledge_graph.all() if hasattr(knowledge_graph, 'all') else {}
+                
+                concepts = []
+                relations = []
+                
+                if isinstance(all_data, dict):
+                    for node_id, node_data in all_data.items():
+                        # Extract concept info
+                        concept = {'name': str(node_id)}
+                        
+                        if hasattr(node_data, 'to_dict'):
+                            node_dict = node_data.to_dict()
+                            concept.update(node_dict)
+                        elif isinstance(node_data, dict):
+                            concept.update(node_data)
+                        
+                        concepts.append(concept)
+                        
+                        # Extract relations dari node_data kalau ada
+                        if isinstance(node_data, dict):
+                            neighbors = node_data.get('neighbors') or node_data.get('connections') or []
+                            for n in neighbors:
+                                if isinstance(n, dict):
+                                    relations.append({
+                                        'source': str(node_id),
+                                        'target': str(n.get('target') or n.get('node') or n),
+                                        'type': str(n.get('relation') or n.get('type') or 'related_to'),
+                                        'weight': float(n.get('weight', 1.0)),
+                                    })
+                
+                # Ambil dari health() untuk count akurat
+                health = {}
+                try:
+                    health = knowledge_graph.health() or {}
+                except Exception:
+                    pass
+                
+                # Kalau relations dari neighbors kosong, ambil dari health connections
+                nodes_count = health.get('nodes', len(concepts))
+                edges_count = health.get('connections', len(relations))
+                
+                is_empty = nodes_count == 0 and edges_count == 0
+                
                 return jsonify({
-                    'nodes': 0,
-                    'edges': 0,
-                    'concepts': [],
-                    'relationships': [],
-                    'timestamp': datetime.now().isoformat()
+                    'nodes': nodes_count,
+                    'edges': edges_count,
+                    'concepts': concepts[:50],
+                    'relations': relations[:50],
+                    'health': health,
+                    'is_empty': is_empty,
+                    'message': 'Engine belum diisi oleh Brain' if is_empty else None,
+                    'timestamp': datetime.now().isoformat(),
                 })
             except Exception as e:
-                return jsonify({'error': str(e)}), 500
+                logger.error(f"Graph error: {e}")
+                return jsonify({
+                    'nodes': 0, 'edges': 0,
+                    'concepts': [], 'relations': [],
+                    'is_empty': True,
+                    'error': str(e)
+                }), 500
 
         @app.route('/api/learning/evaluator', methods=['GET'])
         @require_api_key
         def api_learning_evaluator():
             try:
-                return jsonify({
-                    'accuracy': 0.0,
-                    'evaluation_metrics': {
-                        'precision': 0.0,
-                        'recall': 0.0,
-                        'f1_score': 0.0
-                    },
-                    'timestamp': datetime.now().isoformat()
-                })
+                from core.learning import evaluator_engine
+                
+                if evaluator_engine is None:
+                    return jsonify({'accuracy': 0, 'error': 'evaluator_engine not loaded'})
+                
+                stats = {
+                    'accuracy': 0,
+                    'average_confidence': 0,
+                    'average_score': 0,
+                    'success_rate': 0,
+                    'total_evaluations': 0,
+                }
+                
+                try:
+                    acc = evaluator_engine.accuracy()
+                    stats['accuracy'] = round(float(acc) * 100, 2) if acc and acc <= 1 else round(float(acc), 2) if acc else 0
+                except Exception:
+                    pass
+                
+                try:
+                    stats['average_confidence'] = round(float(evaluator_engine.average_confidence() or 0), 2)
+                except Exception:
+                    pass
+                
+                try:
+                    stats['average_score'] = round(float(evaluator_engine.average_score() or 0), 2)
+                except Exception:
+                    pass
+                
+                try:
+                    stats['success_rate'] = round(float(evaluator_engine.success_rate() or 0), 2)
+                except Exception:
+                    pass
+                
+                try:
+                    status = evaluator_engine.status()
+                    if isinstance(status, dict):
+                        stats['total_evaluations'] = status.get('total', 0) or status.get('count', 0) or 0
+                except Exception:
+                    pass
+                
+                stats['is_empty'] = stats.get('total_evaluations', 0) == 0
+                stats['message'] = 'Engine belum diisi oleh Brain' if stats['is_empty'] else None
+                stats['timestamp'] = datetime.now().isoformat()
+                return jsonify(stats)
             except Exception as e:
-                return jsonify({'error': str(e)}), 500
+                logger.error(f"Evaluator error: {e}")
+                return jsonify({'accuracy': 0, 'error': str(e)}), 500
 
         @app.route('/api/learning/simulate', methods=['POST'])
         @require_api_key
@@ -2106,11 +2582,29 @@ def start_api_server():
         @require_api_key
         def api_modules_list():
             try:
+                modules = []
+                
+                if BRAIN_AVAILABLE and brain:
+                    for name, available in brain.modules_available.items():
+                        modules.append({
+                            'name': name,
+                            'title': name.replace('_', ' ').title(),
+                            'version': '1.0',
+                            'priority': 1,
+                            'status': 'ONLINE' if available else 'OFFLINE',
+                            'role': f'Cognitive module: {name}',
+                            'online': available,
+                            'health_score': 100 if available else 0,
+                        })
+                
                 return jsonify({
-                    'modules': [],
-                    'count': 0,
-                    'timestamp': datetime.now().isoformat()
+                    'modules': modules,
+                    'count': len(modules),
+                    'timestamp': datetime.now().isoformat(),
                 })
+            except Exception as e:
+                logger.error(f"Modules list error: {e}")
+                return jsonify({'modules': [], 'count': 0, 'error': str(e)}), 500
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
 

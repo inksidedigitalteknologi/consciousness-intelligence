@@ -551,6 +551,14 @@ class Brain:
                 self.successful_cycles += 1
                 self.metrics["successful_cycles"] += 1
 
+                # ============================================================
+                # LEARNING ENGINE INTEGRATION — isi engine dari setiap cycle
+                # ============================================================
+                try:
+                    self._feed_learning_engines(cognitive_state)
+                except Exception as e:
+                    logger.debug(f"Learning engine feed error: {e}")
+                
                 # Update self model
                 if self.self_model is not None:
                     try:
@@ -3055,3 +3063,128 @@ def _decide_with_ai_v2(self, state):
 
 
 # Brain._decide = _decide_with_ai_v2  # DISABLED: template-only, hemat token
+
+
+# ============================================================
+# MONKEY PATCH: _feed_learning_engines v2
+# ============================================================
+
+def _feed_learning_engines_v2(self, state):
+    """Feed learning engines dari setiap cycle."""
+    try:
+        # === ADAPTIVE ===
+        try:
+            from core.learning import adaptive_engine
+            if adaptive_engine is not None:
+                decision = getattr(state, 'decision', None) or {}
+                action = decision.get("action", "HOLD") if isinstance(decision, dict) else "HOLD"
+                confidence = decision.get("confidence", 50) if isinstance(decision, dict) else 50
+                
+                success = bool(action and action not in ("ERROR", None))
+                reward = (confidence / 100.0) if confidence else 0.5
+                
+                adaptive_engine.update(
+                    key=f"action_{action.lower()}",
+                    success=success,
+                    domain="decision",
+                    reward=reward,
+                    importance=0.5,
+                )
+        except Exception as e:
+            logger.debug(f"adaptive feed error: {e}")
+        
+        # === CURIOSITY ===
+        try:
+            from core.learning import curiosity_engine
+            if curiosity_engine is not None:
+                perception = getattr(state, 'perception', None) or {}
+                concepts = perception.get("concepts", []) if isinstance(perception, dict) else []
+                for concept in concepts[:2]:
+                    try:
+                        curiosity_engine.ask(
+                            question=f"Apa itu {concept}? Bagaimana relevansinya?",
+                            domain="knowledge",
+                            area="concept_exploration",
+                        )
+                    except Exception as e:
+                        logger.debug(f"curiosity ask error: {e}")
+        except Exception as e:
+            logger.debug(f"curiosity feed error: {e}")
+        
+        # === KNOWLEDGE GRAPH ===
+        try:
+            from core.learning import knowledge_graph
+            if knowledge_graph is not None:
+                perception = getattr(state, 'perception', None) or {}
+                concepts = perception.get("concepts", []) if isinstance(perception, dict) else []
+                
+                for concept in concepts[:3]:
+                    try:
+                        knowledge_graph.add_node(
+                            concept=str(concept),
+                            metadata={"source": "perception"},
+                        )
+                    except Exception as e:
+                        logger.debug(f"graph add_node error: {e}")
+                
+                if len(concepts) >= 2:
+                    try:
+                        knowledge_graph.connect(
+                            concept_a=str(concepts[0]),
+                            concept_b=str(concepts[1]),
+                            relation="co_occur",
+                        )
+                    except Exception as e:
+                        logger.debug(f"graph connect error: {e}")
+        except Exception as e:
+            logger.debug(f"graph feed error: {e}")
+        
+        # === GOAL MANAGER ===
+        try:
+            from core.learning import goal_manager
+            if goal_manager is not None:
+                decision = getattr(state, 'decision', None) or {}
+                conflicts = decision.get("conflicts", {}) if isinstance(decision, dict) else {}
+                if isinstance(conflicts, dict) and conflicts.get("detected"):
+                    try:
+                        goal_manager.create_goal(
+                            title="Resolve signal conflict",
+                            description="Analisis dan selesaikan konflik sinyal",
+                            priority="NORMAL",
+                            tags=["auto", "conflict"],
+                        )
+                    except Exception as e:
+                        logger.debug(f"goal create error: {e}")
+        except Exception as e:
+            logger.debug(f"goal feed error: {e}")
+        
+        # === EVALUATOR ===
+        try:
+            from core.learning import evaluator_engine
+            if evaluator_engine is not None:
+                decision = getattr(state, 'decision', None) or {}
+                reasoning = getattr(state, 'reasoning', None) or {}
+                
+                prediction = decision.get("action") if isinstance(decision, dict) else None
+                reality = reasoning.get("trend") if isinstance(reasoning, dict) else None
+                if not reality:
+                    reality = "unknown"
+                
+                if prediction:
+                    try:
+                        evaluator_engine.evaluate(
+                            prediction=prediction,
+                            reality=reality,
+                            domain="decision",
+                        )
+                    except Exception as e:
+                        logger.debug(f"evaluator evaluate error: {e}")
+        except Exception as e:
+            logger.debug(f"evaluator feed error: {e}")
+        
+    except Exception as e:
+        logger.debug(f"_feed_learning_engines error: {e}")
+
+
+# Attach ke class Brain
+Brain._feed_learning_engines = _feed_learning_engines_v2

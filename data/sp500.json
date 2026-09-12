@@ -1,0 +1,3020 @@
+[
+  {
+    "symbol": "MMM",
+    "name": "3M",
+    "sector": "Industrials",
+    "nasdaq_symbol": "MMM|STOCKS"
+  },
+  {
+    "symbol": "AOS",
+    "name": "A. O. Smith",
+    "sector": "Industrials",
+    "nasdaq_symbol": "AOS|STOCKS"
+  },
+  {
+    "symbol": "ABT",
+    "name": "Abbott Laboratories",
+    "sector": "Health Care",
+    "nasdaq_symbol": "ABT|STOCKS"
+  },
+  {
+    "symbol": "ABBV",
+    "name": "AbbVie",
+    "sector": "Health Care",
+    "nasdaq_symbol": "ABBV|STOCKS"
+  },
+  {
+    "symbol": "ACN",
+    "name": "Accenture",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "ACN|STOCKS"
+  },
+  {
+    "symbol": "ADBE",
+    "name": "Adobe Inc.",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "ADBE|STOCKS"
+  },
+  {
+    "symbol": "AMD",
+    "name": "Advanced Micro Devices",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "AMD|STOCKS"
+  },
+  {
+    "symbol": "AES",
+    "name": "AES Corporation",
+    "sector": "Utilities",
+    "nasdaq_symbol": "AES|STOCKS"
+  },
+  {
+    "symbol": "AFL",
+    "name": "Aflac",
+    "sector": "Financials",
+    "nasdaq_symbol": "AFL|STOCKS"
+  },
+  {
+    "symbol": "A",
+    "name": "Agilent Technologies",
+    "sector": "Health Care",
+    "nasdaq_symbol": "A|STOCKS"
+  },
+  {
+    "symbol": "APD",
+    "name": "Air Products",
+    "sector": "Materials",
+    "nasdaq_symbol": "APD|STOCKS"
+  },
+  {
+    "symbol": "ABNB",
+    "name": "Airbnb",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "ABNB|STOCKS"
+  },
+  {
+    "symbol": "AKAM",
+    "name": "Akamai Technologies",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "AKAM|STOCKS"
+  },
+  {
+    "symbol": "ALB",
+    "name": "Albemarle Corporation",
+    "sector": "Materials",
+    "nasdaq_symbol": "ALB|STOCKS"
+  },
+  {
+    "symbol": "ARE",
+    "name": "Alexandria Real Estate Equities",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "ARE|STOCKS"
+  },
+  {
+    "symbol": "ALGN",
+    "name": "Align Technology",
+    "sector": "Health Care",
+    "nasdaq_symbol": "ALGN|STOCKS"
+  },
+  {
+    "symbol": "ALLE",
+    "name": "Allegion",
+    "sector": "Industrials",
+    "nasdaq_symbol": "ALLE|STOCKS"
+  },
+  {
+    "symbol": "LNT",
+    "name": "Alliant Energy",
+    "sector": "Utilities",
+    "nasdaq_symbol": "LNT|STOCKS"
+  },
+  {
+    "symbol": "ALL",
+    "name": "Allstate",
+    "sector": "Financials",
+    "nasdaq_symbol": "ALL|STOCKS"
+  },
+  {
+    "symbol": "GOOGL",
+    "name": "Alphabet Inc. (Class A)",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "GOOGL|STOCKS"
+  },
+  {
+    "symbol": "GOOG",
+    "name": "Alphabet Inc. (Class C)",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "GOOG|STOCKS"
+  },
+  {
+    "symbol": "MO",
+    "name": "Altria",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "MO|STOCKS"
+  },
+  {
+    "symbol": "AMZN",
+    "name": "Amazon",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "AMZN|STOCKS"
+  },
+  {
+    "symbol": "AMCR",
+    "name": "Amcor",
+    "sector": "Materials",
+    "nasdaq_symbol": "AMCR|STOCKS"
+  },
+  {
+    "symbol": "AEE",
+    "name": "Ameren",
+    "sector": "Utilities",
+    "nasdaq_symbol": "AEE|STOCKS"
+  },
+  {
+    "symbol": "AEP",
+    "name": "American Electric Power",
+    "sector": "Utilities",
+    "nasdaq_symbol": "AEP|STOCKS"
+  },
+  {
+    "symbol": "AXP",
+    "name": "American Express",
+    "sector": "Financials",
+    "nasdaq_symbol": "AXP|STOCKS"
+  },
+  {
+    "symbol": "AIG",
+    "name": "American International Group",
+    "sector": "Financials",
+    "nasdaq_symbol": "AIG|STOCKS"
+  },
+  {
+    "symbol": "AMT",
+    "name": "American Tower",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "AMT|STOCKS"
+  },
+  {
+    "symbol": "AWK",
+    "name": "American Water Works",
+    "sector": "Utilities",
+    "nasdaq_symbol": "AWK|STOCKS"
+  },
+  {
+    "symbol": "AMP",
+    "name": "Ameriprise Financial",
+    "sector": "Financials",
+    "nasdaq_symbol": "AMP|STOCKS"
+  },
+  {
+    "symbol": "AME",
+    "name": "Ametek",
+    "sector": "Industrials",
+    "nasdaq_symbol": "AME|STOCKS"
+  },
+  {
+    "symbol": "AMGN",
+    "name": "Amgen",
+    "sector": "Health Care",
+    "nasdaq_symbol": "AMGN|STOCKS"
+  },
+  {
+    "symbol": "APH",
+    "name": "Amphenol",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "APH|STOCKS"
+  },
+  {
+    "symbol": "ADI",
+    "name": "Analog Devices",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "ADI|STOCKS"
+  },
+  {
+    "symbol": "AON",
+    "name": "Aon plc",
+    "sector": "Financials",
+    "nasdaq_symbol": "AON|STOCKS"
+  },
+  {
+    "symbol": "APA",
+    "name": "APA Corporation",
+    "sector": "Energy",
+    "nasdaq_symbol": "APA|STOCKS"
+  },
+  {
+    "symbol": "APO",
+    "name": "Apollo Global Management",
+    "sector": "Financials",
+    "nasdaq_symbol": "APO|STOCKS"
+  },
+  {
+    "symbol": "AAPL",
+    "name": "Apple Inc.",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "AAPL|STOCKS"
+  },
+  {
+    "symbol": "AMAT",
+    "name": "Applied Materials",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "AMAT|STOCKS"
+  },
+  {
+    "symbol": "APP",
+    "name": "AppLovin",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "APP|STOCKS"
+  },
+  {
+    "symbol": "APTV",
+    "name": "Aptiv",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "APTV|STOCKS"
+  },
+  {
+    "symbol": "ACGL",
+    "name": "Arch Capital Group",
+    "sector": "Financials",
+    "nasdaq_symbol": "ACGL|STOCKS"
+  },
+  {
+    "symbol": "ADM",
+    "name": "Archer Daniels Midland",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "ADM|STOCKS"
+  },
+  {
+    "symbol": "ARES",
+    "name": "Ares Management",
+    "sector": "Financials",
+    "nasdaq_symbol": "ARES|STOCKS"
+  },
+  {
+    "symbol": "ANET",
+    "name": "Arista Networks",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "ANET|STOCKS"
+  },
+  {
+    "symbol": "AJG",
+    "name": "Arthur J. Gallagher & Co.",
+    "sector": "Financials",
+    "nasdaq_symbol": "AJG|STOCKS"
+  },
+  {
+    "symbol": "AIZ",
+    "name": "Assurant",
+    "sector": "Financials",
+    "nasdaq_symbol": "AIZ|STOCKS"
+  },
+  {
+    "symbol": "T",
+    "name": "AT&T",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "T|STOCKS"
+  },
+  {
+    "symbol": "ATO",
+    "name": "Atmos Energy",
+    "sector": "Utilities",
+    "nasdaq_symbol": "ATO|STOCKS"
+  },
+  {
+    "symbol": "ADSK",
+    "name": "Autodesk",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "ADSK|STOCKS"
+  },
+  {
+    "symbol": "ADP",
+    "name": "Automatic Data Processing",
+    "sector": "Industrials",
+    "nasdaq_symbol": "ADP|STOCKS"
+  },
+  {
+    "symbol": "AZO",
+    "name": "AutoZone",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "AZO|STOCKS"
+  },
+  {
+    "symbol": "AVY",
+    "name": "Avery Dennison",
+    "sector": "Materials",
+    "nasdaq_symbol": "AVY|STOCKS"
+  },
+  {
+    "symbol": "AXON",
+    "name": "Axon Enterprise",
+    "sector": "Industrials",
+    "nasdaq_symbol": "AXON|STOCKS"
+  },
+  {
+    "symbol": "BKR",
+    "name": "Baker Hughes",
+    "sector": "Energy",
+    "nasdaq_symbol": "BKR|STOCKS"
+  },
+  {
+    "symbol": "BALL",
+    "name": "Ball Corporation",
+    "sector": "Materials",
+    "nasdaq_symbol": "BALL|STOCKS"
+  },
+  {
+    "symbol": "BAC",
+    "name": "Bank of America",
+    "sector": "Financials",
+    "nasdaq_symbol": "BAC|STOCKS"
+  },
+  {
+    "symbol": "BAX",
+    "name": "Baxter International",
+    "sector": "Health Care",
+    "nasdaq_symbol": "BAX|STOCKS"
+  },
+  {
+    "symbol": "BDX",
+    "name": "Becton Dickinson",
+    "sector": "Health Care",
+    "nasdaq_symbol": "BDX|STOCKS"
+  },
+  {
+    "symbol": "BRK.B",
+    "name": "Berkshire Hathaway",
+    "sector": "Financials",
+    "nasdaq_symbol": "BRK.B|STOCKS"
+  },
+  {
+    "symbol": "BBY",
+    "name": "Best Buy",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "BBY|STOCKS"
+  },
+  {
+    "symbol": "TECH",
+    "name": "Bio-Techne",
+    "sector": "Health Care",
+    "nasdaq_symbol": "TECH|STOCKS"
+  },
+  {
+    "symbol": "BIIB",
+    "name": "Biogen",
+    "sector": "Health Care",
+    "nasdaq_symbol": "BIIB|STOCKS"
+  },
+  {
+    "symbol": "BLK",
+    "name": "BlackRock",
+    "sector": "Financials",
+    "nasdaq_symbol": "BLK|STOCKS"
+  },
+  {
+    "symbol": "BX",
+    "name": "Blackstone Inc.",
+    "sector": "Financials",
+    "nasdaq_symbol": "BX|STOCKS"
+  },
+  {
+    "symbol": "XYZ",
+    "name": "Block, Inc.",
+    "sector": "Financials",
+    "nasdaq_symbol": "XYZ|STOCKS"
+  },
+  {
+    "symbol": "BNY",
+    "name": "BNY Mellon",
+    "sector": "Financials",
+    "nasdaq_symbol": "BNY|STOCKS"
+  },
+  {
+    "symbol": "BA",
+    "name": "Boeing",
+    "sector": "Industrials",
+    "nasdaq_symbol": "BA|STOCKS"
+  },
+  {
+    "symbol": "BKNG",
+    "name": "Booking Holdings",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "BKNG|STOCKS"
+  },
+  {
+    "symbol": "BSX",
+    "name": "Boston Scientific",
+    "sector": "Health Care",
+    "nasdaq_symbol": "BSX|STOCKS"
+  },
+  {
+    "symbol": "BMY",
+    "name": "Bristol Myers Squibb",
+    "sector": "Health Care",
+    "nasdaq_symbol": "BMY|STOCKS"
+  },
+  {
+    "symbol": "AVGO",
+    "name": "Broadcom",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "AVGO|STOCKS"
+  },
+  {
+    "symbol": "BR",
+    "name": "Broadridge Financial Solutions",
+    "sector": "Industrials",
+    "nasdaq_symbol": "BR|STOCKS"
+  },
+  {
+    "symbol": "BRO",
+    "name": "Brown & Brown",
+    "sector": "Financials",
+    "nasdaq_symbol": "BRO|STOCKS"
+  },
+  {
+    "symbol": "BF.B",
+    "name": "Brown\u2013Forman",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "BF.B|STOCKS"
+  },
+  {
+    "symbol": "BLDR",
+    "name": "Builders FirstSource",
+    "sector": "Industrials",
+    "nasdaq_symbol": "BLDR|STOCKS"
+  },
+  {
+    "symbol": "BG",
+    "name": "Bunge Global",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "BG|STOCKS"
+  },
+  {
+    "symbol": "BXP",
+    "name": "BXP, Inc.",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "BXP|STOCKS"
+  },
+  {
+    "symbol": "CHRW",
+    "name": "C.H. Robinson",
+    "sector": "Industrials",
+    "nasdaq_symbol": "CHRW|STOCKS"
+  },
+  {
+    "symbol": "CDNS",
+    "name": "Cadence Design Systems",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "CDNS|STOCKS"
+  },
+  {
+    "symbol": "CPT",
+    "name": "Camden Property Trust",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "CPT|STOCKS"
+  },
+  {
+    "symbol": "COF",
+    "name": "Capital One",
+    "sector": "Financials",
+    "nasdaq_symbol": "COF|STOCKS"
+  },
+  {
+    "symbol": "CAH",
+    "name": "Cardinal Health",
+    "sector": "Health Care",
+    "nasdaq_symbol": "CAH|STOCKS"
+  },
+  {
+    "symbol": "CCL",
+    "name": "Carnival Corporation",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "CCL|STOCKS"
+  },
+  {
+    "symbol": "CARR",
+    "name": "Carrier Global",
+    "sector": "Industrials",
+    "nasdaq_symbol": "CARR|STOCKS"
+  },
+  {
+    "symbol": "CVNA",
+    "name": "Carvana",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "CVNA|STOCKS"
+  },
+  {
+    "symbol": "CASY",
+    "name": "Casey's",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "CASY|STOCKS"
+  },
+  {
+    "symbol": "CAT",
+    "name": "Caterpillar Inc.",
+    "sector": "Industrials",
+    "nasdaq_symbol": "CAT|STOCKS"
+  },
+  {
+    "symbol": "CBOE",
+    "name": "Cboe Global Markets",
+    "sector": "Financials",
+    "nasdaq_symbol": "CBOE|STOCKS"
+  },
+  {
+    "symbol": "CBRE",
+    "name": "CBRE Group",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "CBRE|STOCKS"
+  },
+  {
+    "symbol": "CDW",
+    "name": "CDW Corporation",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "CDW|STOCKS"
+  },
+  {
+    "symbol": "COR",
+    "name": "Cencora",
+    "sector": "Health Care",
+    "nasdaq_symbol": "COR|STOCKS"
+  },
+  {
+    "symbol": "CNC",
+    "name": "Centene Corporation",
+    "sector": "Health Care",
+    "nasdaq_symbol": "CNC|STOCKS"
+  },
+  {
+    "symbol": "CNP",
+    "name": "CenterPoint Energy",
+    "sector": "Utilities",
+    "nasdaq_symbol": "CNP|STOCKS"
+  },
+  {
+    "symbol": "CF",
+    "name": "CF Industries",
+    "sector": "Materials",
+    "nasdaq_symbol": "CF|STOCKS"
+  },
+  {
+    "symbol": "CRL",
+    "name": "Charles River Laboratories",
+    "sector": "Health Care",
+    "nasdaq_symbol": "CRL|STOCKS"
+  },
+  {
+    "symbol": "SCHW",
+    "name": "Charles Schwab Corporation",
+    "sector": "Financials",
+    "nasdaq_symbol": "SCHW|STOCKS"
+  },
+  {
+    "symbol": "CHTR",
+    "name": "Charter Communications",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "CHTR|STOCKS"
+  },
+  {
+    "symbol": "CVX",
+    "name": "Chevron Corporation",
+    "sector": "Energy",
+    "nasdaq_symbol": "CVX|STOCKS"
+  },
+  {
+    "symbol": "CMG",
+    "name": "Chipotle Mexican Grill",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "CMG|STOCKS"
+  },
+  {
+    "symbol": "CB",
+    "name": "Chubb Limited",
+    "sector": "Financials",
+    "nasdaq_symbol": "CB|STOCKS"
+  },
+  {
+    "symbol": "CHD",
+    "name": "Church & Dwight",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "CHD|STOCKS"
+  },
+  {
+    "symbol": "CIEN",
+    "name": "Ciena",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "CIEN|STOCKS"
+  },
+  {
+    "symbol": "CI",
+    "name": "Cigna",
+    "sector": "Health Care",
+    "nasdaq_symbol": "CI|STOCKS"
+  },
+  {
+    "symbol": "CINF",
+    "name": "Cincinnati Financial",
+    "sector": "Financials",
+    "nasdaq_symbol": "CINF|STOCKS"
+  },
+  {
+    "symbol": "CTAS",
+    "name": "Cintas",
+    "sector": "Industrials",
+    "nasdaq_symbol": "CTAS|STOCKS"
+  },
+  {
+    "symbol": "CSCO",
+    "name": "Cisco",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "CSCO|STOCKS"
+  },
+  {
+    "symbol": "C",
+    "name": "Citigroup",
+    "sector": "Financials",
+    "nasdaq_symbol": "C|STOCKS"
+  },
+  {
+    "symbol": "CFG",
+    "name": "Citizens Financial Group",
+    "sector": "Financials",
+    "nasdaq_symbol": "CFG|STOCKS"
+  },
+  {
+    "symbol": "CLX",
+    "name": "Clorox",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "CLX|STOCKS"
+  },
+  {
+    "symbol": "CME",
+    "name": "CME Group",
+    "sector": "Financials",
+    "nasdaq_symbol": "CME|STOCKS"
+  },
+  {
+    "symbol": "CMS",
+    "name": "CMS Energy",
+    "sector": "Utilities",
+    "nasdaq_symbol": "CMS|STOCKS"
+  },
+  {
+    "symbol": "KO",
+    "name": "Coca-Cola Company (The)",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "KO|STOCKS"
+  },
+  {
+    "symbol": "CTSH",
+    "name": "Cognizant",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "CTSH|STOCKS"
+  },
+  {
+    "symbol": "COHR",
+    "name": "Coherent Corp.",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "COHR|STOCKS"
+  },
+  {
+    "symbol": "COIN",
+    "name": "Coinbase",
+    "sector": "Financials",
+    "nasdaq_symbol": "COIN|STOCKS"
+  },
+  {
+    "symbol": "CL",
+    "name": "Colgate-Palmolive",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "CL|STOCKS"
+  },
+  {
+    "symbol": "CMCSA",
+    "name": "Comcast",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "CMCSA|STOCKS"
+  },
+  {
+    "symbol": "FIX",
+    "name": "Comfort Systems USA",
+    "sector": "Industrials",
+    "nasdaq_symbol": "FIX|STOCKS"
+  },
+  {
+    "symbol": "COP",
+    "name": "ConocoPhillips",
+    "sector": "Energy",
+    "nasdaq_symbol": "COP|STOCKS"
+  },
+  {
+    "symbol": "ED",
+    "name": "Consolidated Edison",
+    "sector": "Utilities",
+    "nasdaq_symbol": "ED|STOCKS"
+  },
+  {
+    "symbol": "STZ",
+    "name": "Constellation Brands",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "STZ|STOCKS"
+  },
+  {
+    "symbol": "CEG",
+    "name": "Constellation Energy",
+    "sector": "Utilities",
+    "nasdaq_symbol": "CEG|STOCKS"
+  },
+  {
+    "symbol": "COO",
+    "name": "Cooper Companies (The)",
+    "sector": "Health Care",
+    "nasdaq_symbol": "COO|STOCKS"
+  },
+  {
+    "symbol": "CPRT",
+    "name": "Copart",
+    "sector": "Industrials",
+    "nasdaq_symbol": "CPRT|STOCKS"
+  },
+  {
+    "symbol": "GLW",
+    "name": "Corning Inc.",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "GLW|STOCKS"
+  },
+  {
+    "symbol": "CPAY",
+    "name": "Corpay",
+    "sector": "Financials",
+    "nasdaq_symbol": "CPAY|STOCKS"
+  },
+  {
+    "symbol": "CTVA",
+    "name": "Corteva",
+    "sector": "Materials",
+    "nasdaq_symbol": "CTVA|STOCKS"
+  },
+  {
+    "symbol": "CSGP",
+    "name": "CoStar Group",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "CSGP|STOCKS"
+  },
+  {
+    "symbol": "COST",
+    "name": "Costco",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "COST|STOCKS"
+  },
+  {
+    "symbol": "CRH",
+    "name": "CRH plc",
+    "sector": "Materials",
+    "nasdaq_symbol": "CRH|STOCKS"
+  },
+  {
+    "symbol": "CRWD",
+    "name": "CrowdStrike",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "CRWD|STOCKS"
+  },
+  {
+    "symbol": "CCI",
+    "name": "Crown Castle",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "CCI|STOCKS"
+  },
+  {
+    "symbol": "CSX",
+    "name": "CSX Corporation",
+    "sector": "Industrials",
+    "nasdaq_symbol": "CSX|STOCKS"
+  },
+  {
+    "symbol": "CMI",
+    "name": "Cummins",
+    "sector": "Industrials",
+    "nasdaq_symbol": "CMI|STOCKS"
+  },
+  {
+    "symbol": "CVS",
+    "name": "CVS Health",
+    "sector": "Health Care",
+    "nasdaq_symbol": "CVS|STOCKS"
+  },
+  {
+    "symbol": "DHR",
+    "name": "Danaher Corporation",
+    "sector": "Health Care",
+    "nasdaq_symbol": "DHR|STOCKS"
+  },
+  {
+    "symbol": "DRI",
+    "name": "Darden Restaurants",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "DRI|STOCKS"
+  },
+  {
+    "symbol": "DDOG",
+    "name": "Datadog",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "DDOG|STOCKS"
+  },
+  {
+    "symbol": "DVA",
+    "name": "DaVita",
+    "sector": "Health Care",
+    "nasdaq_symbol": "DVA|STOCKS"
+  },
+  {
+    "symbol": "DECK",
+    "name": "Deckers Brands",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "DECK|STOCKS"
+  },
+  {
+    "symbol": "DE",
+    "name": "Deere & Company",
+    "sector": "Industrials",
+    "nasdaq_symbol": "DE|STOCKS"
+  },
+  {
+    "symbol": "DELL",
+    "name": "Dell Technologies",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "DELL|STOCKS"
+  },
+  {
+    "symbol": "DAL",
+    "name": "Delta Air Lines",
+    "sector": "Industrials",
+    "nasdaq_symbol": "DAL|STOCKS"
+  },
+  {
+    "symbol": "DVN",
+    "name": "Devon Energy",
+    "sector": "Energy",
+    "nasdaq_symbol": "DVN|STOCKS"
+  },
+  {
+    "symbol": "DXCM",
+    "name": "Dexcom",
+    "sector": "Health Care",
+    "nasdaq_symbol": "DXCM|STOCKS"
+  },
+  {
+    "symbol": "FANG",
+    "name": "Diamondback Energy",
+    "sector": "Energy",
+    "nasdaq_symbol": "FANG|STOCKS"
+  },
+  {
+    "symbol": "DLR",
+    "name": "Digital Realty",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "DLR|STOCKS"
+  },
+  {
+    "symbol": "DG",
+    "name": "Dollar General",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "DG|STOCKS"
+  },
+  {
+    "symbol": "DLTR",
+    "name": "Dollar Tree",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "DLTR|STOCKS"
+  },
+  {
+    "symbol": "D",
+    "name": "Dominion Energy",
+    "sector": "Utilities",
+    "nasdaq_symbol": "D|STOCKS"
+  },
+  {
+    "symbol": "DPZ",
+    "name": "Domino's",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "DPZ|STOCKS"
+  },
+  {
+    "symbol": "DASH",
+    "name": "DoorDash",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "DASH|STOCKS"
+  },
+  {
+    "symbol": "DOV",
+    "name": "Dover Corporation",
+    "sector": "Industrials",
+    "nasdaq_symbol": "DOV|STOCKS"
+  },
+  {
+    "symbol": "DOW",
+    "name": "Dow Inc.",
+    "sector": "Materials",
+    "nasdaq_symbol": "DOW|STOCKS"
+  },
+  {
+    "symbol": "DHI",
+    "name": "D. R. Horton",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "DHI|STOCKS"
+  },
+  {
+    "symbol": "DTE",
+    "name": "DTE Energy",
+    "sector": "Utilities",
+    "nasdaq_symbol": "DTE|STOCKS"
+  },
+  {
+    "symbol": "DUK",
+    "name": "Duke Energy",
+    "sector": "Utilities",
+    "nasdaq_symbol": "DUK|STOCKS"
+  },
+  {
+    "symbol": "DD",
+    "name": "DuPont",
+    "sector": "Industrials",
+    "nasdaq_symbol": "DD|STOCKS"
+  },
+  {
+    "symbol": "ETN",
+    "name": "Eaton Corporation",
+    "sector": "Industrials",
+    "nasdaq_symbol": "ETN|STOCKS"
+  },
+  {
+    "symbol": "EBAY",
+    "name": "eBay Inc.",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "EBAY|STOCKS"
+  },
+  {
+    "symbol": "ECHO",
+    "name": "EchoStar",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "ECHO|STOCKS"
+  },
+  {
+    "symbol": "ECL",
+    "name": "Ecolab",
+    "sector": "Materials",
+    "nasdaq_symbol": "ECL|STOCKS"
+  },
+  {
+    "symbol": "EIX",
+    "name": "Edison International",
+    "sector": "Utilities",
+    "nasdaq_symbol": "EIX|STOCKS"
+  },
+  {
+    "symbol": "EW",
+    "name": "Edwards Lifesciences",
+    "sector": "Health Care",
+    "nasdaq_symbol": "EW|STOCKS"
+  },
+  {
+    "symbol": "ELV",
+    "name": "Elevance Health",
+    "sector": "Health Care",
+    "nasdaq_symbol": "ELV|STOCKS"
+  },
+  {
+    "symbol": "EME",
+    "name": "Emcor",
+    "sector": "Industrials",
+    "nasdaq_symbol": "EME|STOCKS"
+  },
+  {
+    "symbol": "EMR",
+    "name": "Emerson Electric",
+    "sector": "Industrials",
+    "nasdaq_symbol": "EMR|STOCKS"
+  },
+  {
+    "symbol": "ETR",
+    "name": "Entergy",
+    "sector": "Utilities",
+    "nasdaq_symbol": "ETR|STOCKS"
+  },
+  {
+    "symbol": "EOG",
+    "name": "EOG Resources",
+    "sector": "Energy",
+    "nasdaq_symbol": "EOG|STOCKS"
+  },
+  {
+    "symbol": "EQT",
+    "name": "EQT Corporation",
+    "sector": "Energy",
+    "nasdaq_symbol": "EQT|STOCKS"
+  },
+  {
+    "symbol": "EFX",
+    "name": "Equifax",
+    "sector": "Industrials",
+    "nasdaq_symbol": "EFX|STOCKS"
+  },
+  {
+    "symbol": "EQIX",
+    "name": "Equinix",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "EQIX|STOCKS"
+  },
+  {
+    "symbol": "ERIE",
+    "name": "Erie Indemnity",
+    "sector": "Financials",
+    "nasdaq_symbol": "ERIE|STOCKS"
+  },
+  {
+    "symbol": "ESS",
+    "name": "Essex Property Trust",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "ESS|STOCKS"
+  },
+  {
+    "symbol": "EL",
+    "name": "Est\u00e9e Lauder Companies (The)",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "EL|STOCKS"
+  },
+  {
+    "symbol": "EG",
+    "name": "Everest Group",
+    "sector": "Financials",
+    "nasdaq_symbol": "EG|STOCKS"
+  },
+  {
+    "symbol": "EVRG",
+    "name": "Evergy",
+    "sector": "Utilities",
+    "nasdaq_symbol": "EVRG|STOCKS"
+  },
+  {
+    "symbol": "ES",
+    "name": "Eversource Energy",
+    "sector": "Utilities",
+    "nasdaq_symbol": "ES|STOCKS"
+  },
+  {
+    "symbol": "EXC",
+    "name": "Exelon",
+    "sector": "Utilities",
+    "nasdaq_symbol": "EXC|STOCKS"
+  },
+  {
+    "symbol": "EXE",
+    "name": "Expand Energy",
+    "sector": "Energy",
+    "nasdaq_symbol": "EXE|STOCKS"
+  },
+  {
+    "symbol": "EXPE",
+    "name": "Expedia Group",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "EXPE|STOCKS"
+  },
+  {
+    "symbol": "EXPD",
+    "name": "Expeditors International",
+    "sector": "Industrials",
+    "nasdaq_symbol": "EXPD|STOCKS"
+  },
+  {
+    "symbol": "EXR",
+    "name": "Extra Space Storage",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "EXR|STOCKS"
+  },
+  {
+    "symbol": "XOM",
+    "name": "ExxonMobil",
+    "sector": "Energy",
+    "nasdaq_symbol": "XOM|STOCKS"
+  },
+  {
+    "symbol": "FFIV",
+    "name": "F5, Inc.",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "FFIV|STOCKS"
+  },
+  {
+    "symbol": "FDS",
+    "name": "FactSet",
+    "sector": "Financials",
+    "nasdaq_symbol": "FDS|STOCKS"
+  },
+  {
+    "symbol": "FICO",
+    "name": "Fair Isaac",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "FICO|STOCKS"
+  },
+  {
+    "symbol": "FAST",
+    "name": "Fastenal",
+    "sector": "Industrials",
+    "nasdaq_symbol": "FAST|STOCKS"
+  },
+  {
+    "symbol": "FRT",
+    "name": "Federal Realty Investment Trust",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "FRT|STOCKS"
+  },
+  {
+    "symbol": "FDX",
+    "name": "FedEx",
+    "sector": "Industrials",
+    "nasdaq_symbol": "FDX|STOCKS"
+  },
+  {
+    "symbol": "FDXF",
+    "name": "FedEx Freight",
+    "sector": "Industrials",
+    "nasdaq_symbol": "FDXF|STOCKS"
+  },
+  {
+    "symbol": "FERG",
+    "name": "Ferguson Enterprises",
+    "sector": "Industrials",
+    "nasdaq_symbol": "FERG|STOCKS"
+  },
+  {
+    "symbol": "FIS",
+    "name": "Fidelity National Information Services",
+    "sector": "Financials",
+    "nasdaq_symbol": "FIS|STOCKS"
+  },
+  {
+    "symbol": "FITB",
+    "name": "Fifth Third Bancorp",
+    "sector": "Financials",
+    "nasdaq_symbol": "FITB|STOCKS"
+  },
+  {
+    "symbol": "FSLR",
+    "name": "First Solar",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "FSLR|STOCKS"
+  },
+  {
+    "symbol": "FE",
+    "name": "FirstEnergy",
+    "sector": "Utilities",
+    "nasdaq_symbol": "FE|STOCKS"
+  },
+  {
+    "symbol": "FISV",
+    "name": "Fiserv",
+    "sector": "Financials",
+    "nasdaq_symbol": "FISV|STOCKS"
+  },
+  {
+    "symbol": "FLEX",
+    "name": "Flex Ltd.",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "FLEX|STOCKS"
+  },
+  {
+    "symbol": "F",
+    "name": "Ford Motor Company",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "F|STOCKS"
+  },
+  {
+    "symbol": "FTNT",
+    "name": "Fortinet",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "FTNT|STOCKS"
+  },
+  {
+    "symbol": "FTV",
+    "name": "Fortive",
+    "sector": "Industrials",
+    "nasdaq_symbol": "FTV|STOCKS"
+  },
+  {
+    "symbol": "FOXA",
+    "name": "Fox Corporation (Class A)",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "FOXA|STOCKS"
+  },
+  {
+    "symbol": "FOX",
+    "name": "Fox Corporation (Class B)",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "FOX|STOCKS"
+  },
+  {
+    "symbol": "BEN",
+    "name": "Franklin Resources",
+    "sector": "Financials",
+    "nasdaq_symbol": "BEN|STOCKS"
+  },
+  {
+    "symbol": "FCX",
+    "name": "Freeport-McMoRan",
+    "sector": "Materials",
+    "nasdaq_symbol": "FCX|STOCKS"
+  },
+  {
+    "symbol": "GRMN",
+    "name": "Garmin",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "GRMN|STOCKS"
+  },
+  {
+    "symbol": "IT",
+    "name": "Gartner",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "IT|STOCKS"
+  },
+  {
+    "symbol": "GE",
+    "name": "GE Aerospace",
+    "sector": "Industrials",
+    "nasdaq_symbol": "GE|STOCKS"
+  },
+  {
+    "symbol": "GEHC",
+    "name": "GE HealthCare",
+    "sector": "Health Care",
+    "nasdaq_symbol": "GEHC|STOCKS"
+  },
+  {
+    "symbol": "GEV",
+    "name": "GE Vernova",
+    "sector": "Industrials",
+    "nasdaq_symbol": "GEV|STOCKS"
+  },
+  {
+    "symbol": "GEN",
+    "name": "Gen Digital",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "GEN|STOCKS"
+  },
+  {
+    "symbol": "GNRC",
+    "name": "Generac",
+    "sector": "Industrials",
+    "nasdaq_symbol": "GNRC|STOCKS"
+  },
+  {
+    "symbol": "GD",
+    "name": "General Dynamics",
+    "sector": "Industrials",
+    "nasdaq_symbol": "GD|STOCKS"
+  },
+  {
+    "symbol": "GIS",
+    "name": "General Mills",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "GIS|STOCKS"
+  },
+  {
+    "symbol": "GM",
+    "name": "General Motors",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "GM|STOCKS"
+  },
+  {
+    "symbol": "GPC",
+    "name": "Genuine Parts Company",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "GPC|STOCKS"
+  },
+  {
+    "symbol": "GILD",
+    "name": "Gilead Sciences",
+    "sector": "Health Care",
+    "nasdaq_symbol": "GILD|STOCKS"
+  },
+  {
+    "symbol": "GPN",
+    "name": "Global Payments",
+    "sector": "Financials",
+    "nasdaq_symbol": "GPN|STOCKS"
+  },
+  {
+    "symbol": "GL",
+    "name": "Globe Life",
+    "sector": "Financials",
+    "nasdaq_symbol": "GL|STOCKS"
+  },
+  {
+    "symbol": "GDDY",
+    "name": "GoDaddy",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "GDDY|STOCKS"
+  },
+  {
+    "symbol": "GS",
+    "name": "Goldman Sachs",
+    "sector": "Financials",
+    "nasdaq_symbol": "GS|STOCKS"
+  },
+  {
+    "symbol": "HAL",
+    "name": "Halliburton",
+    "sector": "Energy",
+    "nasdaq_symbol": "HAL|STOCKS"
+  },
+  {
+    "symbol": "HIG",
+    "name": "Hartford (The)",
+    "sector": "Financials",
+    "nasdaq_symbol": "HIG|STOCKS"
+  },
+  {
+    "symbol": "HAS",
+    "name": "Hasbro",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "HAS|STOCKS"
+  },
+  {
+    "symbol": "HCA",
+    "name": "HCA Healthcare",
+    "sector": "Health Care",
+    "nasdaq_symbol": "HCA|STOCKS"
+  },
+  {
+    "symbol": "DOC",
+    "name": "Healthpeak Properties",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "DOC|STOCKS"
+  },
+  {
+    "symbol": "HSIC",
+    "name": "Henry Schein",
+    "sector": "Health Care",
+    "nasdaq_symbol": "HSIC|STOCKS"
+  },
+  {
+    "symbol": "HSY",
+    "name": "Hershey Company (The)",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "HSY|STOCKS"
+  },
+  {
+    "symbol": "HPE",
+    "name": "Hewlett Packard Enterprise",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "HPE|STOCKS"
+  },
+  {
+    "symbol": "HLT",
+    "name": "Hilton Worldwide",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "HLT|STOCKS"
+  },
+  {
+    "symbol": "HD",
+    "name": "Home Depot (The)",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "HD|STOCKS"
+  },
+  {
+    "symbol": "HONA",
+    "name": "Honeywell Aerospace",
+    "sector": "Industrials",
+    "nasdaq_symbol": "HONA|STOCKS"
+  },
+  {
+    "symbol": "HON",
+    "name": "Honeywell Technologies",
+    "sector": "Industrials",
+    "nasdaq_symbol": "HON|STOCKS"
+  },
+  {
+    "symbol": "HRL",
+    "name": "Hormel Foods",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "HRL|STOCKS"
+  },
+  {
+    "symbol": "HST",
+    "name": "Host Hotels & Resorts",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "HST|STOCKS"
+  },
+  {
+    "symbol": "HWM",
+    "name": "Howmet Aerospace",
+    "sector": "Industrials",
+    "nasdaq_symbol": "HWM|STOCKS"
+  },
+  {
+    "symbol": "HPQ",
+    "name": "HP Inc.",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "HPQ|STOCKS"
+  },
+  {
+    "symbol": "HUBB",
+    "name": "Hubbell Incorporated",
+    "sector": "Industrials",
+    "nasdaq_symbol": "HUBB|STOCKS"
+  },
+  {
+    "symbol": "HUM",
+    "name": "Humana",
+    "sector": "Health Care",
+    "nasdaq_symbol": "HUM|STOCKS"
+  },
+  {
+    "symbol": "HBAN",
+    "name": "Huntington Bancshares",
+    "sector": "Financials",
+    "nasdaq_symbol": "HBAN|STOCKS"
+  },
+  {
+    "symbol": "HII",
+    "name": "Huntington Ingalls Industries",
+    "sector": "Industrials",
+    "nasdaq_symbol": "HII|STOCKS"
+  },
+  {
+    "symbol": "IBM",
+    "name": "IBM",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "IBM|STOCKS"
+  },
+  {
+    "symbol": "IEX",
+    "name": "IDEX Corporation",
+    "sector": "Industrials",
+    "nasdaq_symbol": "IEX|STOCKS"
+  },
+  {
+    "symbol": "IDXX",
+    "name": "Idexx Laboratories",
+    "sector": "Health Care",
+    "nasdaq_symbol": "IDXX|STOCKS"
+  },
+  {
+    "symbol": "ITW",
+    "name": "Illinois Tool Works",
+    "sector": "Industrials",
+    "nasdaq_symbol": "ITW|STOCKS"
+  },
+  {
+    "symbol": "INCY",
+    "name": "Incyte",
+    "sector": "Health Care",
+    "nasdaq_symbol": "INCY|STOCKS"
+  },
+  {
+    "symbol": "IR",
+    "name": "Ingersoll Rand",
+    "sector": "Industrials",
+    "nasdaq_symbol": "IR|STOCKS"
+  },
+  {
+    "symbol": "PODD",
+    "name": "Insulet Corporation",
+    "sector": "Health Care",
+    "nasdaq_symbol": "PODD|STOCKS"
+  },
+  {
+    "symbol": "INTC",
+    "name": "Intel",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "INTC|STOCKS"
+  },
+  {
+    "symbol": "IBKR",
+    "name": "Interactive Brokers",
+    "sector": "Financials",
+    "nasdaq_symbol": "IBKR|STOCKS"
+  },
+  {
+    "symbol": "ICE",
+    "name": "Intercontinental Exchange",
+    "sector": "Financials",
+    "nasdaq_symbol": "ICE|STOCKS"
+  },
+  {
+    "symbol": "IFF",
+    "name": "International Flavors & Fragrances",
+    "sector": "Materials",
+    "nasdaq_symbol": "IFF|STOCKS"
+  },
+  {
+    "symbol": "IP",
+    "name": "International Paper",
+    "sector": "Materials",
+    "nasdaq_symbol": "IP|STOCKS"
+  },
+  {
+    "symbol": "INTU",
+    "name": "Intuit",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "INTU|STOCKS"
+  },
+  {
+    "symbol": "ISRG",
+    "name": "Intuitive Surgical",
+    "sector": "Health Care",
+    "nasdaq_symbol": "ISRG|STOCKS"
+  },
+  {
+    "symbol": "IVZ",
+    "name": "Invesco",
+    "sector": "Financials",
+    "nasdaq_symbol": "IVZ|STOCKS"
+  },
+  {
+    "symbol": "INVH",
+    "name": "Invitation Homes",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "INVH|STOCKS"
+  },
+  {
+    "symbol": "IQV",
+    "name": "IQVIA",
+    "sector": "Health Care",
+    "nasdaq_symbol": "IQV|STOCKS"
+  },
+  {
+    "symbol": "IRM",
+    "name": "Iron Mountain",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "IRM|STOCKS"
+  },
+  {
+    "symbol": "JBHT",
+    "name": "J.B. Hunt",
+    "sector": "Industrials",
+    "nasdaq_symbol": "JBHT|STOCKS"
+  },
+  {
+    "symbol": "JBL",
+    "name": "Jabil",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "JBL|STOCKS"
+  },
+  {
+    "symbol": "JKHY",
+    "name": "Jack Henry & Associates",
+    "sector": "Financials",
+    "nasdaq_symbol": "JKHY|STOCKS"
+  },
+  {
+    "symbol": "J",
+    "name": "Jacobs Solutions",
+    "sector": "Industrials",
+    "nasdaq_symbol": "J|STOCKS"
+  },
+  {
+    "symbol": "JNJ",
+    "name": "Johnson & Johnson",
+    "sector": "Health Care",
+    "nasdaq_symbol": "JNJ|STOCKS"
+  },
+  {
+    "symbol": "JCI",
+    "name": "Johnson Controls",
+    "sector": "Industrials",
+    "nasdaq_symbol": "JCI|STOCKS"
+  },
+  {
+    "symbol": "JPM",
+    "name": "JPMorgan Chase",
+    "sector": "Financials",
+    "nasdaq_symbol": "JPM|STOCKS"
+  },
+  {
+    "symbol": "KVUE",
+    "name": "Kenvue",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "KVUE|STOCKS"
+  },
+  {
+    "symbol": "KDP",
+    "name": "Keurig Dr Pepper",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "KDP|STOCKS"
+  },
+  {
+    "symbol": "KEY",
+    "name": "KeyCorp",
+    "sector": "Financials",
+    "nasdaq_symbol": "KEY|STOCKS"
+  },
+  {
+    "symbol": "KEYS",
+    "name": "Keysight Technologies",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "KEYS|STOCKS"
+  },
+  {
+    "symbol": "KMB",
+    "name": "Kimberly-Clark",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "KMB|STOCKS"
+  },
+  {
+    "symbol": "KIM",
+    "name": "Kimco Realty",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "KIM|STOCKS"
+  },
+  {
+    "symbol": "KMI",
+    "name": "Kinder Morgan",
+    "sector": "Energy",
+    "nasdaq_symbol": "KMI|STOCKS"
+  },
+  {
+    "symbol": "KKR",
+    "name": "KKR & Co.",
+    "sector": "Financials",
+    "nasdaq_symbol": "KKR|STOCKS"
+  },
+  {
+    "symbol": "KLAC",
+    "name": "KLA Corporation",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "KLAC|STOCKS"
+  },
+  {
+    "symbol": "KHC",
+    "name": "Kraft Heinz",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "KHC|STOCKS"
+  },
+  {
+    "symbol": "KR",
+    "name": "Kroger",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "KR|STOCKS"
+  },
+  {
+    "symbol": "LHX",
+    "name": "L3Harris",
+    "sector": "Industrials",
+    "nasdaq_symbol": "LHX|STOCKS"
+  },
+  {
+    "symbol": "LH",
+    "name": "Labcorp",
+    "sector": "Health Care",
+    "nasdaq_symbol": "LH|STOCKS"
+  },
+  {
+    "symbol": "LRCX",
+    "name": "Lam Research",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "LRCX|STOCKS"
+  },
+  {
+    "symbol": "LVS",
+    "name": "Las Vegas Sands",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "LVS|STOCKS"
+  },
+  {
+    "symbol": "LDOS",
+    "name": "Leidos",
+    "sector": "Industrials",
+    "nasdaq_symbol": "LDOS|STOCKS"
+  },
+  {
+    "symbol": "LEN",
+    "name": "Lennar",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "LEN|STOCKS"
+  },
+  {
+    "symbol": "LII",
+    "name": "Lennox International",
+    "sector": "Industrials",
+    "nasdaq_symbol": "LII|STOCKS"
+  },
+  {
+    "symbol": "LLY",
+    "name": "Lilly (Eli)",
+    "sector": "Health Care",
+    "nasdaq_symbol": "LLY|STOCKS"
+  },
+  {
+    "symbol": "LIN",
+    "name": "Linde plc",
+    "sector": "Materials",
+    "nasdaq_symbol": "LIN|STOCKS"
+  },
+  {
+    "symbol": "LYV",
+    "name": "Live Nation Entertainment",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "LYV|STOCKS"
+  },
+  {
+    "symbol": "LMT",
+    "name": "Lockheed Martin",
+    "sector": "Industrials",
+    "nasdaq_symbol": "LMT|STOCKS"
+  },
+  {
+    "symbol": "L",
+    "name": "Loews Corporation",
+    "sector": "Financials",
+    "nasdaq_symbol": "L|STOCKS"
+  },
+  {
+    "symbol": "LOW",
+    "name": "Lowe's",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "LOW|STOCKS"
+  },
+  {
+    "symbol": "LULU",
+    "name": "Lululemon Athletica",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "LULU|STOCKS"
+  },
+  {
+    "symbol": "LITE",
+    "name": "Lumentum",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "LITE|STOCKS"
+  },
+  {
+    "symbol": "LYB",
+    "name": "LyondellBasell",
+    "sector": "Materials",
+    "nasdaq_symbol": "LYB|STOCKS"
+  },
+  {
+    "symbol": "MTB",
+    "name": "M&T Bank",
+    "sector": "Financials",
+    "nasdaq_symbol": "MTB|STOCKS"
+  },
+  {
+    "symbol": "MPC",
+    "name": "Marathon Petroleum",
+    "sector": "Energy",
+    "nasdaq_symbol": "MPC|STOCKS"
+  },
+  {
+    "symbol": "MAR",
+    "name": "Marriott International",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "MAR|STOCKS"
+  },
+  {
+    "symbol": "MRSH",
+    "name": "Marsh McLennan",
+    "sector": "Financials",
+    "nasdaq_symbol": "MRSH|STOCKS"
+  },
+  {
+    "symbol": "MLM",
+    "name": "Martin Marietta Materials",
+    "sector": "Materials",
+    "nasdaq_symbol": "MLM|STOCKS"
+  },
+  {
+    "symbol": "MRVL",
+    "name": "Marvell Technology",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "MRVL|STOCKS"
+  },
+  {
+    "symbol": "MAS",
+    "name": "Masco",
+    "sector": "Industrials",
+    "nasdaq_symbol": "MAS|STOCKS"
+  },
+  {
+    "symbol": "MA",
+    "name": "Mastercard",
+    "sector": "Financials",
+    "nasdaq_symbol": "MA|STOCKS"
+  },
+  {
+    "symbol": "MKC",
+    "name": "McCormick & Company",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "MKC|STOCKS"
+  },
+  {
+    "symbol": "MCD",
+    "name": "McDonald's",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "MCD|STOCKS"
+  },
+  {
+    "symbol": "MCK",
+    "name": "McKesson Corporation",
+    "sector": "Health Care",
+    "nasdaq_symbol": "MCK|STOCKS"
+  },
+  {
+    "symbol": "MDT",
+    "name": "Medtronic",
+    "sector": "Health Care",
+    "nasdaq_symbol": "MDT|STOCKS"
+  },
+  {
+    "symbol": "MRK",
+    "name": "Merck & Co.",
+    "sector": "Health Care",
+    "nasdaq_symbol": "MRK|STOCKS"
+  },
+  {
+    "symbol": "META",
+    "name": "Meta Platforms",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "META|STOCKS"
+  },
+  {
+    "symbol": "MET",
+    "name": "MetLife",
+    "sector": "Financials",
+    "nasdaq_symbol": "MET|STOCKS"
+  },
+  {
+    "symbol": "MTD",
+    "name": "Mettler Toledo",
+    "sector": "Health Care",
+    "nasdaq_symbol": "MTD|STOCKS"
+  },
+  {
+    "symbol": "MGM",
+    "name": "MGM Resorts",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "MGM|STOCKS"
+  },
+  {
+    "symbol": "MCHP",
+    "name": "Microchip Technology",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "MCHP|STOCKS"
+  },
+  {
+    "symbol": "MU",
+    "name": "Micron Technology",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "MU|STOCKS"
+  },
+  {
+    "symbol": "MSFT",
+    "name": "Microsoft",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "MSFT|STOCKS"
+  },
+  {
+    "symbol": "MAA",
+    "name": "Mid-America Apartment Communities",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "MAA|STOCKS"
+  },
+  {
+    "symbol": "MRNA",
+    "name": "Moderna",
+    "sector": "Health Care",
+    "nasdaq_symbol": "MRNA|STOCKS"
+  },
+  {
+    "symbol": "TAP",
+    "name": "Molson Coors Beverage Company",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "TAP|STOCKS"
+  },
+  {
+    "symbol": "MDLZ",
+    "name": "Mondelez International",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "MDLZ|STOCKS"
+  },
+  {
+    "symbol": "MPWR",
+    "name": "Monolithic Power Systems",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "MPWR|STOCKS"
+  },
+  {
+    "symbol": "MNST",
+    "name": "Monster Beverage",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "MNST|STOCKS"
+  },
+  {
+    "symbol": "MCO",
+    "name": "Moody's Corporation",
+    "sector": "Financials",
+    "nasdaq_symbol": "MCO|STOCKS"
+  },
+  {
+    "symbol": "MS",
+    "name": "Morgan Stanley",
+    "sector": "Financials",
+    "nasdaq_symbol": "MS|STOCKS"
+  },
+  {
+    "symbol": "MOS",
+    "name": "Mosaic Company (The)",
+    "sector": "Materials",
+    "nasdaq_symbol": "MOS|STOCKS"
+  },
+  {
+    "symbol": "MSI",
+    "name": "Motorola Solutions",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "MSI|STOCKS"
+  },
+  {
+    "symbol": "MSCI",
+    "name": "MSCI",
+    "sector": "Financials",
+    "nasdaq_symbol": "MSCI|STOCKS"
+  },
+  {
+    "symbol": "NDAQ",
+    "name": "Nasdaq, Inc.",
+    "sector": "Financials",
+    "nasdaq_symbol": "NDAQ|STOCKS"
+  },
+  {
+    "symbol": "NTAP",
+    "name": "NetApp",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "NTAP|STOCKS"
+  },
+  {
+    "symbol": "NFLX",
+    "name": "Netflix",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "NFLX|STOCKS"
+  },
+  {
+    "symbol": "NEM",
+    "name": "Newmont",
+    "sector": "Materials",
+    "nasdaq_symbol": "NEM|STOCKS"
+  },
+  {
+    "symbol": "NWSA",
+    "name": "News Corp (Class A)",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "NWSA|STOCKS"
+  },
+  {
+    "symbol": "NWS",
+    "name": "News Corp (Class B)",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "NWS|STOCKS"
+  },
+  {
+    "symbol": "NEE",
+    "name": "NextEra Energy",
+    "sector": "Utilities",
+    "nasdaq_symbol": "NEE|STOCKS"
+  },
+  {
+    "symbol": "NKE",
+    "name": "Nike, Inc.",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "NKE|STOCKS"
+  },
+  {
+    "symbol": "NI",
+    "name": "NiSource",
+    "sector": "Utilities",
+    "nasdaq_symbol": "NI|STOCKS"
+  },
+  {
+    "symbol": "NDSN",
+    "name": "Nordson Corporation",
+    "sector": "Industrials",
+    "nasdaq_symbol": "NDSN|STOCKS"
+  },
+  {
+    "symbol": "NSC",
+    "name": "Norfolk Southern",
+    "sector": "Industrials",
+    "nasdaq_symbol": "NSC|STOCKS"
+  },
+  {
+    "symbol": "NTRS",
+    "name": "Northern Trust",
+    "sector": "Financials",
+    "nasdaq_symbol": "NTRS|STOCKS"
+  },
+  {
+    "symbol": "NOC",
+    "name": "Northrop Grumman",
+    "sector": "Industrials",
+    "nasdaq_symbol": "NOC|STOCKS"
+  },
+  {
+    "symbol": "NCLH",
+    "name": "Norwegian Cruise Line Holdings",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "NCLH|STOCKS"
+  },
+  {
+    "symbol": "NRG",
+    "name": "NRG Energy",
+    "sector": "Utilities",
+    "nasdaq_symbol": "NRG|STOCKS"
+  },
+  {
+    "symbol": "NUE",
+    "name": "Nucor",
+    "sector": "Materials",
+    "nasdaq_symbol": "NUE|STOCKS"
+  },
+  {
+    "symbol": "NVDA",
+    "name": "Nvidia",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "NVDA|STOCKS"
+  },
+  {
+    "symbol": "NVR",
+    "name": "NVR, Inc.",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "NVR|STOCKS"
+  },
+  {
+    "symbol": "NXPI",
+    "name": "NXP Semiconductors",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "NXPI|STOCKS"
+  },
+  {
+    "symbol": "ORLY",
+    "name": "O'Reilly Automotive",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "ORLY|STOCKS"
+  },
+  {
+    "symbol": "OXY",
+    "name": "Occidental Petroleum",
+    "sector": "Energy",
+    "nasdaq_symbol": "OXY|STOCKS"
+  },
+  {
+    "symbol": "ODFL",
+    "name": "Old Dominion",
+    "sector": "Industrials",
+    "nasdaq_symbol": "ODFL|STOCKS"
+  },
+  {
+    "symbol": "OMC",
+    "name": "Omnicom Group",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "OMC|STOCKS"
+  },
+  {
+    "symbol": "ON",
+    "name": "ON Semiconductor",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "ON|STOCKS"
+  },
+  {
+    "symbol": "OKE",
+    "name": "Oneok",
+    "sector": "Energy",
+    "nasdaq_symbol": "OKE|STOCKS"
+  },
+  {
+    "symbol": "ORCL",
+    "name": "Oracle Corporation",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "ORCL|STOCKS"
+  },
+  {
+    "symbol": "OTIS",
+    "name": "Otis Worldwide",
+    "sector": "Industrials",
+    "nasdaq_symbol": "OTIS|STOCKS"
+  },
+  {
+    "symbol": "PCAR",
+    "name": "Paccar",
+    "sector": "Industrials",
+    "nasdaq_symbol": "PCAR|STOCKS"
+  },
+  {
+    "symbol": "PKG",
+    "name": "Packaging Corporation of America",
+    "sector": "Materials",
+    "nasdaq_symbol": "PKG|STOCKS"
+  },
+  {
+    "symbol": "PLTR",
+    "name": "Palantir Technologies",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "PLTR|STOCKS"
+  },
+  {
+    "symbol": "PANW",
+    "name": "Palo Alto Networks",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "PANW|STOCKS"
+  },
+  {
+    "symbol": "PSKY",
+    "name": "Paramount Skydance Corporation",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "PSKY|STOCKS"
+  },
+  {
+    "symbol": "PH",
+    "name": "Parker Hannifin",
+    "sector": "Industrials",
+    "nasdaq_symbol": "PH|STOCKS"
+  },
+  {
+    "symbol": "PAYX",
+    "name": "Paychex",
+    "sector": "Industrials",
+    "nasdaq_symbol": "PAYX|STOCKS"
+  },
+  {
+    "symbol": "PYPL",
+    "name": "PayPal",
+    "sector": "Financials",
+    "nasdaq_symbol": "PYPL|STOCKS"
+  },
+  {
+    "symbol": "PNR",
+    "name": "Pentair",
+    "sector": "Industrials",
+    "nasdaq_symbol": "PNR|STOCKS"
+  },
+  {
+    "symbol": "PEP",
+    "name": "PepsiCo",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "PEP|STOCKS"
+  },
+  {
+    "symbol": "PFE",
+    "name": "Pfizer",
+    "sector": "Health Care",
+    "nasdaq_symbol": "PFE|STOCKS"
+  },
+  {
+    "symbol": "PCG",
+    "name": "PG&E Corporation",
+    "sector": "Utilities",
+    "nasdaq_symbol": "PCG|STOCKS"
+  },
+  {
+    "symbol": "PM",
+    "name": "Philip Morris International",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "PM|STOCKS"
+  },
+  {
+    "symbol": "PSX",
+    "name": "Phillips 66",
+    "sector": "Energy",
+    "nasdaq_symbol": "PSX|STOCKS"
+  },
+  {
+    "symbol": "PNW",
+    "name": "Pinnacle West Capital",
+    "sector": "Utilities",
+    "nasdaq_symbol": "PNW|STOCKS"
+  },
+  {
+    "symbol": "PNC",
+    "name": "PNC Financial Services",
+    "sector": "Financials",
+    "nasdaq_symbol": "PNC|STOCKS"
+  },
+  {
+    "symbol": "PPG",
+    "name": "PPG Industries",
+    "sector": "Materials",
+    "nasdaq_symbol": "PPG|STOCKS"
+  },
+  {
+    "symbol": "PPL",
+    "name": "PPL Corporation",
+    "sector": "Utilities",
+    "nasdaq_symbol": "PPL|STOCKS"
+  },
+  {
+    "symbol": "PFG",
+    "name": "Principal Financial Group",
+    "sector": "Financials",
+    "nasdaq_symbol": "PFG|STOCKS"
+  },
+  {
+    "symbol": "PG",
+    "name": "Procter & Gamble",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "PG|STOCKS"
+  },
+  {
+    "symbol": "PGR",
+    "name": "Progressive Corporation",
+    "sector": "Financials",
+    "nasdaq_symbol": "PGR|STOCKS"
+  },
+  {
+    "symbol": "PLD",
+    "name": "Prologis",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "PLD|STOCKS"
+  },
+  {
+    "symbol": "PRU",
+    "name": "Prudential Financial",
+    "sector": "Financials",
+    "nasdaq_symbol": "PRU|STOCKS"
+  },
+  {
+    "symbol": "PEG",
+    "name": "Public Service Enterprise Group",
+    "sector": "Utilities",
+    "nasdaq_symbol": "PEG|STOCKS"
+  },
+  {
+    "symbol": "PTC",
+    "name": "PTC Inc.",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "PTC|STOCKS"
+  },
+  {
+    "symbol": "PSA",
+    "name": "Public Storage",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "PSA|STOCKS"
+  },
+  {
+    "symbol": "PHM",
+    "name": "PulteGroup",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "PHM|STOCKS"
+  },
+  {
+    "symbol": "PWR",
+    "name": "Quanta Services",
+    "sector": "Industrials",
+    "nasdaq_symbol": "PWR|STOCKS"
+  },
+  {
+    "symbol": "QCOM",
+    "name": "Qualcomm",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "QCOM|STOCKS"
+  },
+  {
+    "symbol": "DGX",
+    "name": "Quest Diagnostics",
+    "sector": "Health Care",
+    "nasdaq_symbol": "DGX|STOCKS"
+  },
+  {
+    "symbol": "Q",
+    "name": "Qnity Electronics",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "Q|STOCKS"
+  },
+  {
+    "symbol": "RL",
+    "name": "Ralph Lauren Corporation",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "RL|STOCKS"
+  },
+  {
+    "symbol": "RJF",
+    "name": "Raymond James Financial",
+    "sector": "Financials",
+    "nasdaq_symbol": "RJF|STOCKS"
+  },
+  {
+    "symbol": "RDDT",
+    "name": "Reddit",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "RDDT|STOCKS"
+  },
+  {
+    "symbol": "RTX",
+    "name": "RTX Corporation",
+    "sector": "Industrials",
+    "nasdaq_symbol": "RTX|STOCKS"
+  },
+  {
+    "symbol": "O",
+    "name": "Realty Income",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "O|STOCKS"
+  },
+  {
+    "symbol": "REG",
+    "name": "Regency Centers",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "REG|STOCKS"
+  },
+  {
+    "symbol": "REGN",
+    "name": "Regeneron Pharmaceuticals",
+    "sector": "Health Care",
+    "nasdaq_symbol": "REGN|STOCKS"
+  },
+  {
+    "symbol": "RF",
+    "name": "Regions Financial Corporation",
+    "sector": "Financials",
+    "nasdaq_symbol": "RF|STOCKS"
+  },
+  {
+    "symbol": "RSG",
+    "name": "Republic Services",
+    "sector": "Industrials",
+    "nasdaq_symbol": "RSG|STOCKS"
+  },
+  {
+    "symbol": "RMD",
+    "name": "ResMed|",
+    "sector": "Health Care",
+    "nasdaq_symbol": "RMD|STOCKS"
+  },
+  {
+    "symbol": "RVTY",
+    "name": "Revvity",
+    "sector": "Health Care",
+    "nasdaq_symbol": "RVTY|STOCKS"
+  },
+  {
+    "symbol": "HOOD",
+    "name": "Robinhood Markets",
+    "sector": "Financials",
+    "nasdaq_symbol": "HOOD|STOCKS"
+  },
+  {
+    "symbol": "ROK",
+    "name": "Rockwell Automation",
+    "sector": "Industrials",
+    "nasdaq_symbol": "ROK|STOCKS"
+  },
+  {
+    "symbol": "ROL",
+    "name": "Rollins, Inc.",
+    "sector": "Industrials",
+    "nasdaq_symbol": "ROL|STOCKS"
+  },
+  {
+    "symbol": "ROP",
+    "name": "Roper Technologies",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "ROP|STOCKS"
+  },
+  {
+    "symbol": "ROST",
+    "name": "Ross Stores",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "ROST|STOCKS"
+  },
+  {
+    "symbol": "RCL",
+    "name": "Royal Caribbean Group",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "RCL|STOCKS"
+  },
+  {
+    "symbol": "SPGI",
+    "name": "S&P Global",
+    "sector": "Financials",
+    "nasdaq_symbol": "SPGI|STOCKS"
+  },
+  {
+    "symbol": "CRM",
+    "name": "Salesforce",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "CRM|STOCKS"
+  },
+  {
+    "symbol": "SNDK",
+    "name": "Sandisk",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "SNDK|STOCKS"
+  },
+  {
+    "symbol": "SBAC",
+    "name": "SBA Communications",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "SBAC|STOCKS"
+  },
+  {
+    "symbol": "SLB",
+    "name": "Schlumberger",
+    "sector": "Energy",
+    "nasdaq_symbol": "SLB|STOCKS"
+  },
+  {
+    "symbol": "STX",
+    "name": "Seagate Technology",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "STX|STOCKS"
+  },
+  {
+    "symbol": "SRE",
+    "name": "Sempra",
+    "sector": "Utilities",
+    "nasdaq_symbol": "SRE|STOCKS"
+  },
+  {
+    "symbol": "NOW",
+    "name": "ServiceNow",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "NOW|STOCKS"
+  },
+  {
+    "symbol": "SHW",
+    "name": "Sherwin-Williams",
+    "sector": "Materials",
+    "nasdaq_symbol": "SHW|STOCKS"
+  },
+  {
+    "symbol": "SPG",
+    "name": "Simon Property Group",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "SPG|STOCKS"
+  },
+  {
+    "symbol": "SWKS",
+    "name": "Skyworks Solutions",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "SWKS|STOCKS"
+  },
+  {
+    "symbol": "SJM",
+    "name": "J.M. Smucker Company (The)",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "SJM|STOCKS"
+  },
+  {
+    "symbol": "SW",
+    "name": "Smurfit Westrock",
+    "sector": "Materials",
+    "nasdaq_symbol": "SW|STOCKS"
+  },
+  {
+    "symbol": "SNA",
+    "name": "Snap-on",
+    "sector": "Industrials",
+    "nasdaq_symbol": "SNA|STOCKS"
+  },
+  {
+    "symbol": "SOLV",
+    "name": "Solventum",
+    "sector": "Health Care",
+    "nasdaq_symbol": "SOLV|STOCKS"
+  },
+  {
+    "symbol": "SO",
+    "name": "Southern Company",
+    "sector": "Utilities",
+    "nasdaq_symbol": "SO|STOCKS"
+  },
+  {
+    "symbol": "LUV",
+    "name": "Southwest Airlines",
+    "sector": "Industrials",
+    "nasdaq_symbol": "LUV|STOCKS"
+  },
+  {
+    "symbol": "SWK",
+    "name": "Stanley Black & Decker",
+    "sector": "Industrials",
+    "nasdaq_symbol": "SWK|STOCKS"
+  },
+  {
+    "symbol": "SBUX",
+    "name": "Starbucks",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "SBUX|STOCKS"
+  },
+  {
+    "symbol": "STT",
+    "name": "State Street Corporation",
+    "sector": "Financials",
+    "nasdaq_symbol": "STT|STOCKS"
+  },
+  {
+    "symbol": "STLD",
+    "name": "Steel Dynamics",
+    "sector": "Materials",
+    "nasdaq_symbol": "STLD|STOCKS"
+  },
+  {
+    "symbol": "STE",
+    "name": "Steris",
+    "sector": "Health Care",
+    "nasdaq_symbol": "STE|STOCKS"
+  },
+  {
+    "symbol": "SYK",
+    "name": "Stryker Corporation",
+    "sector": "Health Care",
+    "nasdaq_symbol": "SYK|STOCKS"
+  },
+  {
+    "symbol": "SMCI",
+    "name": "Supermicro",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "SMCI|STOCKS"
+  },
+  {
+    "symbol": "SYF",
+    "name": "Synchrony Financial",
+    "sector": "Financials",
+    "nasdaq_symbol": "SYF|STOCKS"
+  },
+  {
+    "symbol": "SNPS",
+    "name": "Synopsys",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "SNPS|STOCKS"
+  },
+  {
+    "symbol": "SYY",
+    "name": "Sysco",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "SYY|STOCKS"
+  },
+  {
+    "symbol": "TMUS",
+    "name": "T-Mobile US",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "TMUS|STOCKS"
+  },
+  {
+    "symbol": "TROW",
+    "name": "T. Rowe Price",
+    "sector": "Financials",
+    "nasdaq_symbol": "TROW|STOCKS"
+  },
+  {
+    "symbol": "TTWO",
+    "name": "Take-Two Interactive",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "TTWO|STOCKS"
+  },
+  {
+    "symbol": "TPR",
+    "name": "Tapestry, Inc.",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "TPR|STOCKS"
+  },
+  {
+    "symbol": "TRGP",
+    "name": "Targa Resources",
+    "sector": "Energy",
+    "nasdaq_symbol": "TRGP|STOCKS"
+  },
+  {
+    "symbol": "TGT",
+    "name": "Target Corporation",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "TGT|STOCKS"
+  },
+  {
+    "symbol": "TEL",
+    "name": "TE Connectivity",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "TEL|STOCKS"
+  },
+  {
+    "symbol": "TDY",
+    "name": "Teledyne Technologies",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "TDY|STOCKS"
+  },
+  {
+    "symbol": "TER",
+    "name": "Teradyne",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "TER|STOCKS"
+  },
+  {
+    "symbol": "TSLA",
+    "name": "Tesla, Inc.",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "TSLA|STOCKS"
+  },
+  {
+    "symbol": "TXN",
+    "name": "Texas Instruments",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "TXN|STOCKS"
+  },
+  {
+    "symbol": "TPL",
+    "name": "Texas Pacific Land Corporation",
+    "sector": "Energy",
+    "nasdaq_symbol": "TPL|STOCKS"
+  },
+  {
+    "symbol": "TXT",
+    "name": "Textron",
+    "sector": "Industrials",
+    "nasdaq_symbol": "TXT|STOCKS"
+  },
+  {
+    "symbol": "TMO",
+    "name": "Thermo Fisher Scientific",
+    "sector": "Health Care",
+    "nasdaq_symbol": "TMO|STOCKS"
+  },
+  {
+    "symbol": "TJX",
+    "name": "TJX Companies",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "TJX|STOCKS"
+  },
+  {
+    "symbol": "TKO",
+    "name": "TKO Group Holdings",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "TKO|STOCKS"
+  },
+  {
+    "symbol": "TTD",
+    "name": "Trade Desk (The)",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "TTD|STOCKS"
+  },
+  {
+    "symbol": "TSCO",
+    "name": "Tractor Supply",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "TSCO|STOCKS"
+  },
+  {
+    "symbol": "TT",
+    "name": "Trane Technologies",
+    "sector": "Industrials",
+    "nasdaq_symbol": "TT|STOCKS"
+  },
+  {
+    "symbol": "TDG",
+    "name": "TransDigm Group",
+    "sector": "Industrials",
+    "nasdaq_symbol": "TDG|STOCKS"
+  },
+  {
+    "symbol": "TRV",
+    "name": "Travelers Companies (The)",
+    "sector": "Financials",
+    "nasdaq_symbol": "TRV|STOCKS"
+  },
+  {
+    "symbol": "TRMB",
+    "name": "Trimble Inc.",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "TRMB|STOCKS"
+  },
+  {
+    "symbol": "TFC",
+    "name": "Truist Financial",
+    "sector": "Financials",
+    "nasdaq_symbol": "TFC|STOCKS"
+  },
+  {
+    "symbol": "TYL",
+    "name": "Tyler Technologies",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "TYL|STOCKS"
+  },
+  {
+    "symbol": "TSN",
+    "name": "Tyson Foods",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "TSN|STOCKS"
+  },
+  {
+    "symbol": "USB",
+    "name": "U.S. Bancorp",
+    "sector": "Financials",
+    "nasdaq_symbol": "USB|STOCKS"
+  },
+  {
+    "symbol": "UBER",
+    "name": "Uber",
+    "sector": "Industrials",
+    "nasdaq_symbol": "UBER|STOCKS"
+  },
+  {
+    "symbol": "UDR",
+    "name": "UDR, Inc.",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "UDR|STOCKS"
+  },
+  {
+    "symbol": "ULTA",
+    "name": "Ulta Beauty",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "ULTA|STOCKS"
+  },
+  {
+    "symbol": "UNP",
+    "name": "Union Pacific Corporation",
+    "sector": "Industrials",
+    "nasdaq_symbol": "UNP|STOCKS"
+  },
+  {
+    "symbol": "UAL",
+    "name": "United Airlines Holdings",
+    "sector": "Industrials",
+    "nasdaq_symbol": "UAL|STOCKS"
+  },
+  {
+    "symbol": "UPS",
+    "name": "United Parcel Service",
+    "sector": "Industrials",
+    "nasdaq_symbol": "UPS|STOCKS"
+  },
+  {
+    "symbol": "URI",
+    "name": "United Rentals",
+    "sector": "Industrials",
+    "nasdaq_symbol": "URI|STOCKS"
+  },
+  {
+    "symbol": "UNH",
+    "name": "UnitedHealth Group",
+    "sector": "Health Care",
+    "nasdaq_symbol": "UNH|STOCKS"
+  },
+  {
+    "symbol": "UHS",
+    "name": "Universal Health Services",
+    "sector": "Health Care",
+    "nasdaq_symbol": "UHS|STOCKS"
+  },
+  {
+    "symbol": "VLO",
+    "name": "Valero Energy",
+    "sector": "Energy",
+    "nasdaq_symbol": "VLO|STOCKS"
+  },
+  {
+    "symbol": "VEEV",
+    "name": "Veeva Systems",
+    "sector": "Health Care",
+    "nasdaq_symbol": "VEEV|STOCKS"
+  },
+  {
+    "symbol": "VTR",
+    "name": "Ventas",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "VTR|STOCKS"
+  },
+  {
+    "symbol": "VLTO",
+    "name": "Veralto",
+    "sector": "Industrials",
+    "nasdaq_symbol": "VLTO|STOCKS"
+  },
+  {
+    "symbol": "VRSN",
+    "name": "Verisign",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "VRSN|STOCKS"
+  },
+  {
+    "symbol": "VRSK",
+    "name": "Verisk Analytics",
+    "sector": "Industrials",
+    "nasdaq_symbol": "VRSK|STOCKS"
+  },
+  {
+    "symbol": "VZ",
+    "name": "Verizon",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "VZ|STOCKS"
+  },
+  {
+    "symbol": "VRTX",
+    "name": "Vertex Pharmaceuticals",
+    "sector": "Health Care",
+    "nasdaq_symbol": "VRTX|STOCKS"
+  },
+  {
+    "symbol": "VRT",
+    "name": "Vertiv",
+    "sector": "Industrials",
+    "nasdaq_symbol": "VRT|STOCKS"
+  },
+  {
+    "symbol": "VTRS",
+    "name": "Viatris",
+    "sector": "Health Care",
+    "nasdaq_symbol": "VTRS|STOCKS"
+  },
+  {
+    "symbol": "VICI",
+    "name": "Vici Properties",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "VICI|STOCKS"
+  },
+  {
+    "symbol": "V",
+    "name": "Visa Inc.",
+    "sector": "Financials",
+    "nasdaq_symbol": "V|STOCKS"
+  },
+  {
+    "symbol": "VST",
+    "name": "Vistra Corp.",
+    "sector": "Utilities",
+    "nasdaq_symbol": "VST|STOCKS"
+  },
+  {
+    "symbol": "VMRK",
+    "name": "Vivmark Residential",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "VMRK|STOCKS"
+  },
+  {
+    "symbol": "VMC",
+    "name": "Vulcan Materials Company",
+    "sector": "Materials",
+    "nasdaq_symbol": "VMC|STOCKS"
+  },
+  {
+    "symbol": "WRB",
+    "name": "W. R. Berkley Corporation",
+    "sector": "Financials",
+    "nasdaq_symbol": "WRB|STOCKS"
+  },
+  {
+    "symbol": "GWW",
+    "name": "W. W. Grainger",
+    "sector": "Industrials",
+    "nasdaq_symbol": "GWW|STOCKS"
+  },
+  {
+    "symbol": "WAB",
+    "name": "Wabtec",
+    "sector": "Industrials",
+    "nasdaq_symbol": "WAB|STOCKS"
+  },
+  {
+    "symbol": "WMT",
+    "name": "Walmart",
+    "sector": "Consumer Staples",
+    "nasdaq_symbol": "WMT|STOCKS"
+  },
+  {
+    "symbol": "DIS",
+    "name": "Walt Disney Company (The)",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "DIS|STOCKS"
+  },
+  {
+    "symbol": "WBD",
+    "name": "Warner Bros. Discovery",
+    "sector": "Communication Services",
+    "nasdaq_symbol": "WBD|STOCKS"
+  },
+  {
+    "symbol": "WM",
+    "name": "Waste Management",
+    "sector": "Industrials",
+    "nasdaq_symbol": "WM|STOCKS"
+  },
+  {
+    "symbol": "WAT",
+    "name": "Waters Corporation",
+    "sector": "Health Care",
+    "nasdaq_symbol": "WAT|STOCKS"
+  },
+  {
+    "symbol": "WEC",
+    "name": "WEC Energy Group",
+    "sector": "Utilities",
+    "nasdaq_symbol": "WEC|STOCKS"
+  },
+  {
+    "symbol": "WFC",
+    "name": "Wells Fargo",
+    "sector": "Financials",
+    "nasdaq_symbol": "WFC|STOCKS"
+  },
+  {
+    "symbol": "WELL",
+    "name": "Welltower",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "WELL|STOCKS"
+  },
+  {
+    "symbol": "WST",
+    "name": "West Pharmaceutical Services",
+    "sector": "Health Care",
+    "nasdaq_symbol": "WST|STOCKS"
+  },
+  {
+    "symbol": "WDC",
+    "name": "Western Digital",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "WDC|STOCKS"
+  },
+  {
+    "symbol": "WY",
+    "name": "Weyerhaeuser",
+    "sector": "Real Estate",
+    "nasdaq_symbol": "WY|STOCKS"
+  },
+  {
+    "symbol": "WSM",
+    "name": "Williams-Sonoma, Inc.",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "WSM|STOCKS"
+  },
+  {
+    "symbol": "WMB",
+    "name": "Williams Companies",
+    "sector": "Energy",
+    "nasdaq_symbol": "WMB|STOCKS"
+  },
+  {
+    "symbol": "WTW",
+    "name": "Willis Towers Watson",
+    "sector": "Financials",
+    "nasdaq_symbol": "WTW|STOCKS"
+  },
+  {
+    "symbol": "WDAY",
+    "name": "Workday, Inc.",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "WDAY|STOCKS"
+  },
+  {
+    "symbol": "WYNN",
+    "name": "Wynn Resorts",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "WYNN|STOCKS"
+  },
+  {
+    "symbol": "XEL",
+    "name": "Xcel Energy",
+    "sector": "Utilities",
+    "nasdaq_symbol": "XEL|STOCKS"
+  },
+  {
+    "symbol": "XYL",
+    "name": "Xylem Inc.",
+    "sector": "Industrials",
+    "nasdaq_symbol": "XYL|STOCKS"
+  },
+  {
+    "symbol": "YUM",
+    "name": "Yum! Brands",
+    "sector": "Consumer Discretionary",
+    "nasdaq_symbol": "YUM|STOCKS"
+  },
+  {
+    "symbol": "ZBRA",
+    "name": "Zebra Technologies",
+    "sector": "Information Technology",
+    "nasdaq_symbol": "ZBRA|STOCKS"
+  },
+  {
+    "symbol": "ZBH",
+    "name": "Zimmer Biomet",
+    "sector": "Health Care",
+    "nasdaq_symbol": "ZBH|STOCKS"
+  },
+  {
+    "symbol": "ZTS",
+    "name": "Zoetis",
+    "sector": "Health Care",
+    "nasdaq_symbol": "ZTS|STOCKS"
+  }
+]

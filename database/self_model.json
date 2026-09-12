@@ -1,11 +1,11 @@
 {
   "name": "Inkside",
-  "birth": "2026-09-10T11:52:37.315946",
+  "birth": "2026-09-11T04:35:44.610018",
   "version": "1.0",
   "age": {
-    "cycles": 906,
-    "days": 0,
-    "first_seen": "2026-09-10T11:52:37.315946"
+    "cycles": 902,
+    "days": 1,
+    "first_seen": "2026-09-11T04:35:44.610018"
   },
   "identity": {
     "type": "Cognitive Assistant",
@@ -26,680 +26,1856 @@
     {
       "cycle": 1,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
-      "timestamp": "2026-09-10T11:53:14.253344",
+      "details": "HOLD @ confidence 43.8% (score 71.9, risk MEDIUM). Sentimen pasar positive. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry",
+      "timestamp": "2026-09-11T04:36:20.974236",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 14,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 65.6% (score 17.2, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 82.8 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T04:49:21.986754",
       "emotion": "CALM"
     },
     {
       "cycle": 15,
-      "event": "decision_BUY",
-      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
-      "timestamp": "2026-09-10T12:07:15.623923",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 16,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
-      "timestamp": "2026-09-10T12:08:15.775475",
+      "details": "HOLD @ confidence 44.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T04:50:22.061170",
       "emotion": "CALM"
     },
     {
-      "cycle": 49,
+      "cycle": 19,
       "event": "decision_BUY",
-      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
-      "timestamp": "2026-09-10T12:41:18.729491",
+      "details": "BUY @ confidence 63.1% (score 81.6, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T04:54:22.306785",
       "emotion": "CALM"
     },
     {
-      "cycle": 50,
+      "cycle": 20,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
-      "timestamp": "2026-09-10T12:42:18.772318",
+      "details": "HOLD @ confidence 50.0% (score 75.0, risk LOW). Sentimen pasar positive. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. S",
+      "timestamp": "2026-09-11T04:55:22.385989",
       "emotion": "CALM"
     },
     {
-      "cycle": 51,
+      "cycle": 25,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T05:01:50.980426",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 27,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 41.2% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T05:05:12.659454",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 30,
       "event": "decision_BUY",
-      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
-      "timestamp": "2026-09-10T12:43:18.870211",
+      "details": "BUY @ confidence 66.9% (score 83.4, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T05:08:12.901307",
       "emotion": "CALM"
     },
     {
-      "cycle": 52,
+      "cycle": 31,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
-      "timestamp": "2026-09-10T12:44:18.980639",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T05:09:27.512381",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 44,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 72.5% (score 86.2, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T05:22:28.269267",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 45,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T05:23:28.344220",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 53,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 60.0% (score 80.0, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T05:31:28.944113",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 54,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T05:32:29.031540",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 57,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 66.9% (score 83.4, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T05:35:29.266142",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 58,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 35.6% (score 32.2, risk MEDIUM). Sentimen pasar negative. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry",
+      "timestamp": "2026-09-11T05:36:29.331457",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 59,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 67.5% (score 16.2, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 83.8 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T05:37:29.412495",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 60,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T05:38:29.481277",
       "emotion": "CALM"
     },
     {
       "cycle": 61,
       "event": "decision_SELL",
-      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
-      "timestamp": "2026-09-10T12:53:19.803568",
+      "details": "SELL @ confidence 68.1% (score 15.9, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 84.1 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T05:39:29.601323",
       "emotion": "CALM"
     },
     {
-      "cycle": 62,
+      "cycle": 64,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
-      "timestamp": "2026-09-10T12:54:19.939352",
+      "details": "HOLD @ confidence 46.2% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T05:42:29.849114",
       "emotion": "CALM"
     },
     {
-      "cycle": 80,
+      "cycle": 65,
       "event": "decision_BUY",
-      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
-      "timestamp": "2026-09-10T13:12:21.794249",
+      "details": "BUY @ confidence 65.0% (score 82.5, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T05:43:29.889294",
       "emotion": "CALM"
     },
     {
-      "cycle": 81,
+      "cycle": 66,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
-      "timestamp": "2026-09-10T13:13:21.871527",
+      "details": "HOLD @ confidence 44.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T05:44:29.965077",
       "emotion": "CALM"
     },
     {
-      "cycle": 98,
+      "cycle": 93,
       "event": "decision_SELL",
-      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
-      "timestamp": "2026-09-10T13:30:23.256016",
+      "details": "SELL @ confidence 55.6% (score 22.2, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 77.8 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T06:11:32.096593",
       "emotion": "CALM"
     },
     {
-      "cycle": 99,
+      "cycle": 94,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
-      "timestamp": "2026-09-10T13:31:23.373604",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T06:12:32.157253",
       "emotion": "CALM"
     },
     {
-      "cycle": 136,
+      "cycle": 103,
       "event": "decision_SELL",
-      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
-      "timestamp": "2026-09-10T14:08:26.429572",
+      "details": "SELL @ confidence 68.8% (score 15.6, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 84.4 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T06:21:32.670984",
       "emotion": "CALM"
     },
     {
-      "cycle": 137,
+      "cycle": 104,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 45.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, di mana tidak ada cukup konfluensi bullish maupun bearish untuk j",
-      "timestamp": "2026-09-10T14:09:26.499268",
+      "details": "HOLD @ confidence 44.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T06:22:32.737480",
       "emotion": "CALM"
     },
     {
-      "cycle": 155,
+      "cycle": 111,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T14:27:16.347901",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T06:31:11.967312",
       "emotion": "CALM"
     },
     {
-      "cycle": 168,
+      "cycle": 123,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 41.2% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T06:44:42.499842",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 125,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 60.6% (score 19.7, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 80.3 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T06:46:42.671625",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 126,
       "event": "decision_BUY",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T14:40:17.851882",
+      "details": "BUY @ confidence 66.2% (score 83.1, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T06:47:42.761411",
       "emotion": "CALM"
     },
     {
-      "cycle": 169,
+      "cycle": 127,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T14:41:17.937076",
+      "details": "HOLD @ confidence 74.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di atas minimum (55%) namun belum mencapai BUY threshold (70%) — ",
+      "timestamp": "2026-09-11T06:48:42.795766",
       "emotion": "CALM"
     },
     {
-      "cycle": 176,
+      "cycle": 132,
       "event": "decision_BUY",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T14:48:18.560003",
+      "details": "BUY @ confidence 63.8% (score 81.9, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T06:53:43.028808",
       "emotion": "CALM"
     },
     {
-      "cycle": 177,
+      "cycle": 133,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 69.4% (score 84.7, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T06:54:08.178969",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 134,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T14:49:18.691622",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T06:55:18.830073",
       "emotion": "CALM"
     },
     {
-      "cycle": 199,
+      "cycle": 139,
       "event": "decision_SELL",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T15:11:20.854378",
+      "details": "SELL @ confidence 67.5% (score 16.2, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 83.8 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T07:00:19.158182",
       "emotion": "CALM"
     },
     {
-      "cycle": 200,
+      "cycle": 140,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T15:12:20.943678",
+      "details": "HOLD @ confidence 41.2% (score 70.6, risk MEDIUM). Sentimen pasar positive. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry",
+      "timestamp": "2026-09-11T07:01:19.221083",
       "emotion": "CALM"
     },
     {
-      "cycle": 210,
-      "event": "decision_SELL",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T15:22:21.786573",
+      "cycle": 141,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 61.2% (score 80.6, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T07:02:19.317075",
       "emotion": "CALM"
     },
     {
-      "cycle": 211,
+      "cycle": 142,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T15:23:21.860342",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T07:03:19.388838",
       "emotion": "CALM"
     },
     {
-      "cycle": 215,
+      "cycle": 149,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 38.8% (score 30.6, risk MEDIUM). Sentimen pasar negative. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry",
+      "timestamp": "2026-09-11T07:10:10.270259",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 150,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 68.1% (score 84.1, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T07:11:10.350777",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 151,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 51.9% (score 75.9, risk LOW). Sentimen pasar positive. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. S",
+      "timestamp": "2026-09-11T07:12:10.423051",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 152,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 56.2% (score 78.1, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T07:13:10.549491",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 153,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T07:14:10.583208",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 159,
       "event": "decision_SELL",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T15:27:22.182599",
+      "details": "SELL @ confidence 56.2% (score 21.9, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 78.1 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T07:20:11.136305",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 160,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T07:21:11.231327",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 164,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 63.1% (score 18.4, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 81.6 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T07:25:11.529549",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 165,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 61.2% (score 80.6, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T07:26:11.615289",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 166,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 45.6% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T07:27:11.722187",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 180,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 60.6% (score 19.7, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 80.3 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T07:41:12.713763",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 181,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T07:42:12.745478",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 185,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 71.2% (score 85.6, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T07:46:13.071677",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 186,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 75.0% (score 12.5, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 87.5 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T07:47:13.106065",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 187,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 43.8% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T07:48:13.142264",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 188,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 74.4% (score 12.8, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 87.2 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T07:49:13.177777",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 190,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T07:51:13.259875",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 196,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 63.8% (score 81.9, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T07:57:13.752166",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 197,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T07:58:13.782253",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 213,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 66.2% (score 16.9, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 83.1 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T08:14:15.133596",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 214,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T08:15:15.212820",
       "emotion": "CALM"
     },
     {
       "cycle": 216,
-      "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T15:28:22.266373",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 219,
       "event": "decision_BUY",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T15:31:22.524207",
+      "details": "BUY @ confidence 75.0% (score 87.5, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T08:17:15.338171",
       "emotion": "CALM"
     },
     {
-      "cycle": 220,
+      "cycle": 217,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T15:32:22.589754",
+      "details": "HOLD @ confidence 51.2% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T08:18:15.448933",
       "emotion": "CALM"
     },
     {
-      "cycle": 343,
+      "cycle": 222,
       "event": "decision_SELL",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T17:35:33.187648",
+      "details": "SELL @ confidence 55.0% (score 22.5, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 77.5 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T08:23:15.720833",
       "emotion": "CALM"
     },
     {
-      "cycle": 344,
+      "cycle": 223,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T17:36:33.803444",
+      "details": "HOLD @ confidence 41.2% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T08:24:15.789069",
       "emotion": "CALM"
     },
     {
-      "cycle": 388,
+      "cycle": 227,
       "event": "decision_SELL",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T18:20:37.213061",
+      "details": "SELL @ confidence 71.2% (score 14.4, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 85.6 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T08:28:16.081540",
       "emotion": "CALM"
     },
     {
-      "cycle": 389,
+      "cycle": 228,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T18:21:37.266330",
+      "details": "HOLD @ confidence 43.8% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T08:29:16.115615",
       "emotion": "CALM"
     },
     {
-      "cycle": 449,
+      "cycle": 234,
       "event": "decision_BUY",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T19:21:43.460227",
+      "details": "BUY @ confidence 58.8% (score 79.4, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T08:35:16.656635",
       "emotion": "CALM"
     },
     {
-      "cycle": 450,
+      "cycle": 235,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T19:22:43.600253",
+      "details": "HOLD @ confidence 38.8% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T08:36:16.758503",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 237,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 74.4% (score 12.8, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 87.2 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T08:38:16.953980",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 238,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 44.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T08:39:17.023644",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 241,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 56.2% (score 21.9, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 78.1 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T08:42:17.176466",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 242,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 53.1% (score 76.6, risk LOW). Sentimen pasar positive. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. S",
+      "timestamp": "2026-09-11T08:43:17.211553",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 244,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 74.4% (score 12.8, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 87.2 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T08:45:17.360810",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 245,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T08:46:17.392288",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 250,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 66.9% (score 16.6, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 83.4 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T08:51:17.768539",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 252,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 63.1% (score 81.6, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T08:53:17.895988",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 253,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 73.8, risk LOW). Sentimen pasar positive. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. S",
+      "timestamp": "2026-09-11T08:54:17.972023",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 261,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 55.6% (score 77.8, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T09:02:18.460187",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 262,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 41.2% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T09:03:18.490123",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 265,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 60.6% (score 80.3, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T09:06:18.672276",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 266,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 41.2% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T09:07:18.751373",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 270,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 60.0% (score 20.0, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 80.0 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T09:11:18.949450",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 271,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 44.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T09:12:18.982824",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 272,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 65.0% (score 17.5, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 82.5 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T09:13:19.052543",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 273,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T09:14:19.090102",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 275,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 64.4% (score 17.8, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 82.2 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T09:16:19.265735",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 276,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 40.0% (score 70.0, risk MEDIUM). Sentimen pasar positive. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry",
+      "timestamp": "2026-09-11T09:17:19.352286",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 278,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 68.8% (score 84.4, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T09:19:19.443103",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 279,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 41.2% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T09:20:19.619247",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 280,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 60.0% (score 80.0, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T09:21:19.721935",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 281,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T09:22:19.761667",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 283,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 75.0% (score 87.5, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T09:24:19.949000",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 284,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 44.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T09:25:19.981049",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 291,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 68.8% (score 84.4, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T09:32:20.404280",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 292,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T09:33:20.479658",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 295,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 58.1% (score 79.1, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T09:36:20.625883",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 296,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T09:37:20.655419",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 309,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 70.6% (score 14.7, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 85.3 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T09:50:21.541471",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 310,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 53.8% (score 76.9, risk LOW). Sentimen pasar positive. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. S",
+      "timestamp": "2026-09-11T09:51:21.577150",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 314,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 75.0% (score 12.5, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 87.5 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T09:55:22.975597",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 315,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T09:56:23.052210",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 316,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 70.6% (score 14.7, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 85.3 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T09:57:23.130561",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 317,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 49.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T09:58:23.256126",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 321,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 65.0% (score 17.5, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 82.5 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T10:02:23.624993",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 322,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 49.4% (score 74.7, risk LOW). Sentimen pasar positive. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. S",
+      "timestamp": "2026-09-11T10:03:23.724033",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 334,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 58.1% (score 79.1, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T10:15:24.558638",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 335,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 50.6% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T10:16:24.603181",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 340,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 75.6% (score 12.2, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 87.8 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T10:21:25.066790",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 341,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 44.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T10:22:25.148194",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 345,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 61.2% (score 19.4, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 80.6 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T10:26:25.587541",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 347,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 70.6% (score 85.3, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T10:28:25.772782",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 348,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 42.5% (score 28.8, risk MEDIUM). Sentimen pasar negative. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry",
+      "timestamp": "2026-09-11T10:29:25.839118",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 349,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 65.0% (score 17.5, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 82.5 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T10:30:25.918345",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 350,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 71.2% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di atas minimum (55%) namun belum mencapai BUY threshold (70%) — ",
+      "timestamp": "2026-09-11T10:31:25.981945",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 367,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 59.4% (score 79.7, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T10:48:27.091558",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 368,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 58.1% (score 20.9, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 79.1 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T10:49:27.203028",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 369,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 36.2% (score 68.1, risk MEDIUM). Sentimen pasar positive. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry",
+      "timestamp": "2026-09-11T10:50:27.293592",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 372,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 61.2% (score 19.4, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 80.6 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T10:53:27.516933",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 373,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 44.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T10:54:27.593935",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 384,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 59.4% (score 79.7, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T11:05:28.830445",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 385,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T11:06:28.889040",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 386,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 73.1% (score 13.4, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 86.6 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T11:07:28.984432",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 387,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 37.5% (score 31.2, risk MEDIUM). Sentimen pasar negative. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry",
+      "timestamp": "2026-09-11T11:08:29.038853",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 390,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 68.8% (score 15.6, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 84.4 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T11:11:29.350122",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 391,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T11:12:29.399570",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 407,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 72.5% (score 13.8, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 86.2 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T11:28:30.860903",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 408,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 56.9% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di atas minimum (55%) namun belum mencapai BUY threshold (70%) — ",
+      "timestamp": "2026-09-11T11:29:30.929261",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 413,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 66.2% (score 83.1, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T11:34:31.208158",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 414,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 46.9% (score 73.4, risk LOW). Sentimen pasar positive. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. S",
+      "timestamp": "2026-09-11T11:35:31.280595",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 416,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 68.8% (score 84.4, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T11:37:31.439100",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 417,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 52.5% (score 23.8, risk LOW). Sentimen pasar negative. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. S",
+      "timestamp": "2026-09-11T11:38:31.574296",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 418,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 63.8% (score 18.1, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 81.9 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T11:39:31.621527",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 419,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T11:40:31.716243",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 420,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 60.6% (score 80.3, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T11:41:31.788459",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 421,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T11:42:31.868954",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 431,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 65.6% (score 17.2, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 82.8 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T11:52:32.939667",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 432,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T11:53:33.021516",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 439,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 68.1% (score 15.9, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 84.1 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T12:00:33.740468",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 441,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 61.9% (score 80.9, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T12:02:33.992202",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 442,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 38.8% (score 69.4, risk MEDIUM). Sentimen pasar positive. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry",
+      "timestamp": "2026-09-11T12:03:34.076960",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 443,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 63.1% (score 18.4, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 81.6 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T12:04:34.211662",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 444,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 41.2% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T12:05:34.287681",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 459,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 66.2% (score 83.1, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T12:20:35.695034",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 461,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 41.2% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T12:22:35.779043",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 462,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 60.0% (score 20.0, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 80.0 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T12:23:35.859955",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 463,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T12:24:35.943072",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 476,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 73.8% (score 13.1, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 86.9 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T12:37:36.987589",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 477,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 44.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T12:38:37.069012",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 478,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 74.4% (score 87.2, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T12:39:37.111124",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 479,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 39.4% (score 69.7, risk MEDIUM). Sentimen pasar positive. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry",
+      "timestamp": "2026-09-11T12:40:37.161825",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 484,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 61.2% (score 19.4, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 80.6 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T12:45:37.527969",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 485,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 39.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T12:46:37.619465",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 488,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 68.8% (score 84.4, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T12:49:37.824548",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 489,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 44.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T12:50:37.899083",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 496,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 66.2% (score 16.9, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 83.1 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T12:57:38.554241",
       "emotion": "CALM"
     },
     {
       "cycle": 497,
-      "event": "decision_SELL",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T20:09:49.039034",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 498,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T20:10:49.170533",
+      "details": "HOLD @ confidence 50.0% (score 75.0, risk LOW). Sentimen pasar positive. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. S",
+      "timestamp": "2026-09-11T12:58:38.671926",
       "emotion": "CALM"
     },
     {
-      "cycle": 499,
+      "cycle": 511,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 55.0% (score 77.5, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T13:12:40.122332",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 512,
       "event": "decision_SELL",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T20:11:49.255490",
+      "details": "SELL @ confidence 58.8% (score 20.6, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 79.4 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T13:13:40.176278",
       "emotion": "CALM"
     },
     {
-      "cycle": 500,
+      "cycle": 513,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T20:12:49.330054",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 519,
-      "event": "decision_SELL",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T20:31:51.066675",
+      "details": "HOLD @ confidence 38.8% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T13:14:40.251672",
       "emotion": "CALM"
     },
     {
       "cycle": 520,
-      "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T20:32:51.233561",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 532,
-      "event": "decision_BUY",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T20:44:52.567429",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 533,
-      "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T20:45:52.657937",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 560,
-      "event": "decision_BUY",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T21:12:54.990609",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 561,
-      "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T21:13:55.088552",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 614,
       "event": "decision_SELL",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T22:07:00.481849",
+      "details": "SELL @ confidence 75.0% (score 12.5, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 87.5 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T13:21:40.790075",
       "emotion": "CALM"
     },
     {
-      "cycle": 616,
+      "cycle": 521,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T22:09:00.664314",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T13:22:40.865252",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 535,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 71.9% (score 85.9, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T13:36:41.865588",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 536,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 51.9% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T13:37:41.937322",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 539,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 68.1% (score 15.9, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 84.1 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-11T13:40:42.204205",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 540,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T13:41:42.280008",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 547,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 74.4% (score 87.2, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T13:48:42.805249",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 548,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T13:49:42.880949",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 552,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 60.6% (score 80.3, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-11T13:53:43.279281",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 553,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-11T13:54:43.430456",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 563,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 44.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T02:26:25.114955",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 565,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 58.8% (score 79.4, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T02:28:25.165760",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 566,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T02:29:25.193346",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 571,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 70.0% (score 85.0, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T02:34:25.397643",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 572,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 44.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T02:35:25.421503",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 573,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 70.0% (score 85.0, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T02:36:25.532009",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 574,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T02:37:25.559492",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 578,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 71.9% (score 85.9, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T02:41:25.743172",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 579,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T02:42:25.819939",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 607,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 67.5% (score 16.2, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 83.8 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T03:10:27.239841",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 608,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T03:11:27.266796",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 610,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 63.8% (score 18.1, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 81.9 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T03:13:27.346098",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 611,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T03:14:27.372800",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 617,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 59.4% (score 20.3, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 79.7 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T03:20:27.608671",
       "emotion": "CALM"
     },
     {
       "cycle": 618,
-      "event": "decision_SELL",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T22:11:00.984668",
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 44.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T03:21:27.637758",
       "emotion": "CALM"
     },
     {
       "cycle": 619,
-      "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T22:12:01.055492",
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 60.6% (score 80.3, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T03:22:27.679829",
       "emotion": "CALM"
     },
     {
-      "cycle": 632,
+      "cycle": 620,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T03:23:27.708507",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 625,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T03:28:11.089398",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 627,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 56.9% (score 78.4, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T03:30:11.288009",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 628,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 44.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T03:31:11.315436",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 646,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 66.9% (score 83.4, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T03:49:12.402905",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 647,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 41.2% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T03:50:12.488051",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 649,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 55.6% (score 77.8, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T03:52:12.578877",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 651,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T03:54:12.686836",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 653,
       "event": "decision_SELL",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T22:25:02.341403",
+      "details": "SELL @ confidence 63.8% (score 18.1, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 81.9 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T03:56:12.903561",
       "emotion": "CALM"
     },
     {
-      "cycle": 633,
+      "cycle": 654,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T22:26:02.380275",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T03:57:12.975082",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 659,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 68.8% (score 15.6, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 84.4 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T04:02:13.266829",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 660,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T04:03:13.315723",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 674,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 61.2% (score 19.4, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 80.6 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T04:17:14.274712",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 675,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 46.2% (score 26.9, risk MEDIUM). Sentimen pasar negative. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry",
+      "timestamp": "2026-09-12T04:18:14.356916",
       "emotion": "CALM"
     },
     {
       "cycle": 682,
       "event": "decision_BUY",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T23:15:06.616434",
+      "details": "BUY @ confidence 68.8% (score 84.4, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T04:25:14.755908",
       "emotion": "CALM"
     },
     {
       "cycle": 683,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T23:16:06.666241",
+      "details": "HOLD @ confidence 43.8% (score 71.9, risk MEDIUM). Sentimen pasar positive. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry",
+      "timestamp": "2026-09-12T04:26:14.787166",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 686,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 69.4% (score 84.7, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T04:29:14.951013",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 687,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T04:30:14.996768",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 693,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 70.0% (score 85.0, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T04:36:15.273041",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 694,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T04:37:15.303374",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 698,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 63.8% (score 18.1, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 81.9 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T04:41:15.554022",
       "emotion": "CALM"
     },
     {
       "cycle": 699,
-      "event": "decision_BUY",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T23:32:08.260144",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 700,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T23:33:08.371487",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T04:42:15.596595",
       "emotion": "CALM"
     },
     {
       "cycle": 702,
       "event": "decision_SELL",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T23:35:08.605874",
+      "details": "SELL @ confidence 61.9% (score 19.1, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 80.9 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T04:45:15.719954",
       "emotion": "CALM"
     },
     {
       "cycle": 703,
-      "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T23:36:08.760809",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 714,
-      "event": "decision_SELL",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T23:47:09.890936",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 715,
-      "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-10T23:48:10.010540",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 728,
-      "event": "decision_SELL",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-11T00:01:11.369028",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 729,
       "event": "decision_BUY",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-11T00:02:11.477489",
+      "details": "BUY @ confidence 70.0% (score 85.0, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T04:46:15.752492",
       "emotion": "CALM"
     },
     {
-      "cycle": 730,
+      "cycle": 704,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-11T00:03:11.551225",
+      "details": "HOLD @ confidence 60.0% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di atas minimum (55%) namun belum mencapai BUY threshold (70%) — ",
+      "timestamp": "2026-09-12T04:47:15.818468",
       "emotion": "CALM"
     },
     {
-      "cycle": 751,
+      "cycle": 707,
       "event": "decision_SELL",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-11T00:24:13.209911",
+      "details": "SELL @ confidence 62.5% (score 18.8, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 81.2 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T04:50:16.263516",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 708,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 61.9% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di atas minimum (55%) namun belum mencapai BUY threshold (70%) — ",
+      "timestamp": "2026-09-12T04:51:16.350545",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 712,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 64.4% (score 17.8, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 82.2 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T04:55:16.689399",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 713,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 46.9% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T04:56:16.746245",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 723,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 60.0% (score 20.0, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 80.0 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T05:06:17.348008",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 724,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T05:07:17.374120",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 738,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 58.1% (score 79.1, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T05:21:18.039259",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 739,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T05:22:18.070358",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 744,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 60.0% (score 20.0, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 80.0 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T05:27:18.264893",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 745,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 59.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di atas minimum (55%) namun belum mencapai BUY threshold (70%) — ",
+      "timestamp": "2026-09-12T05:28:18.295215",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 748,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 63.8% (score 18.1, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 81.9 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T05:31:18.492882",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 749,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 61.2% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di atas minimum (55%) namun belum mencapai BUY threshold (70%) — ",
+      "timestamp": "2026-09-12T05:32:18.635505",
       "emotion": "CALM"
     },
     {
       "cycle": 752,
-      "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-11T00:25:13.318784",
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 70.6% (score 14.7, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 85.3 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T05:35:18.819178",
       "emotion": "CALM"
     },
     {
-      "cycle": 759,
+      "cycle": 753,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 36.9% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T05:36:18.868023",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 754,
       "event": "decision_BUY",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-11T00:32:14.145350",
+      "details": "BUY @ confidence 72.5% (score 86.2, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T05:37:18.911570",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 755,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T05:38:18.952100",
       "emotion": "CALM"
     },
     {
       "cycle": 760,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 60.0% (score 20.0, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 80.0 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T05:43:19.221538",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 761,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-11T00:33:14.174461",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T05:44:19.251499",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 773,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 61.2% (score 19.4, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 80.6 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T05:56:20.033866",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 774,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 41.9% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T05:57:20.063060",
       "emotion": "CALM"
     },
     {
       "cycle": 775,
-      "event": "decision_SELL",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-11T00:48:15.417385",
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 70.6% (score 85.3, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T05:58:20.106450",
       "emotion": "CALM"
     },
     {
       "cycle": 776,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-11T00:49:15.458352",
+      "details": "HOLD @ confidence 52.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T05:59:20.169794",
       "emotion": "CALM"
     },
     {
-      "cycle": 810,
+      "cycle": 781,
       "event": "decision_BUY",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-11T01:23:18.981791",
+      "details": "BUY @ confidence 73.1% (score 86.6, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T06:04:20.398830",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 782,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 44.4% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T06:05:20.499780",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 793,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 73.8% (score 86.9, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T06:16:21.340134",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 794,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 41.2% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T06:17:21.377708",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 797,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 60.0% (score 20.0, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 80.0 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T06:20:21.506933",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 798,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 61.2% (score 80.6, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T06:21:21.557179",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 799,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T06:22:21.587909",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 802,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 55.0% (score 77.5, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T06:25:21.732714",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 803,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 45.6% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T06:26:21.949461",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 808,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 69.4% (score 15.3, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 84.7 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T06:31:22.424028",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 809,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T06:32:22.464921",
       "emotion": "CALM"
     },
     {
       "cycle": 811,
-      "event": "decision_HOLD",
-      "details": "Confidence hanya 43.33% dengan score 50.0/100 menempatkan setup ini di zona abu-abu, sehingga HOLD jadi keputusan paling rasional ketimbang memaksa en",
-      "timestamp": "2026-09-11T01:24:19.094602",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 813,
-      "event": "decision_HOLD",
-      "details": "Confidence hanya 43% dengan score 50/100 menandakan sinyal bullish dan bearish masih berimbang, sehingga HOLD menjadi keputusan paling rasional diband",
-      "timestamp": "2026-09-11T01:26:23.578124",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 833,
-      "event": "decision_HOLD",
-      "details": "Sinyal saat ini tidak konklusif dengan Score 50.0/100 dan Confidence hanya 43.33%, sehingga tidak ada cukup edge untuk entry maupun exit posisi. Senti",
-      "timestamp": "2026-09-11T01:46:28.244264",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 837,
-      "event": "decision_BUY",
-      "details": "Sinyal saat ini tidak konklusif dengan Score 50.0/100 dan Confidence hanya 43.33%, sehingga tidak ada cukup edge untuk entry maupun exit posisi. Senti",
-      "timestamp": "2026-09-11T01:50:28.759860",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 838,
-      "event": "decision_HOLD",
-      "details": "Sinyal saat ini tidak konklusif dengan Score 50.0/100 dan Confidence hanya 43.33%, sehingga tidak ada cukup edge untuk entry maupun exit posisi. Senti",
-      "timestamp": "2026-09-11T01:51:28.902641",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 839,
       "event": "decision_SELL",
-      "details": "Sinyal saat ini tidak konklusif dengan Score 50.0/100 dan Confidence hanya 43.33%, sehingga tidak ada cukup edge untuk entry maupun exit posisi. Senti",
-      "timestamp": "2026-09-11T01:52:29.038067",
+      "details": "SELL @ confidence 55.6% (score 22.2, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 77.8 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T06:34:22.593659",
       "emotion": "CALM"
     },
     {
-      "cycle": 840,
+      "cycle": 812,
       "event": "decision_HOLD",
-      "details": "Sinyal saat ini tidak konklusif dengan Score 50.0/100 dan Confidence hanya 43.33%, sehingga tidak ada cukup edge untuk entry maupun exit posisi. Senti",
-      "timestamp": "2026-09-11T01:53:29.109950",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T06:35:22.631894",
       "emotion": "CALM"
     },
     {
-      "cycle": 851,
+      "cycle": 824,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 66.2% (score 16.9, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 83.1 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T06:47:23.390799",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 825,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 68.8% (score 84.4, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T06:48:23.475172",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 826,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:04:54.972503",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T06:49:23.569224",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 835,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 68.8% (score 84.4, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T06:58:24.303868",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 836,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T06:59:24.332389",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 843,
+      "event": "decision_BUY",
+      "details": "BUY @ confidence 61.9% (score 80.9, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T07:06:24.629868",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 844,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T07:07:24.657845",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 845,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 45.6% (score 27.2, risk MEDIUM). Sentimen pasar negative. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry",
+      "timestamp": "2026-09-12T07:08:31.033022",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 846,
+      "event": "decision_SELL",
+      "details": "SELL @ confidence 67.5% (score 16.2, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 83.8 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T07:09:31.093010",
+      "emotion": "CALM"
+    },
+    {
+      "cycle": 847,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T07:10:31.141833",
       "emotion": "CALM"
     },
     {
       "cycle": 853,
-      "event": "decision_BUY",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:06:55.159525",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 854,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:07:55.328526",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 856,
-      "event": "decision_BUY",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:09:55.658303",
+      "details": "HOLD @ confidence 50.6% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T07:16:09.964368",
       "emotion": "CALM"
     },
     {
       "cycle": 857,
-      "event": "decision_SELL",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:10:55.727922",
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 50.6% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T07:20:15.602947",
       "emotion": "CALM"
     },
     {
-      "cycle": 858,
+      "cycle": 859,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:11:55.893115",
+      "details": "HOLD @ confidence 50.6% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T07:22:28.909514",
       "emotion": "CALM"
     },
     {
       "cycle": 861,
-      "event": "decision_BUY",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:14:56.184412",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 862,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:15:56.251901",
+      "details": "HOLD @ confidence 50.6% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T07:23:33.197500",
       "emotion": "CALM"
     },
     {
-      "cycle": 866,
-      "event": "decision_BUY",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:19:56.613431",
+      "cycle": 863,
+      "event": "decision_HOLD",
+      "details": "HOLD @ confidence 41.2% (score 29.4, risk MEDIUM). Sentimen pasar negative. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry",
+      "timestamp": "2026-09-12T07:24:57.035063",
       "emotion": "CALM"
     },
     {
       "cycle": 867,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:20:56.679337",
+      "details": "HOLD @ confidence 54.4% (score 22.8, risk LOW). Sentimen pasar negative. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. S",
+      "timestamp": "2026-09-12T07:29:25.576256",
       "emotion": "CALM"
     },
     {
-      "cycle": 872,
-      "event": "decision_SELL",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:25:57.350587",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 873,
-      "event": "decision_HOLD",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:26:57.425409",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 876,
+      "cycle": 868,
       "event": "decision_BUY",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:29:57.846260",
+      "details": "BUY @ confidence 68.1% (score 84.1, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T07:30:25.617095",
       "emotion": "CALM"
     },
     {
-      "cycle": 877,
+      "cycle": 869,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:30:57.886961",
+      "details": "HOLD @ confidence 45.0% (score 72.5, risk MEDIUM). Sentimen pasar positive. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry",
+      "timestamp": "2026-09-12T07:31:25.650003",
       "emotion": "CALM"
     },
     {
-      "cycle": 888,
+      "cycle": 881,
       "event": "decision_BUY",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:41:58.774958",
+      "details": "BUY @ confidence 68.8% (score 84.4, risk LOW). Sentimen pasar positive. Confidence berada di atas BUY threshold (70%), sehingga sistem merekomendasika",
+      "timestamp": "2026-09-12T07:43:26.442195",
       "emotion": "CALM"
     },
     {
-      "cycle": 889,
+      "cycle": 882,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:42:58.857855",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 892,
-      "event": "decision_SELL",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:45:59.250883",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 893,
-      "event": "decision_HOLD",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:46:59.297315",
+      "details": "HOLD @ confidence 47.5% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T07:44:26.477822",
       "emotion": "CALM"
     },
     {
       "cycle": 897,
       "event": "decision_SELL",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:50:59.719198",
+      "details": "SELL @ confidence 64.4% (score 17.8, risk LOW). Sentimen pasar negative. Sentimen negative dengan skor invers 82.2 (100 - score) memenuhi SELL thresho",
+      "timestamp": "2026-09-12T07:59:27.166835",
       "emotion": "CALM"
     },
     {
-      "cycle": 898,
+      "cycle": 901,
       "event": "decision_HOLD",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:51:59.780639",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 900,
-      "event": "decision_SELL",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:53:59.966943",
-      "emotion": "CALM"
-    },
-    {
-      "cycle": 902,
-      "event": "decision_HOLD",
-      "details": "Confidence hanya 43.75% dengan 1 conflict sinyal, sehingga sistem memilih HOLD meski score teknikal cukup kuat di 71.88/100 dan sentiment positive. Ri",
-      "timestamp": "2026-09-11T02:56:00.040913",
+      "details": "HOLD @ confidence 35.6% (score 50.0, risk MEDIUM). Sentimen pasar netral. Confidence di bawah minimum threshold (55%) — tidak cukup kuat untuk entry. ",
+      "timestamp": "2026-09-12T08:03:27.406597",
       "emotion": "CALM"
     }
   ],
@@ -707,37 +1883,37 @@
     {
       "cycle": 0,
       "event": "birth",
-      "timestamp": "2026-09-10T11:52:37.315946"
+      "timestamp": "2026-09-11T04:35:44.610018"
     },
     {
       "cycle": 10,
       "event": "reached_cycle_10",
-      "timestamp": "2026-09-10T12:02:15.084094"
+      "timestamp": "2026-09-11T04:45:21.651566"
     },
     {
       "cycle": 50,
       "event": "reached_cycle_50",
-      "timestamp": "2026-09-10T12:42:18.772296"
+      "timestamp": "2026-09-11T05:28:28.745759"
     },
     {
       "cycle": 100,
       "event": "reached_cycle_100",
-      "timestamp": "2026-09-10T13:32:23.490041"
+      "timestamp": "2026-09-11T06:18:32.527910"
     },
     {
       "cycle": 500,
       "event": "reached_cycle_500",
-      "timestamp": "2026-09-10T20:12:49.329968"
+      "timestamp": "2026-09-11T13:01:38.963185"
     }
   ],
   "narrative": "Aku Inkside. Baru lahir. Belum tahu apa-apa. Akan belajar dari setiap cycle.",
   "current_emotion": "CALM",
-  "last_save": "2026-09-11T03:00:00.564281",
+  "last_save": "2026-09-12T08:04:27.583093",
   "metrics": {
-    "successful_cycles": 906,
-    "decision_count": 906,
+    "successful_cycles": 770,
+    "decision_count": 770,
     "error_count": 0,
-    "learning_count": 906,
-    "prediction_count": 906
+    "learning_count": 770,
+    "prediction_count": 770
   }
 }
