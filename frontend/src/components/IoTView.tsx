@@ -23,7 +23,7 @@ export const IoTView: React.FC<IoTViewProps> = ({ wsConnected }) => {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const apiKey = localStorage.getItem('apiKey') || 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ';
+  const apiKey = localStorage.getItem('apiKey') || 'iks_612d40ce554b1670525355c85567f823';
 
   const fetchDevices = useCallback(async () => {
     try {

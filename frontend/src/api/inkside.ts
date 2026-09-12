@@ -10,7 +10,7 @@ import axios from 'axios';
 // ============================================================
 
 const API_BASE_URL = '';
-const API_KEY = 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ';
+const API_KEY = 'iks_612d40ce554b1670525355c85567f823';
 
 // ============================================================
 // TYPES & INTERFACES

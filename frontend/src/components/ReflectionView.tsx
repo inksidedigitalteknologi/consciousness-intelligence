@@ -177,7 +177,7 @@ export const ReflectionView: React.FC = () => {
     system: true,
     learning: true
   });
-  const [apiKey] = useState<string>(localStorage.getItem('apiKey') || 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ');
+  const [apiKey] = useState<string>(localStorage.getItem('apiKey') || 'iks_612d40ce554b1670525355c85567f823');
   const [animating, setAnimating] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 

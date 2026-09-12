@@ -265,7 +265,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-API-Key': localStorage.getItem('apiKey') || 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ',
+            'X-API-Key': localStorage.getItem('apiKey') || 'iks_612d40ce554b1670525355c85567f823',
           },
           body: JSON.stringify({
             question: question,
@@ -293,7 +293,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
                   ai_enhanced: true,
                 };
                 
-                const apiKey = localStorage.getItem('apiKey') || 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ';
+                const apiKey = localStorage.getItem('apiKey') || 'iks_612d40ce554b1670525355c85567f823';
                 const saveResponse = await fetch('/api/knowledge/add', {
                   method: 'POST',
                   headers: {
@@ -476,7 +476,7 @@ export const KnowledgeView: React.FC<KnowledgeViewProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': localStorage.getItem('apiKey') || 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ',
+          'X-API-Key': localStorage.getItem('apiKey') || 'iks_612d40ce554b1670525355c85567f823',
         },
         body: JSON.stringify({ url: urlContent }),
       });

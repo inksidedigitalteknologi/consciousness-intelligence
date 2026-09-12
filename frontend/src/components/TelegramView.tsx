@@ -112,7 +112,7 @@ const API_BASE = '';
 const api = {
   async getStatus(): Promise<{ configured: boolean; status: string; bot_name: string }> {
     const response = await fetch(`${API_BASE}/api/telegram/status`, {
-      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
+      headers: { 'X-API-Key': 'iks_612d40ce554b1670525355c85567f823' }
     });
     if (!response.ok) throw new Error('Failed to get status');
     return response.json();
@@ -120,7 +120,7 @@ const api = {
 
   async getConfig(): Promise<{ bot_token: string; chat_id: string; configured: boolean }> {
     const response = await fetch(`${API_BASE}/api/telegram/config`, {
-      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
+      headers: { 'X-API-Key': 'iks_612d40ce554b1670525355c85567f823' }
     });
     if (!response.ok) throw new Error('Failed to get config');
     return response.json();
@@ -131,7 +131,7 @@ const api = {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ'
+        'X-API-Key': 'iks_612d40ce554b1670525355c85567f823'
       },
       body: JSON.stringify({ bot_token: botToken, chat_id: chatId }),
     });
@@ -144,7 +144,7 @@ const api = {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ'
+        'X-API-Key': 'iks_612d40ce554b1670525355c85567f823'
       },
       body: JSON.stringify({ message }),
     });
@@ -155,7 +155,7 @@ const api = {
   async testConnection(): Promise<{ status: string; message: string; sent: boolean }> {
     const response = await fetch(`${API_BASE}/api/telegram/test`, {
       method: 'POST',
-      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
+      headers: { 'X-API-Key': 'iks_612d40ce554b1670525355c85567f823' }
     });
     if (!response.ok) throw new Error('Test failed');
     return response.json();
@@ -163,7 +163,7 @@ const api = {
 
   async getSystemMetrics(): Promise<SystemMetrics> {
     const response = await fetch(`${API_BASE}/api/system/metrics`, {
-      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
+      headers: { 'X-API-Key': 'iks_612d40ce554b1670525355c85567f823' }
     });
     if (!response.ok) throw new Error('Failed to get system metrics');
     return response.json();
@@ -171,7 +171,7 @@ const api = {
 
   async getModules(): Promise<ModuleStatus[]> {
     const response = await fetch(`${API_BASE}/api/modules/list`, {
-      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
+      headers: { 'X-API-Key': 'iks_612d40ce554b1670525355c85567f823' }
     });
     if (!response.ok) throw new Error('Failed to get modules');
     const data = await response.json();
@@ -180,7 +180,7 @@ const api = {
 
   async getLearningStats(): Promise<LearningStats> {
     const response = await fetch(`${API_BASE}/api/learning/stats`, {
-      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
+      headers: { 'X-API-Key': 'iks_612d40ce554b1670525355c85567f823' }
     });
     if (!response.ok) throw new Error('Failed to get learning stats');
     return response.json();
@@ -188,7 +188,7 @@ const api = {
 
   async getAdaptiveWeights(): Promise<AdaptiveWeight[]> {
     const response = await fetch(`${API_BASE}/api/learning/adaptive`, {
-      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
+      headers: { 'X-API-Key': 'iks_612d40ce554b1670525355c85567f823' }
     });
     if (!response.ok) throw new Error('Failed to get adaptive weights');
     const data = await response.json();
@@ -197,7 +197,7 @@ const api = {
 
   async getEvaluatorStats(): Promise<any> {
     const response = await fetch(`${API_BASE}/api/learning/evaluator`, {
-      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
+      headers: { 'X-API-Key': 'iks_612d40ce554b1670525355c85567f823' }
     });
     if (!response.ok) throw new Error('Failed to get evaluator stats');
     return response.json();
@@ -205,7 +205,7 @@ const api = {
 
   async getBrainState(): Promise<any> {
     const response = await fetch(`${API_BASE}/api/brain/state`, {
-      headers: { 'X-API-Key': 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ' }
+      headers: { 'X-API-Key': 'iks_612d40ce554b1670525355c85567f823' }
     });
     if (!response.ok) throw new Error('Failed to get brain state');
     return response.json();

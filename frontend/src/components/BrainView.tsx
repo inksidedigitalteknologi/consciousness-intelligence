@@ -211,7 +211,7 @@ export const BrainView: React.FC<BrainViewProps> = ({
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
 
-  const apiKey = localStorage.getItem('apiKey') || 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ';
+  const apiKey = localStorage.getItem('apiKey') || 'iks_612d40ce554b1670525355c85567f823';
 
   // ============================================================
   // FETCH

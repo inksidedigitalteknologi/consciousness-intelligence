@@ -85,7 +85,7 @@ export const MarketQuotesView: React.FC<MarketQuotesViewProps> = ({ wsConnected 
   const [analysisCache, setAnalysisCache] = useState<Record<string, FullAnalysis>>({});
   const [analysisLoading, setAnalysisLoading] = useState<Record<string, boolean>>({});
 
-  const apiKey = localStorage.getItem('apiKey') || 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ';
+  const apiKey = localStorage.getItem('apiKey') || 'iks_612d40ce554b1670525355c85567f823';
 
   // ============================================================
   // FETCH QUOTES

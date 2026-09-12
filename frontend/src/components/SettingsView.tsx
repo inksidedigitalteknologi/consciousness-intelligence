@@ -133,7 +133,7 @@ interface ConfigData {
 // API HELPER
 // ============================================================
 
-const API_KEY = 'iks_7x9mK2wP5vN8qR3tY6uA1eF4cH0jL9oZ';
+const API_KEY = 'iks_612d40ce554b1670525355c85567f823';
 
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   const response = await fetch(url, {
