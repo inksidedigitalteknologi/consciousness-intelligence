@@ -666,10 +666,7 @@ function AppContent() {
             )}
 
             {currentPage === 'Signals' && (
-              <SignalsView
-                signals={realSignals.length > 0 ? (realSignals as any) : signals}
-                wsConnected={isConnected}
-              />
+              <SignalsView />
             )}
 
             {currentPage === 'Learning' && (

@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 #
 # ============================================================
 
+
 class DecisionEngine:
 
     # ========================================================
@@ -53,54 +54,34 @@ class DecisionEngine:
     # ========================================================
 
     def __init__(
-        self,
-        buy_threshold=None,
-        sell_threshold=None,
-        min_confidence=None,
-        max_history=None
+        self, buy_threshold=None, sell_threshold=None, min_confidence=None, max_history=None
     ):
 
         self.buy_threshold = (
-            buy_threshold
-            if buy_threshold is not None
-            else self.DEFAULT_BUY_THRESHOLD
+            buy_threshold if buy_threshold is not None else self.DEFAULT_BUY_THRESHOLD
         )
 
         self.sell_threshold = (
-            sell_threshold
-            if sell_threshold is not None
-            else self.DEFAULT_SELL_THRESHOLD
+            sell_threshold if sell_threshold is not None else self.DEFAULT_SELL_THRESHOLD
         )
 
         self.min_confidence = (
-            min_confidence
-            if min_confidence is not None
-            else self.DEFAULT_MIN_CONFIDENCE
+            min_confidence if min_confidence is not None else self.DEFAULT_MIN_CONFIDENCE
         )
 
-        self.max_history = (
-            max_history
-            if max_history is not None
-            else self.MAX_HISTORY
-        )
+        self.max_history = max_history if max_history is not None else self.MAX_HISTORY
 
         self.decisions = 0
 
         self.history = []
 
-        self.action_counts = {
-            "BUY": 0,
-            "SELL": 0,
-            "HOLD": 0
-        }
+        self.action_counts = {"BUY": 0, "SELL": 0, "HOLD": 0}
 
         self.confidence_history = []
 
         self.score_history = []
 
-        logger.info(
-            "Decision Engine initialized."
-        )
+        logger.info("Decision Engine initialized.")
 
     # ========================================================
     #
@@ -108,75 +89,35 @@ class DecisionEngine:
     #
     # ========================================================
 
-    def decide(
-        self,
-        data
-    ):
+    def decide(self, data):
 
         try:
 
             if not isinstance(data, dict):
 
-                data = {
-                    "input": data
-                }
+                data = {"input": data}
 
-            analysis = self._get_dict(
-                data.get(
-                    "analysis"
-                )
-            )
+            analysis = self._get_dict(data.get("analysis"))
 
-            prediction = self._get_dict(
-                data.get(
-                    "prediction"
-                )
-            )
+            prediction = self._get_dict(data.get("prediction"))
 
-            semantic = self._get_dict(
-                data.get(
-                    "semantic"
-                )
-            )
+            semantic = self._get_dict(data.get("semantic"))
 
-            insight = self._get_dict(
-                data.get(
-                    "insight"
-                )
-            )
+            insight = self._get_dict(data.get("insight"))
 
-            reasoning = self._get_dict(
-                data.get(
-                    "reasoning"
-                )
-            )
+            reasoning = self._get_dict(data.get("reasoning"))
 
-            context = self._get_dict(
-                data.get(
-                    "context"
-                )
-            )
+            context = self._get_dict(data.get("context"))
 
             # ------------------------------------------------
             # Extract signals
             # ------------------------------------------------
 
             sentiment = self.normalize_sentiment(
-                analysis.get(
-                    "sentiment",
-                    semantic.get(
-                        "sentiment",
-                        "neutral"
-                    )
-                )
+                analysis.get("sentiment", semantic.get("sentiment", "neutral"))
             )
 
-            confidence = self.extract_confidence(
-                analysis,
-                prediction,
-                insight,
-                reasoning
-            )
+            confidence = self.extract_confidence(analysis, prediction, insight, reasoning)
 
             score = self.calculate_score(
                 sentiment=sentiment,
@@ -185,7 +126,7 @@ class DecisionEngine:
                 prediction=prediction,
                 semantic=semantic,
                 insight=insight,
-                reasoning=reasoning
+                reasoning=reasoning,
             )
 
             # ------------------------------------------------
@@ -193,10 +134,7 @@ class DecisionEngine:
             # ------------------------------------------------
 
             conflicts = self.detect_conflicts(
-                analysis=analysis,
-                prediction=prediction,
-                semantic=semantic,
-                reasoning=reasoning
+                analysis=analysis, prediction=prediction, semantic=semantic, reasoning=reasoning
             )
 
             # ------------------------------------------------
@@ -204,10 +142,7 @@ class DecisionEngine:
             # ------------------------------------------------
 
             risk = self.calculate_risk(
-                confidence=confidence,
-                score=score,
-                sentiment=sentiment,
-                conflicts=conflicts
+                confidence=confidence, score=score, sentiment=sentiment, conflicts=conflicts
             )
 
             # ------------------------------------------------
@@ -215,10 +150,7 @@ class DecisionEngine:
             # ------------------------------------------------
 
             action = self.determine_action(
-                score=score,
-                confidence=confidence,
-                sentiment=sentiment,
-                conflicts=conflicts
+                score=score, confidence=confidence, sentiment=sentiment, conflicts=conflicts
             )
 
             # ------------------------------------------------
@@ -231,7 +163,7 @@ class DecisionEngine:
                 confidence=confidence,
                 score=score,
                 risk=risk,
-                conflicts=conflicts
+                conflicts=conflicts,
             )
 
             # ------------------------------------------------
@@ -244,7 +176,7 @@ class DecisionEngine:
                 prediction=prediction,
                 semantic=semantic,
                 insight=insight,
-                reasoning=reasoning
+                reasoning=reasoning,
             )
 
             # ------------------------------------------------
@@ -253,64 +185,25 @@ class DecisionEngine:
 
             timestamp = datetime.now().isoformat()
 
-            decision_id = (
-                f"DEC-{self.decisions + 1:06d}"
-            )
+            decision_id = f"DEC-{self.decisions + 1:06d}"
 
             result = {
-
-                "id":
-                    decision_id,
-
-                "timestamp":
-                    timestamp,
-
-                "action":
-                    action,
-
-                "confidence":
-                    round(
-                        confidence,
-                        2
-                    ),
-
-                "score":
-                    round(
-                        score,
-                        2
-                    ),
-
-                "sentiment":
-                    sentiment,
-
-                "risk":
-                    risk,
-
-                "conflicts":
-                    conflicts,
-
-                "evidence":
-                    evidence,
-
-                "reason":
-                    reason,
-
+                "id": decision_id,
+                "timestamp": timestamp,
+                "action": action,
+                "confidence": round(confidence, 2),
+                "score": round(score, 2),
+                "sentiment": sentiment,
+                "risk": risk,
+                "conflicts": conflicts,
+                "evidence": evidence,
+                "reason": reason,
                 "thresholds": {
-
-                    "buy":
-                        self.buy_threshold,
-
-                    "sell":
-                        self.sell_threshold,
-
-                    "minimum_confidence":
-                        self.min_confidence
-
+                    "buy": self.buy_threshold,
+                    "sell": self.sell_threshold,
+                    "minimum_confidence": self.min_confidence,
                 },
-
-                "context":
-                    context
-
+                "context": context,
             }
 
             # ------------------------------------------------
@@ -319,24 +212,13 @@ class DecisionEngine:
 
             self.decisions += 1
 
-            self.action_counts[action] = (
-                self.action_counts.get(
-                    action,
-                    0
-                ) + 1
-            )
+            self.action_counts[action] = self.action_counts.get(action, 0) + 1
 
-            self.confidence_history.append(
-                confidence
-            )
+            self.confidence_history.append(confidence)
 
-            self.score_history.append(
-                score
-            )
+            self.score_history.append(score)
 
-            self.history.append(
-                result
-            )
+            self.history.append(result)
 
             self._trim_history()
 
@@ -346,14 +228,24 @@ class DecisionEngine:
 
             data["decision"] = result
 
+            # Save decision to memory
+            try:
+                from core.memory import memory
+
+                if isinstance(result, dict):
+                    memory.save_decision(
+                        decision=str(result.get("action") or result.get("decision") or "HOLD"),
+                        reason=str(result.get("reason") or ""),
+                        confidence=float(result.get("confidence") or 0),
+                    )
+            except Exception:
+                pass
+
             return data
 
         except Exception as e:
 
-            logger.exception(
-                "Decision failed: %s",
-                e
-            )
+            logger.exception("Decision failed: %s", e)
 
             return data
 
@@ -363,13 +255,7 @@ class DecisionEngine:
     #
     # ========================================================
 
-    def extract_confidence(
-        self,
-        analysis=None,
-        prediction=None,
-        insight=None,
-        reasoning=None
-    ):
+    def extract_confidence(self, analysis=None, prediction=None, insight=None, reasoning=None):
 
         # Weighted confidence: prioritaskan analysis (data real),
         # kurangi bobot sumber default (prediction, reasoning).
@@ -415,10 +301,7 @@ class DecisionEngine:
         if total_weight == 0.0:
             return 50.0  # default netral, bukan 0
 
-        return round(
-            weighted_sum / total_weight,
-            2
-        )
+        return round(weighted_sum / total_weight, 2)
 
     # ========================================================
     #
@@ -426,34 +309,20 @@ class DecisionEngine:
     #
     # ========================================================
 
-    def normalize_confidence(
-        self,
-        value
-    ):
+    def normalize_confidence(self, value):
 
         try:
 
-            value = float(
-                value
-            )
+            value = float(value)
 
             # Support 0.0 - 1.0
             if 0 <= value <= 1:
 
                 value *= 100
 
-            return max(
-                0.0,
-                min(
-                    value,
-                    100.0
-                )
-            )
+            return max(0.0, min(value, 100.0))
 
-        except (
-            TypeError,
-            ValueError
-        ):
+        except (TypeError, ValueError):
 
             return 0.0
 
@@ -463,51 +332,26 @@ class DecisionEngine:
     #
     # ========================================================
 
-    def normalize_sentiment(
-        self,
-        sentiment
-    ):
+    def normalize_sentiment(self, sentiment):
 
         if sentiment is None:
 
             return "neutral"
 
-        sentiment = str(
-            sentiment
-        ).strip().lower()
+        sentiment = str(sentiment).strip().lower()
 
         mapping = {
-
-            "bullish":
-                "positive",
-
-            "buy":
-                "positive",
-
-            "positive":
-                "positive",
-
-            "bearish":
-                "negative",
-
-            "sell":
-                "negative",
-
-            "negative":
-                "negative",
-
-            "neutral":
-                "neutral",
-
-            "hold":
-                "neutral"
-
+            "bullish": "positive",
+            "buy": "positive",
+            "positive": "positive",
+            "bearish": "negative",
+            "sell": "negative",
+            "negative": "negative",
+            "neutral": "neutral",
+            "hold": "neutral",
         }
 
-        return mapping.get(
-            sentiment,
-            "neutral"
-        )
+        return mapping.get(sentiment, "neutral")
 
     # ========================================================
     #
@@ -523,7 +367,7 @@ class DecisionEngine:
         prediction=None,
         semantic=None,
         insight=None,
-        reasoning=None
+        reasoning=None,
     ):
 
         score = 50.0
@@ -544,9 +388,7 @@ class DecisionEngine:
         # Confidence contribution
         # ------------------------------------------------
 
-        confidence_factor = (
-            confidence - 50
-        ) * 0.5
+        confidence_factor = (confidence - 50) * 0.5
 
         if sentiment == "positive":
 
@@ -562,34 +404,17 @@ class DecisionEngine:
 
         prediction_value = ""
 
-        if isinstance(
-            prediction,
-            dict
-        ):
+        if isinstance(prediction, dict):
 
             prediction_value = str(
-                prediction.get(
-                    "prediction",
-                    prediction.get(
-                        "signal",
-                        ""
-                    )
-                )
+                prediction.get("prediction", prediction.get("signal", ""))
             ).lower()
 
-        if prediction_value in (
-            "bullish",
-            "buy",
-            "positive"
-        ):
+        if prediction_value in ("bullish", "buy", "positive"):
 
             score += 10
 
-        elif prediction_value in (
-            "bearish",
-            "sell",
-            "negative"
-        ):
+        elif prediction_value in ("bearish", "sell", "negative"):
 
             score -= 10
 
@@ -597,41 +422,19 @@ class DecisionEngine:
         # Analysis signal
         # ------------------------------------------------
 
-        if isinstance(
-            analysis,
-            dict
-        ):
+        if isinstance(analysis, dict):
 
-            signal = str(
-                analysis.get(
-                    "signal",
-                    ""
-                )
-            ).lower()
+            signal = str(analysis.get("signal", "")).lower()
 
-            if signal in (
-                "bullish",
-                "buy",
-                "positive"
-            ):
+            if signal in ("bullish", "buy", "positive"):
 
                 score += 10
 
-            elif signal in (
-                "bearish",
-                "sell",
-                "negative"
-            ):
+            elif signal in ("bearish", "sell", "negative"):
 
                 score -= 10
 
-        return max(
-            0.0,
-            min(
-                score,
-                100.0
-            )
-        )
+        return max(0.0, min(score, 100.0))
 
     # ========================================================
     #
@@ -639,49 +442,22 @@ class DecisionEngine:
     #
     # ========================================================
 
-    def detect_conflicts(
-        self,
-        analysis=None,
-        prediction=None,
-        semantic=None,
-        reasoning=None
-    ):
+    def detect_conflicts(self, analysis=None, prediction=None, semantic=None, reasoning=None):
 
         signals = []
 
-        sources = [
-            analysis,
-            prediction,
-            semantic,
-            reasoning
-        ]
+        sources = [analysis, prediction, semantic, reasoning]
 
         for source in sources:
 
-            if not isinstance(
-                source,
-                dict
-            ):
+            if not isinstance(source, dict):
                 continue
 
             values = [
-
-                source.get(
-                    "sentiment"
-                ),
-
-                source.get(
-                    "signal"
-                ),
-
-                source.get(
-                    "prediction"
-                ),
-
-                source.get(
-                    "direction"
-                )
-
+                source.get("sentiment"),
+                source.get("signal"),
+                source.get("prediction"),
+                source.get("direction"),
             ]
 
             for value in values:
@@ -689,33 +465,15 @@ class DecisionEngine:
                 if value is None:
                     continue
 
-                normalized = self.normalize_sentiment(
-                    value
-                )
+                normalized = self.normalize_sentiment(value)
 
-                if normalized in (
-                    "positive",
-                    "negative"
-                ):
+                if normalized in ("positive", "negative"):
 
-                    signals.append(
-                        normalized
-                    )
+                    signals.append(normalized)
 
-        unique = set(
-            signals
-        )
+        unique = set(signals)
 
-        return {
-            "detected":
-                len(unique) > 1,
-
-            "count":
-                len(signals),
-
-            "types":
-                list(unique)
-        }
+        return {"detected": len(unique) > 1, "count": len(signals), "types": list(unique)}
 
     # ========================================================
     #
@@ -723,34 +481,19 @@ class DecisionEngine:
     #
     # ========================================================
 
-    def calculate_risk(
-        self,
-        confidence,
-        score,
-        sentiment,
-        conflicts
-    ):
+    def calculate_risk(self, confidence, score, sentiment, conflicts):
 
         risk_score = 0.0
 
         # Low confidence = higher risk
 
-        risk_score += (
-            100 - confidence
-        ) * 0.5
+        risk_score += (100 - confidence) * 0.5
 
         # Weak score = higher risk
 
-        distance = abs(
-            score - 50
-        )
+        distance = abs(score - 50)
 
-        risk_score += (
-            50 - min(
-                distance,
-                50
-            )
-        ) * 0.5
+        risk_score += (50 - min(distance, 50)) * 0.5
 
         # Neutral decisions are less decisive
 
@@ -760,10 +503,7 @@ class DecisionEngine:
 
         # Conflicting intelligence
 
-        if conflicts.get(
-            "detected",
-            False
-        ):
+        if conflicts.get("detected", False):
 
             risk_score += 20
 
@@ -783,13 +523,7 @@ class DecisionEngine:
     #
     # ========================================================
 
-    def determine_action(
-        self,
-        score,
-        confidence,
-        sentiment,
-        conflicts
-    ):
+    def determine_action(self, score, confidence, sentiment, conflicts):
 
         # Never act when confidence is too low.
 
@@ -799,30 +533,17 @@ class DecisionEngine:
 
         # Conflicting signals require caution.
 
-        if conflicts.get(
-            "detected",
-            False
-        ):
+        if conflicts.get("detected", False):
 
             if confidence < 80:
 
                 return "HOLD"
 
-        if (
-            sentiment == "positive"
-            and
-            score >= self.buy_threshold
-        ):
+        if sentiment == "positive" and score >= self.buy_threshold:
 
             return "BUY"
 
-        if (
-            sentiment == "negative"
-            and
-            (
-                100 - score
-            ) >= self.sell_threshold
-        ):
+        if sentiment == "negative" and (100 - score) >= self.sell_threshold:
 
             return "SELL"
 
@@ -834,79 +555,47 @@ class DecisionEngine:
     #
     # ========================================================
 
-    def generate_reason(
-        self,
-        action,
-        sentiment,
-        confidence,
-        score,
-        risk,
-        conflicts
-    ):
+    def generate_reason(self, action, sentiment, confidence, score, risk, conflicts):
 
         reasons = []
 
         if sentiment == "positive":
 
-            reasons.append(
-                "Positive market sentiment detected."
-            )
+            reasons.append("Positive market sentiment detected.")
 
         elif sentiment == "negative":
 
-            reasons.append(
-                "Negative market sentiment detected."
-            )
+            reasons.append("Negative market sentiment detected.")
 
         else:
 
-            reasons.append(
-                "Market sentiment is neutral."
-            )
+            reasons.append("Market sentiment is neutral.")
 
-        reasons.append(
-            f"Decision confidence is {confidence:.1f}%."
-        )
+        reasons.append(f"Decision confidence is {confidence:.1f}%.")
 
-        reasons.append(
-            f"Decision score is {score:.1f}/100."
-        )
+        reasons.append(f"Decision score is {score:.1f}/100.")
 
-        reasons.append(
-            f"Risk level is {risk}."
-        )
+        reasons.append(f"Risk level is {risk}.")
 
-        if conflicts.get(
-            "detected",
-            False
-        ):
+        if conflicts.get("detected", False):
 
-            reasons.append(
-                "Conflicting signals detected."
-            )
+            reasons.append("Conflicting signals detected.")
 
         if action == "BUY":
 
-            reasons.append(
-                "Conditions meet the BUY threshold."
-            )
+            reasons.append("Conditions meet the BUY threshold.")
 
         elif action == "SELL":
 
-            reasons.append(
-                "Conditions meet the SELL threshold."
-            )
+            reasons.append("Conditions meet the SELL threshold.")
 
         else:
 
             reasons.append(
-                "Conditions do not provide sufficient "
-                "evidence for an active decision."
+                "Conditions do not provide sufficient " "evidence for an active decision."
             )
 
-        return " ".join(
-            reasons
-        )
+        return " ".join(reasons)
 
     # ========================================================
     #
@@ -914,82 +603,29 @@ class DecisionEngine:
     #
     # ========================================================
 
-    def collect_evidence(
-        self,
-        data,
-        analysis,
-        prediction,
-        semantic,
-        insight,
-        reasoning
-    ):
+    def collect_evidence(self, data, analysis, prediction, semantic, insight, reasoning):
 
         evidence = []
 
-        if isinstance(
-            analysis,
-            dict
-        ):
+        if isinstance(analysis, dict):
 
-            evidence.append({
-                "source":
-                    "analysis",
+            evidence.append({"source": "analysis", "data": analysis})
 
-                "data":
-                    analysis
-            })
+        if isinstance(prediction, dict):
 
-        if isinstance(
-            prediction,
-            dict
-        ):
+            evidence.append({"source": "prediction", "data": prediction})
 
-            evidence.append({
-                "source":
-                    "prediction",
+        if isinstance(semantic, dict):
 
-                "data":
-                    prediction
-            })
+            evidence.append({"source": "semantic", "data": semantic})
 
-        if isinstance(
-            semantic,
-            dict
-        ):
+        if isinstance(insight, dict):
 
-            evidence.append({
-                "source":
-                    "semantic",
+            evidence.append({"source": "insight", "data": insight})
 
-                "data":
-                    semantic
-            })
+        if isinstance(reasoning, dict):
 
-        if isinstance(
-            insight,
-            dict
-        ):
-
-            evidence.append({
-                "source":
-                    "insight",
-
-                "data":
-                    insight
-            })
-
-        if isinstance(
-            reasoning,
-            dict
-        ):
-
-            evidence.append({
-                "source":
-                    "reasoning",
-
-                "data":
-                    reasoning
-            })
+            evidence.append({"source": "reasoning", "data": reasoning})
 
         return evidence
 
@@ -999,25 +635,13 @@ class DecisionEngine:
     #
     # ========================================================
 
-    def _trim_history(
-        self
-    ):
+    def _trim_history(self):
 
-        if len(
-            self.history
-        ) > self.max_history:
+        if len(self.history) > self.max_history:
 
-            excess = (
-                len(
-                    self.history
-                )
-                -
-                self.max_history
-            )
+            excess = len(self.history) - self.max_history
 
-            del self.history[
-                :excess
-            ]
+            del self.history[:excess]
 
     # ========================================================
     #
@@ -1025,9 +649,7 @@ class DecisionEngine:
     #
     # ========================================================
 
-    def latest(
-        self
-    ):
+    def latest(self):
 
         if not self.history:
 
@@ -1041,18 +663,13 @@ class DecisionEngine:
     #
     # ========================================================
 
-    def recall(
-        self,
-        limit=20
-    ):
+    def recall(self, limit=20):
 
         if limit <= 0:
 
             return []
 
-        return self.history[
-            -limit:
-        ]
+        return self.history[-limit:]
 
     # ========================================================
     #
@@ -1060,50 +677,25 @@ class DecisionEngine:
     #
     # ========================================================
 
-    def search(
-        self,
-        action=None,
-        sentiment=None,
-        risk=None
-    ):
+    def search(self, action=None, sentiment=None, risk=None):
 
         results = []
 
         for item in self.history:
 
-            if (
-                action is not None
-                and
-                item.get(
-                    "action"
-                ) != action
-            ):
+            if action is not None and item.get("action") != action:
 
                 continue
 
-            if (
-                sentiment is not None
-                and
-                item.get(
-                    "sentiment"
-                ) != sentiment
-            ):
+            if sentiment is not None and item.get("sentiment") != sentiment:
 
                 continue
 
-            if (
-                risk is not None
-                and
-                item.get(
-                    "risk"
-                ) != risk
-            ):
+            if risk is not None and item.get("risk") != risk:
 
                 continue
 
-            results.append(
-                item
-            )
+            results.append(item)
 
         return results
 
@@ -1113,9 +705,7 @@ class DecisionEngine:
     #
     # ========================================================
 
-    def statistics(
-        self
-    ):
+    def statistics(self):
 
         average_confidence = 0
 
@@ -1123,43 +713,18 @@ class DecisionEngine:
 
         if self.confidence_history:
 
-            average_confidence = round(
-                mean(
-                    self.confidence_history
-                ),
-                2
-            )
+            average_confidence = round(mean(self.confidence_history), 2)
 
         if self.score_history:
 
-            average_score = round(
-                mean(
-                    self.score_history
-                ),
-                2
-            )
+            average_score = round(mean(self.score_history), 2)
 
         return {
-
-            "decisions":
-                self.decisions,
-
-            "actions":
-                dict(
-                    self.action_counts
-                ),
-
-            "average_confidence":
-                average_confidence,
-
-            "average_score":
-                average_score,
-
-            "history":
-                len(
-                    self.history
-                )
-
+            "decisions": self.decisions,
+            "actions": dict(self.action_counts),
+            "average_confidence": average_confidence,
+            "average_score": average_score,
+            "history": len(self.history),
         }
 
     # ========================================================
@@ -1168,9 +733,7 @@ class DecisionEngine:
     #
     # ========================================================
 
-    def reset(
-        self
-    ):
+    def reset(self):
 
         self.decisions = 0
 
@@ -1180,18 +743,7 @@ class DecisionEngine:
 
         self.score_history.clear()
 
-        self.action_counts = {
-
-            "BUY":
-                0,
-
-            "SELL":
-                0,
-
-            "HOLD":
-                0
-
-        }
+        self.action_counts = {"BUY": 0, "SELL": 0, "HOLD": 0}
 
         return True
 
@@ -1201,67 +753,22 @@ class DecisionEngine:
     #
     # ========================================================
 
-    def status(
-        self
-    ):
+    def status(self):
 
         return {
-
-            "module":
-                "decision",
-
-            "online":
-                True,
-
-            "decisions":
-                self.decisions,
-
-            "history":
-                len(
-                    self.history
-                ),
-
-            "max_history":
-                self.max_history,
-
-            "buy_threshold":
-                self.buy_threshold,
-
-            "sell_threshold":
-                self.sell_threshold,
-
-            "minimum_confidence":
-                self.min_confidence,
-
-            "actions":
-                dict(
-                    self.action_counts
-                ),
-
-            "average_confidence":
-                (
-                    round(
-                        mean(
-                            self.confidence_history
-                        ),
-                        2
-                    )
-                    if self.confidence_history
-                    else 0
-                ),
-
-            "average_score":
-                (
-                    round(
-                        mean(
-                            self.score_history
-                        ),
-                        2
-                    )
-                    if self.score_history
-                    else 0
-                )
-
+            "module": "decision",
+            "online": True,
+            "decisions": self.decisions,
+            "history": len(self.history),
+            "max_history": self.max_history,
+            "buy_threshold": self.buy_threshold,
+            "sell_threshold": self.sell_threshold,
+            "minimum_confidence": self.min_confidence,
+            "actions": dict(self.action_counts),
+            "average_confidence": (
+                round(mean(self.confidence_history), 2) if self.confidence_history else 0
+            ),
+            "average_score": (round(mean(self.score_history), 2) if self.score_history else 0),
         }
 
     # ========================================================
@@ -1271,14 +778,9 @@ class DecisionEngine:
     # ========================================================
 
     @staticmethod
-    def _get_dict(
-        value
-    ):
+    def _get_dict(value):
 
-        if isinstance(
-            value,
-            dict
-        ):
+        if isinstance(value, dict):
 
             return value
 
@@ -1317,6 +819,7 @@ __all__ = [
 # Ditambahkan oleh patch — override method lama
 # ============================================================
 
+
 def _generate_reason_v2(self, action, sentiment, confidence, score, risk, conflicts):
     """
     Narasi hybrid: ringkasan paragraf + bullet detail.
@@ -1326,10 +829,7 @@ def _generate_reason_v2(self, action, sentiment, confidence, score, risk, confli
     sell_thr = getattr(self, "sell_threshold", 30)
     min_conf = getattr(self, "min_confidence", 50)
 
-    header = (
-        f"{action} @ confidence {confidence:.1f}% "
-        f"(score {score:.1f}, risk {risk}). "
-    )
+    header = f"{action} @ confidence {confidence:.1f}% " f"(score {score:.1f}, risk {risk}). "
 
     if sentiment == "positive":
         ctx = "Sentimen pasar positive"
@@ -1363,9 +863,7 @@ def _generate_reason_v2(self, action, sentiment, confidence, score, risk, confli
                 f"tidak cukup kuat untuk entry. Sistem merekomendasikan HOLD."
             )
     else:
-        eval_sentence = (
-            f"Sistem merekomendasikan {action} sambil memantau konfirmasi lanjutan."
-        )
+        eval_sentence = f"Sistem merekomendasikan {action} sambil memantau konfirmasi lanjutan."
 
     summary = f"{header}{ctx}. {eval_sentence}"
 
@@ -1378,10 +876,7 @@ def _generate_reason_v2(self, action, sentiment, confidence, score, risk, confli
     bullets = []
     bullets.append(f"\u2022 Sentiment  : {sentiment}")
     bullets.append(f"\u2022 Score      : {score:.1f} / 100")
-    bullets.append(
-        f"\u2022 Threshold  : buy={buy_thr}, sell={sell_thr}, "
-        f"min_conf={min_conf}"
-    )
+    bullets.append(f"\u2022 Threshold  : buy={buy_thr}, sell={sell_thr}, " f"min_conf={min_conf}")
     bullets.append(f"\u2022 Risk       : {risk} — {risk_desc}")
 
     if isinstance(conflicts, dict):
@@ -1397,9 +892,7 @@ def _generate_reason_v2(self, action, sentiment, confidence, score, risk, confli
         bullets.append("\u2022 Conflicts  : N/A")
 
     if action in ("BUY", "SELL"):
-        bullets.append(
-            f"\u2022 Action     : {action} — kondisi memenuhi syarat threshold"
-        )
+        bullets.append(f"\u2022 Action     : {action} — kondisi memenuhi syarat threshold")
     elif action == "HOLD":
         bullets.append("\u2022 Action     : HOLD — menunggu konfirmasi tambahan")
     else:

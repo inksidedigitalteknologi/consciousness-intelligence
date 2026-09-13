@@ -42,10 +42,11 @@ API_VERSION = "1.0"
 # REFLECTION ENGINE
 # ============================================================
 
+
 class ReflectionEngine:
     """
     Reflection Engine for learning from outcomes.
-    
+
     Features:
     - Reflect on experiences
     - Evaluate outcomes (success/failure/neutral)
@@ -68,7 +69,7 @@ class ReflectionEngine:
         self.success_count = 0
         self.failure_count = 0
         self.neutral_count = 0
-        
+
         logger.info("Reflection Engine v%s initialized.", self.VERSION)
 
     # ========================================================
@@ -83,11 +84,11 @@ class ReflectionEngine:
         reality: Any = None,
         confidence: Optional[float] = None,
         context: Optional[Dict] = None,
-        metadata: Optional[Dict] = None
+        metadata: Optional[Dict] = None,
     ) -> Optional[Dict[str, Any]]:
         """
         Create a reflection from an event and its outcome.
-        
+
         Args:
             event: The event/action being reflected upon
             outcome: The outcome (success/failure/etc)
@@ -96,38 +97,31 @@ class ReflectionEngine:
             confidence: Confidence level (0-100)
             context: Additional context
             metadata: Additional metadata
-            
+
         Returns:
             Reflection dictionary or None
         """
         try:
             timestamp = datetime.now().isoformat()
-            
+
             evaluation = self.evaluate_outcome(
-                outcome=outcome,
-                prediction=prediction,
-                reality=reality
+                outcome=outcome, prediction=prediction, reality=reality
             )
-            
-            error = self.calculate_error(
-                prediction=prediction,
-                reality=reality
-            )
-            
+
+            error = self.calculate_error(prediction=prediction, reality=reality)
+
             lesson = self.generate_lesson(
                 outcome=outcome,
                 prediction=prediction,
                 reality=reality,
                 evaluation=evaluation,
-                error=error
-            )
-            
-            recommendation = self.generate_recommendation(
-                evaluation=evaluation,
                 error=error,
-                confidence=confidence
             )
-            
+
+            recommendation = self.generate_recommendation(
+                evaluation=evaluation, error=error, confidence=confidence
+            )
+
             reflection = {
                 "id": self._generate_id(),
                 "time": timestamp,
@@ -142,12 +136,24 @@ class ReflectionEngine:
                 "lesson": lesson,
                 "recommendation": recommendation,
                 "context": context if isinstance(context, dict) else {},
-                "metadata": metadata if isinstance(metadata, dict) else {}
+                "metadata": metadata if isinstance(metadata, dict) else {},
             }
-            
+
             self._store(reflection)
+            # Save reflection to memory
+            try:
+                from core.memory import memory
+
+                if isinstance(result, dict):
+                    memory.save_knowledge(
+                        content=result,
+                        category="reflection",
+                    )
+            except Exception:
+                pass
+
             return reflection
-            
+
         except Exception as e:
             logger.exception("Reflection failed: %s", e)
             return None
@@ -159,17 +165,18 @@ class ReflectionEngine:
     def _generate_id(self) -> str:
         """Generate a unique ID for reflection."""
         import uuid
+
         return f"ref_{uuid.uuid4().hex[:8]}"
 
     def _store(self, reflection: Dict[str, Any]) -> None:
         """Store a reflection."""
         self.reflections.append(reflection)
-        
+
         if len(self.reflections) > self.max_history:
-            self.reflections = self.reflections[-self.max_history:]
-        
+            self.reflections = self.reflections[-self.max_history :]
+
         self.total_reflections += 1
-        
+
         evaluation = reflection.get("evaluation")
         if evaluation == "success":
             self.success_count += 1
@@ -183,14 +190,11 @@ class ReflectionEngine:
     # ========================================================
 
     def evaluate_outcome(
-        self,
-        outcome: Any = None,
-        prediction: Any = None,
-        reality: Any = None
+        self, outcome: Any = None, prediction: Any = None, reality: Any = None
     ) -> str:
         """
         Evaluate the outcome of an event.
-        
+
         Returns:
             "success", "failure", or "neutral"
         """
@@ -200,7 +204,7 @@ class ReflectionEngine:
                 return "success"
             if normalized in ("wrong", "failure", "failed", "incorrect", "loss", "lost"):
                 return "failure"
-        
+
         if prediction is not None and reality is not None:
             try:
                 if prediction == reality:
@@ -208,7 +212,7 @@ class ReflectionEngine:
                 return "failure"
             except Exception:
                 pass
-        
+
         return "neutral"
 
     def normalize_outcome(self, outcome: Any) -> str:
@@ -225,7 +229,7 @@ class ReflectionEngine:
         """Normalize confidence to 0-100."""
         if confidence is None:
             return None
-        
+
         try:
             value = float(confidence)
             if 0 <= value <= 1:
@@ -238,33 +242,25 @@ class ReflectionEngine:
     # ERROR CALCULATION
     # ========================================================
 
-    def calculate_error(
-        self,
-        prediction: Any = None,
-        reality: Any = None
-    ) -> Dict[str, Any]:
+    def calculate_error(self, prediction: Any = None, reality: Any = None) -> Dict[str, Any]:
         """Calculate error between prediction and reality."""
         if prediction is None or reality is None:
-            return {
-                "available": False,
-                "type": None,
-                "value": None
-            }
-        
+            return {"available": False, "type": None, "value": None}
+
         # Numeric error
         if isinstance(prediction, (int, float)) and isinstance(reality, (int, float)):
             difference = prediction - reality
             absolute = abs(difference)
             percentage = (absolute / abs(reality)) * 100 if reality != 0 else None
-            
+
             return {
                 "available": True,
                 "type": "numeric",
                 "value": round(difference, 6),
                 "absolute": round(absolute, 6),
-                "percentage": round(percentage, 2) if percentage is not None else None
+                "percentage": round(percentage, 2) if percentage is not None else None,
             }
-        
+
         # Categorical / exact match
         matched = prediction == reality
         return {
@@ -272,7 +268,7 @@ class ReflectionEngine:
             "type": "categorical",
             "value": 0 if matched else 1,
             "absolute": 0 if matched else 1,
-            "percentage": 0 if matched else 100
+            "percentage": 0 if matched else 100,
         }
 
     # ========================================================
@@ -285,12 +281,12 @@ class ReflectionEngine:
         prediction: Any = None,
         reality: Any = None,
         evaluation: Optional[str] = None,
-        error: Optional[Dict] = None
+        error: Optional[Dict] = None,
     ) -> str:
         """Generate a learning lesson."""
         if evaluation is None:
             evaluation = self.evaluate_outcome(outcome, prediction, reality)
-        
+
         if evaluation == "failure":
             if isinstance(error, dict) and error.get("type") == "numeric":
                 percentage = error.get("percentage")
@@ -305,14 +301,14 @@ class ReflectionEngine:
                 "The underlying assumptions should be reviewed "
                 "before repeating the pattern."
             )
-        
+
         if evaluation == "success":
             return (
                 "Prediction was confirmed. "
                 "The associated pattern and reasoning "
                 "are reinforced by the observed outcome."
             )
-        
+
         return (
             "Outcome was inconclusive. "
             "More observations are required before "
@@ -324,36 +320,24 @@ class ReflectionEngine:
     # ========================================================
 
     def generate_recommendation(
-        self,
-        evaluation: str,
-        error: Optional[Dict] = None,
-        confidence: Optional[float] = None
+        self, evaluation: str, error: Optional[Dict] = None, confidence: Optional[float] = None
     ) -> str:
         """Generate a recommendation based on reflection."""
         normalized_confidence = self.normalize_confidence(confidence)
-        
+
         if evaluation == "failure":
             if normalized_confidence is not None and normalized_confidence >= 80:
-                return (
-                    "Review high-confidence assumptions. "
-                    "Confidence may be overestimated."
-                )
+                return "Review high-confidence assumptions. " "Confidence may be overestimated."
             return (
                 "Reduce confidence and collect "
                 "additional evidence before repeating "
                 "the decision pattern."
             )
-        
+
         if evaluation == "success":
-            return (
-                "Retain the successful pattern while "
-                "continuing to validate it with new data."
-            )
-        
-        return (
-            "Continue observation and avoid "
-            "overfitting to the current result."
-        )
+            return "Retain the successful pattern while " "continuing to validate it with new data."
+
+        return "Continue observation and avoid " "overfitting to the current result."
 
     # ========================================================
     # ANALYZE REFLECTION
@@ -363,7 +347,7 @@ class ReflectionEngine:
         """Analyze a reflection."""
         if not isinstance(reflection, dict):
             return {"valid": False, "reason": "Reflection must be a dictionary."}
-        
+
         return {
             "valid": True,
             "evaluation": reflection.get("evaluation", "neutral"),
@@ -372,7 +356,7 @@ class ReflectionEngine:
             "has_error": bool(reflection.get("error", {})),
             "confidence": reflection.get("confidence"),
             "lesson": reflection.get("lesson"),
-            "recommendation": reflection.get("recommendation")
+            "recommendation": reflection.get("recommendation"),
         }
 
     # ========================================================
@@ -396,33 +380,32 @@ class ReflectionEngine:
         """Search reflections by keyword."""
         if not query:
             return []
-        
+
         query = str(query).strip().lower()
         if not query:
             return []
-        
+
         results = []
         for reflection in self.reflections:
-            searchable = " ".join([
-                str(reflection.get("event", "")),
-                str(reflection.get("outcome", "")),
-                str(reflection.get("lesson", "")),
-                str(reflection.get("evaluation", "")),
-                str(reflection.get("recommendation", ""))
-            ]).lower()
-            
+            searchable = " ".join(
+                [
+                    str(reflection.get("event", "")),
+                    str(reflection.get("outcome", "")),
+                    str(reflection.get("lesson", "")),
+                    str(reflection.get("evaluation", "")),
+                    str(reflection.get("recommendation", "")),
+                ]
+            ).lower()
+
             if query in searchable:
                 results.append(reflection)
-        
+
         return results
 
     def filter_by_evaluation(self, evaluation: str) -> List[Dict[str, Any]]:
         """Filter reflections by evaluation."""
         target = str(evaluation).strip().lower()
-        return [
-            r for r in self.reflections
-            if str(r.get("evaluation", "")).lower() == target
-        ]
+        return [r for r in self.reflections if str(r.get("evaluation", "")).lower() == target]
 
     def filter_by_success(self) -> List[Dict[str, Any]]:
         """Get successful reflections."""
@@ -444,10 +427,8 @@ class ReflectionEngine:
 
     def statistics(self) -> Dict[str, Any]:
         """Get reflection statistics."""
-        evaluations = Counter(
-            r.get("evaluation", "neutral") for r in self.reflections
-        )
-        
+        evaluations = Counter(r.get("evaluation", "neutral") for r in self.reflections)
+
         return {
             "total": self.total_reflections,
             "stored": len(self.reflections),
@@ -456,7 +437,7 @@ class ReflectionEngine:
             "neutral": self.neutral_count,
             "success_rate": self.success_rate(),
             "evaluations": dict(evaluations),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     # ========================================================
@@ -492,7 +473,7 @@ class ReflectionEngine:
             "success_rate": stats["success_rate"],
             "max_history": self.max_history,
             "has_latest": self.latest() is not None,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
 
@@ -506,6 +487,7 @@ reflection_engine = ReflectionEngine()
 # ============================================================
 # COMPATIBILITY FUNCTIONS
 # ============================================================
+
 
 def reflect(event: Any, **kwargs) -> Optional[Dict[str, Any]]:
     """Legacy reflect function."""
@@ -531,6 +513,7 @@ def status() -> Dict[str, Any]:
 # SELF TEST
 # ============================================================
 
+
 def self_test() -> Dict[str, Any]:
     """Run comprehensive self-test."""
     print()
@@ -538,11 +521,11 @@ def self_test() -> Dict[str, Any]:
     print("  REFLECTION ENGINE v2.0 - SELF TEST")
     print("=" * 70)
     print()
-    
+
     tests_passed = 0
     tests_failed = 0
     results = {}
-    
+
     # Test 1: Initialization
     print("1. Testing initialization...")
     try:
@@ -554,15 +537,12 @@ def self_test() -> Dict[str, Any]:
         results["initialization"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Initialization failed: {e}")
-    
+
     # Test 2: Reflect - Success
     print("\n2. Testing reflect (success)...")
     try:
         reflection = reflection_engine.reflect(
-            event="Test event",
-            prediction="up",
-            reality="up",
-            confidence=85
+            event="Test event", prediction="up", reality="up", confidence=85
         )
         if reflection and reflection.get("evaluation") == "success":
             results["reflect_success"] = {"status": "PASS"}
@@ -576,15 +556,12 @@ def self_test() -> Dict[str, Any]:
         results["reflect_success"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Reflect success failed: {e}")
-    
+
     # Test 3: Reflect - Failure
     print("\n3. Testing reflect (failure)...")
     try:
         reflection = reflection_engine.reflect(
-            event="Test event",
-            prediction="up",
-            reality="down",
-            confidence=90
+            event="Test event", prediction="up", reality="down", confidence=90
         )
         if reflection and reflection.get("evaluation") == "failure":
             results["reflect_failure"] = {"status": "PASS"}
@@ -598,7 +575,7 @@ def self_test() -> Dict[str, Any]:
         results["reflect_failure"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Reflect failure failed: {e}")
-    
+
     # Test 4: Statistics
     print("\n4. Testing statistics...")
     try:
@@ -615,7 +592,7 @@ def self_test() -> Dict[str, Any]:
         results["statistics"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Statistics failed: {e}")
-    
+
     # Test 5: Status
     print("\n5. Testing status...")
     try:
@@ -632,7 +609,7 @@ def self_test() -> Dict[str, Any]:
         results["status"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Status failed: {e}")
-    
+
     # Summary
     print()
     print("=" * 70)
@@ -642,7 +619,7 @@ def self_test() -> Dict[str, Any]:
     print(f"  ❌ Failed: {tests_failed}")
     print(f"  📊 Total:  {tests_passed + tests_failed}")
     print("=" * 70)
-    
+
     return {
         "module": "reflection",
         "version": reflection_engine.VERSION,

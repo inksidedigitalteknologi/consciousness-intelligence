@@ -84,8 +84,10 @@ CONFIDENCE_VERY_LOW = 0.20
 # ENUMS
 # ============================================================
 
+
 class ExperienceType(Enum):
     """Types of experiences."""
+
     ACTION = "action"
     DECISION = "decision"
     OBSERVATION = "observation"
@@ -100,6 +102,7 @@ class ExperienceType(Enum):
 
 class ExperienceTier(Enum):
     """Experience importance tiers."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -109,20 +112,23 @@ class ExperienceTier(Enum):
 
 class MemoryStage(Enum):
     """Memory consolidation stages."""
-    SENSORY = "sensory"      # 0-10 minutes
+
+    SENSORY = "sensory"  # 0-10 minutes
     SHORT_TERM = "short_term"  # 10 minutes - 6 hours
-    WORKING = "working"       # 6-24 hours
-    LONG_TERM = "long_term"   # > 24 hours
-    PERMANENT = "permanent"   # Consolidated
+    WORKING = "working"  # 6-24 hours
+    LONG_TERM = "long_term"  # > 24 hours
+    PERMANENT = "permanent"  # Consolidated
 
 
 # ============================================================
 # DATA CLASSES
 # ============================================================
 
+
 @dataclass
 class Experience:
     """Complete experience record."""
+
     id: str
     timestamp: str
     event: Any
@@ -135,7 +141,7 @@ class Experience:
     importance: float = 0.5
     tags: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     # New fields v3.0
     type: str = ExperienceType.ACTION.value
     tier: str = ExperienceTier.MEDIUM.value
@@ -153,7 +159,7 @@ class Experience:
     validation_score: float = 0.0
     evolution: List[Dict[str, Any]] = field(default_factory=list)
     patterns: List[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "id": self.id,
@@ -183,7 +189,7 @@ class Experience:
             "validation_score": self.validation_score,
             "patterns": self.patterns,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Experience":
         return cls(**data)
@@ -192,6 +198,7 @@ class Experience:
 @dataclass
 class ExperienceStats:
     """Experience statistics."""
+
     total: int = 0
     by_status: Dict[str, int] = field(default_factory=dict)
     by_type: Dict[str, int] = field(default_factory=dict)
@@ -211,6 +218,7 @@ class ExperienceStats:
 @dataclass
 class ExperiencePattern:
     """Discovered experience pattern."""
+
     id: str
     name: str
     description: str
@@ -226,10 +234,11 @@ class ExperiencePattern:
 # EXPERIENCE ENGINE v3.0
 # ============================================================
 
+
 class ExperienceEngine:
     """
     Experience Engine v3.0 - Ultra Comprehensive Experience Management.
-    
+
     Features:
     1. Record experiences
     2. Store outcomes
@@ -269,50 +278,46 @@ class ExperienceEngine:
         max_size: int = 10000,
         consolidation_threshold: int = 100,
         decay_rate: float = 0.01,
-        auto_tag: bool = True
+        auto_tag: bool = True,
     ):
         self.name = "experience"
-        
+
         # Core storage
         self.experiences: List[Experience] = []
         self.experience_map: Dict[str, Experience] = {}
-        
+
         # Statistics
         self.total_recorded = 0
         self.success_count = 0
         self.failure_count = 0
         self.neutral_count = 0
         self.partial_count = 0
-        
+
         # Configuration
         self.max_size = max(1, int(max_size))
         self.consolidation_threshold = max(1, int(consolidation_threshold))
         self.decay_rate = float(decay_rate)
         self.auto_tag = bool(auto_tag)
-        
+
         # Tracking
         self.last_experience: Optional[Experience] = None
         self.experience_patterns: List[ExperiencePattern] = []
         self.experience_graph: Dict[str, List[str]] = defaultdict(list)
         self.access_history: deque = deque(maxlen=1000)
-        
+
         # Forgetting curve
         self.forgetting_curve = {
-            "sensory": 0.9,     # 90% retention
-            "short_term": 0.7,   # 70% retention
-            "working": 0.5,      # 50% retention
-            "long_term": 0.3,    # 30% retention
-            "permanent": 0.9,    # 90% retention (reconsolidated)
+            "sensory": 0.9,  # 90% retention
+            "short_term": 0.7,  # 70% retention
+            "working": 0.5,  # 50% retention
+            "long_term": 0.3,  # 30% retention
+            "permanent": 0.9,  # 90% retention (reconsolidated)
         }
-        
+
         # Thread safety
         self._lock = threading.RLock()
-        
-        logger.info(
-            "Experience Engine v%s initialized (max_size=%d)",
-            self.VERSION,
-            self.max_size
-        )
+
+        logger.info("Experience Engine v%s initialized (max_size=%d)", self.VERSION, self.max_size)
 
     # ============================================================
     # INTERNAL HELPERS
@@ -324,29 +329,25 @@ class ExperienceEngine:
     def _generate_id(self) -> str:
         return f"exp_{uuid.uuid4().hex[:12]}"
 
-    def _normalize_status(
-        self,
-        result: Any = None,
-        success: Optional[bool] = None
-    ) -> str:
+    def _normalize_status(self, result: Any = None, success: Optional[bool] = None) -> str:
         """Normalize status from various inputs."""
-        
+
         # Explicit success flag
         if success is True:
             return STATUS_SUCCESS
         if success is False:
             return STATUS_FAILURE
-        
+
         # Infer from result
         if isinstance(result, bool):
             return STATUS_SUCCESS if result else STATUS_FAILURE
-        
+
         if isinstance(result, dict):
             if result.get("success") is True:
                 return STATUS_SUCCESS
             if result.get("success") is False:
                 return STATUS_FAILURE
-            
+
             status = result.get("status")
             if status in ("success", "successful", "correct", "positive"):
                 return STATUS_SUCCESS
@@ -354,7 +355,7 @@ class ExperienceEngine:
                 return STATUS_FAILURE
             if status in ("partial", "partially"):
                 return STATUS_PARTIAL
-            
+
             evaluation = result.get("evaluation")
             if isinstance(evaluation, str):
                 eval_lower = evaluation.lower()
@@ -364,7 +365,7 @@ class ExperienceEngine:
                     return STATUS_FAILURE
                 if eval_lower in ("partial", "partially"):
                     return STATUS_PARTIAL
-        
+
         if isinstance(result, str):
             result_lower = result.lower()
             if result_lower in ("success", "successful", "correct", "positive"):
@@ -373,29 +374,22 @@ class ExperienceEngine:
                 return STATUS_FAILURE
             if result_lower in ("partial", "partially"):
                 return STATUS_PARTIAL
-        
+
         return STATUS_NEUTRAL
 
     def _calculate_importance(
-        self,
-        importance: Any,
-        status: str,
-        confidence: Optional[float],
-        result: Any = None
+        self, importance: Any, status: str, confidence: Optional[float], result: Any = None
     ) -> float:
         """Calculate experience importance."""
-        
+
         if importance is not None:
             try:
-                return round(
-                    min(max(float(importance), 0.0), 1.0),
-                    3
-                )
+                return round(min(max(float(importance), 0.0), 1.0), 3)
             except (TypeError, ValueError):
                 pass
-        
+
         score = 0.5
-        
+
         # Status contribution
         if status == STATUS_SUCCESS:
             score += 0.15
@@ -403,7 +397,7 @@ class ExperienceEngine:
             score += 0.20
         elif status == STATUS_PARTIAL:
             score += 0.10
-        
+
         # Confidence contribution
         if confidence is not None:
             try:
@@ -414,14 +408,14 @@ class ExperienceEngine:
                     score += 0.05
             except (TypeError, ValueError):
                 pass
-        
+
         # Result importance
         if isinstance(result, dict):
             if result.get("critical"):
                 score += 0.20
             if result.get("risk", 0) > 0.7:
                 score += 0.15
-        
+
         return round(min(score, 1.0), 3)
 
     def _determine_tier(self, importance: float) -> str:
@@ -442,7 +436,7 @@ class ExperienceEngine:
         try:
             exp_time = datetime.fromisoformat(timestamp)
             age = (datetime.now() - exp_time).total_seconds()
-            
+
             if age < 600:  # < 10 minutes
                 return MemoryStage.SENSORY.value
             elif age < 21600:  # < 6 hours
@@ -459,20 +453,20 @@ class ExperienceEngine:
     def _automatic_tags(self, experience: Experience) -> List[str]:
         """Generate automatic tags."""
         tags = set()
-        
+
         # Status tags
         tags.add(experience.status)
-        
+
         # Domain tag
         if experience.domain:
             tags.add(f"domain:{experience.domain}")
-        
+
         # Type tag
         tags.add(f"type:{experience.type}")
-        
+
         # Tier tag
         tags.add(f"tier:{experience.tier}")
-        
+
         # Confidence tag
         if experience.confidence >= 0.8:
             tags.add("high_confidence")
@@ -480,25 +474,25 @@ class ExperienceEngine:
             tags.add("medium_confidence")
         else:
             tags.add("low_confidence")
-        
+
         # Success/Failure tags
         if experience.success is True:
             tags.add("successful")
         elif experience.success is False:
             tags.add("failed")
-        
+
         # Extract keywords from event
         if isinstance(experience.event, str):
             words = experience.event.lower().split()
             important_words = [w for w in words if len(w) > 3]
             for word in important_words[:3]:
                 tags.add(word)
-        
+
         # Context tags
         if experience.context:
             for key in experience.context.keys():
                 tags.add(f"ctx:{key}")
-        
+
         return list(tags)
 
     def _calculate_retention(self, age: float) -> float:
@@ -530,11 +524,11 @@ class ExperienceEngine:
         tags: Optional[List[str]] = None,
         metadata: Optional[Dict[str, Any]] = None,
         type: str = ExperienceType.ACTION.value,
-        parent_id: Optional[str] = None
+        parent_id: Optional[str] = None,
     ) -> Optional[Experience]:
         """
         Record a new experience.
-        
+
         Args:
             event: The event/action
             result: The outcome
@@ -547,22 +541,22 @@ class ExperienceEngine:
             metadata: Additional metadata
             type: Experience type
             parent_id: Parent experience ID
-            
+
         Returns:
             Experience object or None
         """
         with self._lock:
             try:
                 status = self._normalize_status(result, success)
-                
+
                 # Calculate importance
                 importance_value = self._calculate_importance(
                     importance, status, confidence, result
                 )
-                
+
                 # Determine tier
                 tier = self._determine_tier(importance_value)
-                
+
                 # Create experience
                 experience = Experience(
                     id=self._generate_id(),
@@ -572,7 +566,11 @@ class ExperienceEngine:
                     domain=domain,
                     context=context or {},
                     status=status,
-                    success=(status == STATUS_SUCCESS) if status in [STATUS_SUCCESS, STATUS_FAILURE] else None,
+                    success=(
+                        (status == STATUS_SUCCESS)
+                        if status in [STATUS_SUCCESS, STATUS_FAILURE]
+                        else None
+                    ),
                     confidence=confidence or 0.5,
                     importance=importance_value,
                     tags=tags or [],
@@ -584,42 +582,47 @@ class ExperienceEngine:
                     decay_rate=self.decay_rate,
                     parent_id=parent_id,
                 )
-                
+
                 # Automatic tagging
                 if self.auto_tag:
                     auto_tags = self._automatic_tags(experience)
                     experience.tags.extend(auto_tags)
                     experience.tags = list(set(experience.tags))
-                
+
                 # Store
                 self.experiences.append(experience)
                 self.experience_map[experience.id] = experience
                 self.total_recorded += 1
                 self.last_experience = experience
-                
+
                 # Update statistics
                 self._update_statistics(status)
-                
+
                 # Link to parent
                 if parent_id and parent_id in self.experience_map:
                     self.experience_map[parent_id].children.append(experience.id)
                     self.experience_graph[parent_id].append(experience.id)
-                
+
                 # Enforce limit
                 self._enforce_limit()
-                
+
                 # Check consolidation
                 if len(self.experiences) % self.consolidation_threshold == 0:
                     self._consolidate_memories()
-                
-                logger.debug(
-                    "Experience recorded: %s (%s)",
-                    experience.id[:8],
-                    status
-                )
-                
+
+                logger.debug("Experience recorded: %s (%s)", experience.id[:8], status)
+
+                # Save experience to memory
+                try:
+                    from core.memory import memory
+
+                    if isinstance(result, dict):
+                        memory.save_experience(result)
+                except Exception:
+                    pass
+
                 return experience
-                
+
             except Exception as e:
                 logger.exception("Experience recording failed: %s", e)
                 return None
@@ -663,25 +666,25 @@ class ExperienceEngine:
         """Consolidate memories (move to long-term storage)."""
         try:
             consolidated = 0
-            
+
             for exp in self.experiences:
                 if exp.stage != MemoryStage.PERMANENT.value:
                     age = (datetime.now() - datetime.fromisoformat(exp.timestamp)).total_seconds()
-                    
+
                     # Update stage based on age
                     new_stage = self._determine_stage(exp.timestamp)
                     if new_stage != exp.stage:
                         exp.stage = new_stage
                         consolidated += 1
-                        
+
                         # Recalculate importance if promoted
                         if new_stage == MemoryStage.PERMANENT.value:
                             exp.importance = min(1.0, exp.importance + 0.1)
                             exp.tier = self._determine_tier(exp.importance)
-            
+
             if consolidated > 0:
                 logger.debug("Consolidated %d memories", consolidated)
-                
+
         except Exception as e:
             logger.warning("Memory consolidation failed: %s", e)
 
@@ -695,18 +698,18 @@ class ExperienceEngine:
         min_confidence: float = 0.0,
         min_importance: float = 0.0,
         domain: Optional[str] = None,
-        status: Optional[str] = None
+        status: Optional[str] = None,
     ) -> List[Experience]:
         """
         Recall recent experiences with filters.
-        
+
         Args:
             limit: Maximum number to return
             min_confidence: Minimum confidence
             min_importance: Minimum importance
             domain: Filter by domain
             status: Filter by status
-            
+
         Returns:
             List of experiences
         """
@@ -715,9 +718,9 @@ class ExperienceEngine:
                 limit = max(0, int(limit))
                 if limit == 0:
                     return []
-                
+
                 results = []
-                
+
                 for exp in reversed(self.experiences):
                     # Filters
                     if exp.confidence < min_confidence:
@@ -728,37 +731,34 @@ class ExperienceEngine:
                         continue
                     if status and exp.status != status:
                         continue
-                    
+
                     # Update access
                     exp.access_count += 1
                     exp.last_accessed = self._timestamp()
                     self.access_history.append(exp.id)
-                    
+
                     results.append(exp)
-                    
+
                     if len(results) >= limit:
                         break
-                
+
                 return results
-                
+
             except Exception as e:
                 logger.error("Recall failed: %s", e)
                 return []
 
     def recall_by_relevance(
-        self,
-        query: Any,
-        limit: int = 10,
-        min_similarity: float = 0.5
+        self, query: Any, limit: int = 10, min_similarity: float = 0.5
     ) -> List[Tuple[Experience, float]]:
         """
         Recall experiences by relevance/similarity.
-        
+
         Args:
             query: Query to match against
             limit: Maximum results
             min_similarity: Minimum similarity score
-            
+
         Returns:
             List of (experience, similarity_score) tuples
         """
@@ -766,15 +766,15 @@ class ExperienceEngine:
             try:
                 results = []
                 query_str = str(query).lower()
-                
+
                 for exp in self.experiences:
                     similarity = self._calculate_similarity(query_str, exp)
                     if similarity >= min_similarity:
                         results.append((exp, similarity))
-                
+
                 results.sort(key=lambda x: x[1], reverse=True)
                 return results[:limit]
-                
+
             except Exception as e:
                 logger.error("Recall by relevance failed: %s", e)
                 return []
@@ -782,30 +782,32 @@ class ExperienceEngine:
     def _calculate_similarity(self, query: str, experience: Experience) -> float:
         """Calculate similarity between query and experience."""
         score = 0.0
-        content = " ".join([
-            str(experience.event),
-            str(experience.result),
-            str(experience.domain),
-            " ".join(experience.tags)
-        ]).lower()
-        
+        content = " ".join(
+            [
+                str(experience.event),
+                str(experience.result),
+                str(experience.domain),
+                " ".join(experience.tags),
+            ]
+        ).lower()
+
         # Word matching
         query_words = set(query.split())
         content_words = set(content.split())
-        
+
         if query_words and content_words:
             common = query_words.intersection(content_words)
             score += len(common) / len(query_words) * 0.6
-        
+
         # Partial matching
         if query in content:
             score += 0.3
-        
+
         # Tag matching
         for tag in experience.tags:
             if tag.lower() in query:
                 score += 0.1
-        
+
         return min(score, 1.0)
 
     # ============================================================
@@ -841,66 +843,68 @@ class ExperienceEngine:
         query: Any,
         domain: Optional[str] = None,
         status: Optional[str] = None,
-        limit: int = 50
+        limit: int = 50,
     ) -> List[Experience]:
         """
         Search experiences.
-        
+
         Args:
             query: Search query
             domain: Filter by domain
             status: Filter by status
             limit: Maximum results
-            
+
         Returns:
             List of matching experiences
         """
         if query is None:
             return []
-        
+
         query_str = str(query).lower().strip()
         if not query_str:
             return []
-        
+
         with self._lock:
             results = []
-            
+
             for exp in reversed(self.experiences):
                 if domain is not None and exp.domain != domain:
                     continue
                 if status is not None and exp.status != status:
                     continue
-                
-                searchable = " ".join([
-                    str(exp.event),
-                    str(exp.result),
-                    str(exp.domain),
-                    " ".join(exp.tags),
-                    str(exp.metadata)
-                ]).lower()
-                
+
+                searchable = " ".join(
+                    [
+                        str(exp.event),
+                        str(exp.result),
+                        str(exp.domain),
+                        " ".join(exp.tags),
+                        str(exp.metadata),
+                    ]
+                ).lower()
+
                 if query_str in searchable:
                     exp.access_count += 1
                     exp.last_accessed = self._timestamp()
                     results.append(exp)
-                    
+
                     if len(results) >= limit:
                         break
-            
+
             return results
 
     def search_by_tags(self, tags: List[str], limit: int = 50) -> List[Experience]:
         """Search experiences by tags."""
         tag_set = set(tags)
         results = []
-        
+
         with self._lock:
             for exp in reversed(self.experiences):
                 if tag_set.intersection(set(exp.tags)):
                     results.append(exp)
                     if len(results) >= limit:
                         break
-        
+
         return results
 
     # ============================================================
@@ -954,7 +958,7 @@ class ExperienceEngine:
         with self._lock:
             stats = ExperienceStats()
             stats.total = len(self.experiences)
-            
+
             # Status counts
             for exp in self.experiences:
                 stats.by_status[exp.status] = stats.by_status.get(exp.status, 0) + 1
@@ -963,34 +967,35 @@ class ExperienceEngine:
                 stats.by_tier[exp.tier] = stats.by_tier.get(exp.tier, 0) + 1
                 stats.by_stage[exp.stage] = stats.by_stage.get(exp.stage, 0) + 1
                 stats.total_access += exp.access_count
-                
+
                 if exp.status == STATUS_SUCCESS:
                     stats.success_rate += 1
-                
+
                 stats.avg_confidence += exp.confidence
                 stats.avg_importance += exp.importance
-            
+
             # Calculate averages
             if stats.total > 0:
                 stats.success_rate = stats.success_rate / stats.total
                 stats.avg_confidence = stats.avg_confidence / stats.total
                 stats.avg_importance = stats.avg_importance / stats.total
-            
+
             # Recent count (last 24 hours)
             day_ago = datetime.now() - timedelta(days=1)
             stats.recent_count = sum(
-                1 for e in self.experiences
-                if datetime.fromisoformat(e.timestamp) > day_ago
+                1 for e in self.experiences if datetime.fromisoformat(e.timestamp) > day_ago
             )
-            
+
             # Consolidated count
-            stats.consolidated = sum(1 for e in self.experiences if e.stage == MemoryStage.PERMANENT.value)
-            
+            stats.consolidated = sum(
+                1 for e in self.experiences if e.stage == MemoryStage.PERMANENT.value
+            )
+
             # Patterns
             stats.patterns = [p.name for p in self.experience_patterns[:10]]
-            
+
             stats.timestamp = self._timestamp()
-            
+
             return stats
 
     def count(self) -> int:
@@ -1016,61 +1021,73 @@ class ExperienceEngine:
         """Discover patterns in experiences."""
         with self._lock:
             patterns = []
-            
+
             # Status patterns
             status_sequence = [e.status for e in self.experiences[-100:]]
             for status in set(status_sequence):
                 freq = status_sequence.count(status)
                 if freq >= min_frequency:
-                    patterns.append(ExperiencePattern(
-                        id=f"pat_{uuid.uuid4().hex[:8]}",
-                        name=f"{status}_pattern",
-                        description=f"Frequent {status} experiences",
-                        pattern_type="status",
-                        confidence=freq / len(status_sequence),
-                        examples=[e.id for e in self.experiences if e.status == status][:5],
-                        frequency=freq
-                    ))
-            
+                    patterns.append(
+                        ExperiencePattern(
+                            id=f"pat_{uuid.uuid4().hex[:8]}",
+                            name=f"{status}_pattern",
+                            description=f"Frequent {status} experiences",
+                            pattern_type="status",
+                            confidence=freq / len(status_sequence),
+                            examples=[e.id for e in self.experiences if e.status == status][:5],
+                            frequency=freq,
+                        )
+                    )
+
             # Domain patterns
             domains = [e.domain for e in self.experiences if e.domain]
             domain_counts = Counter(domains)
             for domain, freq in domain_counts.most_common(5):
                 if freq >= min_frequency:
-                    patterns.append(ExperiencePattern(
-                        id=f"pat_{uuid.uuid4().hex[:8]}",
-                        name=f"{domain}_pattern",
-                        description=f"Experiences in {domain} domain",
-                        pattern_type="domain",
-                        confidence=freq / len(self.experiences),
-                        examples=[e.id for e in self.experiences if e.domain == domain][:5],
-                        frequency=freq
-                    ))
-            
+                    patterns.append(
+                        ExperiencePattern(
+                            id=f"pat_{uuid.uuid4().hex[:8]}",
+                            name=f"{domain}_pattern",
+                            description=f"Experiences in {domain} domain",
+                            pattern_type="domain",
+                            confidence=freq / len(self.experiences),
+                            examples=[e.id for e in self.experiences if e.domain == domain][:5],
+                            frequency=freq,
+                        )
+                    )
+
             # Success/Failure patterns
             if len(self.experiences) >= min_frequency:
                 success_rate = self.success_rate()
                 if success_rate >= 0.8:
-                    patterns.append(ExperiencePattern(
-                        id=f"pat_{uuid.uuid4().hex[:8]}",
-                        name="high_success",
-                        description=f"High success rate: {success_rate:.1%}",
-                        pattern_type="success",
-                        confidence=success_rate,
-                        examples=[e.id for e in self.experiences if e.status == STATUS_SUCCESS][:5],
-                        frequency=self.success_count
-                    ))
+                    patterns.append(
+                        ExperiencePattern(
+                            id=f"pat_{uuid.uuid4().hex[:8]}",
+                            name="high_success",
+                            description=f"High success rate: {success_rate:.1%}",
+                            pattern_type="success",
+                            confidence=success_rate,
+                            examples=[e.id for e in self.experiences if e.status == STATUS_SUCCESS][
+                                :5
+                            ],
+                            frequency=self.success_count,
+                        )
+                    )
                 elif success_rate <= 0.3:
-                    patterns.append(ExperiencePattern(
-                        id=f"pat_{uuid.uuid4().hex[:8]}",
-                        name="low_success",
-                        description=f"Low success rate: {success_rate:.1%}",
-                        pattern_type="failure",
-                        confidence=1 - success_rate,
-                        examples=[e.id for e in self.experiences if e.status == STATUS_FAILURE][:5],
-                        frequency=self.failure_count
-                    ))
-            
+                    patterns.append(
+                        ExperiencePattern(
+                            id=f"pat_{uuid.uuid4().hex[:8]}",
+                            name="low_success",
+                            description=f"Low success rate: {success_rate:.1%}",
+                            pattern_type="failure",
+                            confidence=1 - success_rate,
+                            examples=[e.id for e in self.experiences if e.status == STATUS_FAILURE][
+                                :5
+                            ],
+                            frequency=self.failure_count,
+                        )
+                    )
+
             self.experience_patterns = patterns
             return patterns
 
@@ -1081,70 +1098,78 @@ class ExperienceEngine:
     def detect_anomalies(self) -> List[Dict[str, Any]]:
         """Detect anomalies in experiences."""
         anomalies = []
-        
+
         with self._lock:
             if len(self.experiences) < 10:
                 return anomalies
-            
+
             # Check for unusual success/failure patterns
             recent = self.experiences[-20:]
             recent_success = sum(1 for e in recent if e.status == STATUS_SUCCESS)
             recent_failure = sum(1 for e in recent if e.status == STATUS_FAILURE)
-            
+
             if recent_success > 15 and len(recent) > 0:
-                anomalies.append({
-                    "type": "unusual_success",
-                    "description": f"Unusually high success rate: {recent_success}/{len(recent)}",
-                    "count": recent_success,
-                    "total": len(recent),
-                    "severity": "medium"
-                })
-            
+                anomalies.append(
+                    {
+                        "type": "unusual_success",
+                        "description": f"Unusually high success rate: {recent_success}/{len(recent)}",
+                        "count": recent_success,
+                        "total": len(recent),
+                        "severity": "medium",
+                    }
+                )
+
             if recent_failure > 10 and len(recent) > 0:
-                anomalies.append({
-                    "type": "unusual_failure",
-                    "description": f"Unusually high failure rate: {recent_failure}/{len(recent)}",
-                    "count": recent_failure,
-                    "total": len(recent),
-                    "severity": "high"
-                })
-            
+                anomalies.append(
+                    {
+                        "type": "unusual_failure",
+                        "description": f"Unusually high failure rate: {recent_failure}/{len(recent)}",
+                        "count": recent_failure,
+                        "total": len(recent),
+                        "severity": "high",
+                    }
+                )
+
             # Check for confidence anomalies
             confidences = [e.confidence for e in self.experiences[-50:]]
             if len(confidences) > 5:
                 mean = statistics.mean(confidences)
                 std = statistics.stdev(confidences) if len(confidences) > 1 else 0
-                
+
                 for exp in self.experiences[-20:]:
                     if std > 0 and abs(exp.confidence - mean) > 2 * std:
-                        anomalies.append({
-                            "type": "confidence_anomaly",
-                            "description": f"Unusual confidence: {exp.confidence:.2f} (mean: {mean:.2f})",
-                            "confidence": exp.confidence,
-                            "mean": mean,
-                            "std": std,
-                            "experience_id": exp.id,
-                            "severity": "low"
-                        })
-            
+                        anomalies.append(
+                            {
+                                "type": "confidence_anomaly",
+                                "description": f"Unusual confidence: {exp.confidence:.2f} (mean: {mean:.2f})",
+                                "confidence": exp.confidence,
+                                "mean": mean,
+                                "std": std,
+                                "experience_id": exp.id,
+                                "severity": "low",
+                            }
+                        )
+
             # Check for importance anomalies
             importances = [e.importance for e in self.experiences[-50:]]
             if len(importances) > 5:
                 mean = statistics.mean(importances)
                 std = statistics.stdev(importances) if len(importances) > 1 else 0
-                
+
                 for exp in self.experiences[-20:]:
                     if std > 0 and abs(exp.importance - mean) > 2 * std:
-                        anomalies.append({
-                            "type": "importance_anomaly",
-                            "description": f"Unusual importance: {exp.importance:.2f} (mean: {mean:.2f})",
-                            "importance": exp.importance,
-                            "mean": mean,
-                            "std": std,
-                            "experience_id": exp.id,
-                            "severity": "low"
-                        })
-        
+                        anomalies.append(
+                            {
+                                "type": "importance_anomaly",
+                                "description": f"Unusual importance: {exp.importance:.2f} (mean: {mean:.2f})",
+                                "importance": exp.importance,
+                                "mean": mean,
+                                "std": std,
+                                "experience_id": exp.id,
+                                "severity": "low",
+                            }
+                        )
+
         return anomalies
 
     # ============================================================
@@ -1155,45 +1180,45 @@ class ExperienceEngine:
         """Build experience relationship graph."""
         with self._lock:
             graph = defaultdict(list)
-            
+
             for exp in self.experiences:
                 graph[exp.id] = exp.children
-            
+
             # Add parent relationships
             for exp in self.experiences:
                 if exp.parent_id:
                     graph[exp.parent_id].append(exp.id)
-            
+
             return dict(graph)
 
     def get_related(self, experience_id: str, depth: int = 1) -> List[Experience]:
         """Get related experiences."""
         related = []
         visited = set()
-        
+
         def traverse(current_id: str, current_depth: int):
             if current_depth > depth or current_id in visited:
                 return
-            
+
             visited.add(current_id)
-            
+
             # Get children
             children = self.experience_graph.get(current_id, [])
             for child_id in children:
                 if child_id in self.experience_map:
                     related.append(self.experience_map[child_id])
                     traverse(child_id, current_depth + 1)
-            
+
             # Get parent
             if current_id in self.experience_map:
                 exp = self.experience_map[current_id]
                 if exp.parent_id and exp.parent_id in self.experience_map:
                     related.append(self.experience_map[exp.parent_id])
                     traverse(exp.parent_id, current_depth + 1)
-        
+
         with self._lock:
             traverse(experience_id, 0)
-        
+
         return related
 
     # ============================================================
@@ -1203,17 +1228,17 @@ class ExperienceEngine:
     def replay(self, count: int = 10) -> List[Experience]:
         """
         Replay experiences for learning.
-        
+
         Returns experiences weighted by importance.
         """
         with self._lock:
             if not self.experiences:
                 return []
-            
+
             # Weight by importance and recency
             weighted = []
             now = datetime.now()
-            
+
             for exp in self.experiences:
                 try:
                     age = (now - datetime.fromisoformat(exp.timestamp)).total_seconds()
@@ -1222,10 +1247,10 @@ class ExperienceEngine:
                     weighted.append((exp, weight))
                 except:
                     weighted.append((exp, exp.importance))
-            
+
             # Sort by weight
             weighted.sort(key=lambda x: x[1], reverse=True)
-            
+
             return [exp for exp, _ in weighted[:count]]
 
     # ============================================================
@@ -1240,13 +1265,13 @@ class ExperienceEngine:
             self.experience_graph.clear()
             self.access_history.clear()
             self.experience_patterns.clear()
-            
+
             self.last_experience = None
             self.success_count = 0
             self.failure_count = 0
             self.neutral_count = 0
             self.partial_count = 0
-            
+
             logger.info("Experience memory cleared")
             return True
 
@@ -1270,7 +1295,7 @@ class ExperienceEngine:
                 },
                 "experiences": [exp.to_dict() for exp in self.experiences],
             }
-            
+
             if include_patterns:
                 data["patterns"] = [
                     {
@@ -1282,49 +1307,49 @@ class ExperienceEngine:
                     }
                     for p in self.experience_patterns
                 ]
-            
+
             return data
 
     def import_data(self, data: Dict[str, Any]) -> int:
         """Import experiences from data."""
         if not isinstance(data, dict):
             return 0
-        
+
         with self._lock:
             experiences_data = data.get("experiences", [])
             imported = 0
-            
+
             for exp_data in experiences_data:
                 if not isinstance(exp_data, dict):
                     continue
-                
+
                 try:
                     # Check if exists
                     exp_id = exp_data.get("id")
                     if exp_id and exp_id in self.experience_map:
                         continue
-                    
+
                     # Create experience
                     exp = Experience.from_dict(exp_data)
-                    
+
                     # Ensure required fields
                     if not exp.id:
                         exp.id = self._generate_id()
                     if not exp.timestamp:
                         exp.timestamp = self._timestamp()
-                    
+
                     self.experiences.append(exp)
                     self.experience_map[exp.id] = exp
                     self.total_recorded += 1
                     self._update_statistics(exp.status)
                     imported += 1
-                    
+
                 except Exception as e:
                     logger.warning("Failed to import experience: %s", e)
-            
+
             self._enforce_limit()
             self._build_graph()
-            
+
             logger.info("Imported %d experiences", imported)
             return imported
 
@@ -1372,19 +1397,18 @@ class ExperienceEngine:
             exp = self.experience_map.get(experience_id)
             if not exp:
                 return False
-            
+
             exp.validation_count += 1
             exp.validation_score = (
-                (exp.validation_score * (exp.validation_count - 1) + score)
-                / exp.validation_count
-            )
-            
+                exp.validation_score * (exp.validation_count - 1) + score
+            ) / exp.validation_count
+
             # Update confidence based on validation
             if score >= 0.8:
                 exp.confidence = min(1.0, exp.confidence + 0.05)
             elif score <= 0.3:
                 exp.confidence = max(0.0, exp.confidence - 0.05)
-            
+
             return True
 
     # ============================================================
@@ -1415,19 +1439,20 @@ experience_engine = ExperienceEngine()
 # SELF TEST - MENGGUNAKAN experience_engine
 # ============================================================
 
+
 def self_test() -> Dict[str, Any]:
     """Run experience engine self-test."""
-    
+
     print()
     print("=" * 80)
     print("  EXPERIENCE ENGINE v3.0 - SELF TEST")
     print("=" * 80)
     print()
-    
+
     tests_passed = 0
     tests_failed = 0
     results = {}
-    
+
     # Test 1: Initialization
     print("1. Testing initialization...")
     try:
@@ -1439,7 +1464,7 @@ def self_test() -> Dict[str, Any]:
         results["initialization"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Initialization failed: {e}")
-    
+
     # Test 2: Record
     print("\n2. Testing record...")
     try:
@@ -1456,7 +1481,7 @@ def self_test() -> Dict[str, Any]:
         results["record"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Record failed: {e}")
-    
+
     # Test 3: Recall
     print("\n3. Testing recall...")
     try:
@@ -1473,7 +1498,7 @@ def self_test() -> Dict[str, Any]:
         results["recall"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Recall failed: {e}")
-    
+
     # Test 4: Patterns
     print("\n4. Testing pattern discovery...")
     try:
@@ -1490,7 +1515,7 @@ def self_test() -> Dict[str, Any]:
         results["patterns"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Patterns failed: {e}")
-    
+
     # Test 5: Stats
     print("\n5. Testing stats...")
     try:
@@ -1507,7 +1532,7 @@ def self_test() -> Dict[str, Any]:
         results["stats"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Stats failed: {e}")
-    
+
     # Summary
     print()
     print("=" * 80)
@@ -1517,7 +1542,7 @@ def self_test() -> Dict[str, Any]:
     print(f"  ❌ Failed: {tests_failed}")
     print(f"  📊 Total:  {tests_passed + tests_failed}")
     print("=" * 80)
-    
+
     return {
         "module": "experience",
         "version": EXPERIENCE_VERSION,
@@ -1538,12 +1563,10 @@ __all__ = [
     "Experience",
     "ExperienceStats",
     "ExperiencePattern",
-    
     # Enums
     "ExperienceType",
     "ExperienceTier",
     "MemoryStage",
-    
     # Constants
     "EXPERIENCE_VERSION",
     "STATUS_SUCCESS",
@@ -1563,10 +1586,8 @@ __all__ = [
     "CONFIDENCE_MEDIUM",
     "CONFIDENCE_LOW",
     "CONFIDENCE_VERY_LOW",
-    
     # Global instance
     "experience_engine",
-    
     # Functions
     "self_test",
 ]

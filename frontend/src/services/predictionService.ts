@@ -3,7 +3,7 @@
  * Real-time data integration for PredictionView
  */
 
-const API_BASE = "";
+const API_BASE = "";  // relative path — akan di-resolve oleh browser
 const API_KEY = import.meta.env.VITE_API_KEY || '';
 
 // ============================================================
@@ -177,7 +177,7 @@ export const predictionService = {
    */
   async getMetrics(): Promise<ApiResponse<SystemMetrics>> {
     try {
-      const response = await fetch(`${API_BASE}/predictions/metrics`, {
+      const response = await fetch(`${API_BASE}/api/predictions/metrics`, {
         method: 'GET',
         headers: getHeaders(),
       });
@@ -196,7 +196,7 @@ export const predictionService = {
    */
   async runMonteCarlo(params: MonteCarloRequest): Promise<ApiResponse<MonteCarloResult>> {
     try {
-      const response = await fetch(`${API_BASE}/predictions/monte_carlo`, {
+      const response = await fetch(`${API_BASE}/api/predictions/monte_carlo`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({
@@ -221,7 +221,7 @@ export const predictionService = {
    */
   async getMonteCarlo(pair: string): Promise<ApiResponse<MonteCarloResult>> {
     try {
-      const url = new URL(`${API_BASE}/predictions/monte_carlo`);
+      const url = new URL(`${API_BASE}/api/predictions/monte_carlo`);
       url.searchParams.append('pair', pair);
       
       const response = await fetch(url.toString(), {
@@ -257,7 +257,7 @@ export const predictionService = {
    */
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await fetch(`${API_BASE}/health`, {
+      const response = await fetch(`${API_BASE}/api/health`, {
         method: 'GET',
         headers: getHeaders(),
       });

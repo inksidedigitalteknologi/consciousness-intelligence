@@ -1,4 +1,3 @@
-
 # ============================================================
 #
 # INKSIDE INTELLIGENCE OS
@@ -37,7 +36,6 @@ import re
 from copy import deepcopy
 from datetime import datetime
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -65,10 +63,7 @@ class SemanticMemory:
 
         self.memory = []
 
-        self.max_memory = max(
-            1,
-            max_memory
-        )
+        self.max_memory = max(1, max_memory)
 
         self.total_stored = 0
         self.total_searches = 0
@@ -77,9 +72,7 @@ class SemanticMemory:
 
         self.last_memory = None
 
-        logger.info(
-            "Semantic Memory initialized."
-        )
+        logger.info("Semantic Memory initialized.")
 
     # ========================================================
     # NORMALIZE TEXT
@@ -92,11 +85,7 @@ class SemanticMemory:
 
         text = str(value).strip().lower()
 
-        text = re.sub(
-            r"\s+",
-            " ",
-            text
-        )
+        text = re.sub(r"\s+", " ", text)
 
         return text
 
@@ -106,17 +95,12 @@ class SemanticMemory:
 
     def extract_keywords(self, meaning):
 
-        text = self.normalize_text(
-            meaning
-        )
+        text = self.normalize_text(meaning)
 
         if not text:
             return []
 
-        words = re.findall(
-            r"[a-zA-Z0-9_\-/]+",
-            text
-        )
+        words = re.findall(r"[a-zA-Z0-9_\-/]+", text)
 
         stopwords = {
             "yang",
@@ -162,9 +146,7 @@ class SemanticMemory:
 
     def extract_concepts(self, meaning):
 
-        text = self.normalize_text(
-            meaning
-        )
+        text = self.normalize_text(meaning)
 
         if not text:
             return []
@@ -210,31 +192,18 @@ class SemanticMemory:
     # NORMALIZE SCORE
     # ========================================================
 
-    def normalize_score(
-        self,
-        value,
-        default=0.5
-    ):
+    def normalize_score(self, value, default=0.5):
 
         try:
             value = float(value)
 
-        except (
-            TypeError,
-            ValueError
-        ):
+        except (TypeError, ValueError):
             value = default
 
         if value > 1:
             value = value / 100.0
 
-        return max(
-            0.0,
-            min(
-                1.0,
-                value
-            )
-        )
+        return max(0.0, min(1.0, value))
 
     # ========================================================
     # STORE MEMORY
@@ -249,91 +218,63 @@ class SemanticMemory:
         source=None,
         metadata=None,
         concepts=None,
-        keywords=None
+        keywords=None,
     ):
 
         timestamp = datetime.now().isoformat()
 
         if concepts is None:
-            concepts = self.extract_concepts(
-                meaning
-            )
+            concepts = self.extract_concepts(meaning)
 
         if keywords is None:
-            keywords = self.extract_keywords(
-                meaning
-            )
+            keywords = self.extract_keywords(meaning)
 
-        if not isinstance(
-            concepts,
-            (list, tuple, set)
-        ):
+        if not isinstance(concepts, (list, tuple, set)):
             concepts = []
 
-        if not isinstance(
-            keywords,
-            (list, tuple, set)
-        ):
+        if not isinstance(keywords, (list, tuple, set)):
             keywords = []
 
         item = {
             "id": self.total_stored + 1,
-
             "time": timestamp,
-
             "timestamp": timestamp,
-
-            "category": str(
-                category
-            ),
-
+            "category": str(category),
             "meaning": meaning,
-
-            "importance": self.normalize_score(
-                importance,
-                default=self.DEFAULT_IMPORTANCE
-            ),
-
-            "confidence": self.normalize_score(
-                confidence,
-                default=self.DEFAULT_CONFIDENCE
-            ),
-
+            "importance": self.normalize_score(importance, default=self.DEFAULT_IMPORTANCE),
+            "confidence": self.normalize_score(confidence, default=self.DEFAULT_CONFIDENCE),
             "strength": self.DEFAULT_STRENGTH,
-
             "recall_count": 0,
-
             "reinforcement_count": 0,
-
             "source": source,
-
-            "concepts": list(
-                concepts
-            ),
-
-            "keywords": list(
-                keywords
-            ),
-
-            "metadata": (
-                deepcopy(metadata)
-                if isinstance(
-                    metadata,
-                    dict
-                )
-                else {}
-            ),
+            "concepts": list(concepts),
+            "keywords": list(keywords),
+            "metadata": (deepcopy(metadata) if isinstance(metadata, dict) else {}),
         }
 
-        self.memory.append(
-            item
-        )
+        self.memory.append(item)
 
         self.total_stored += 1
 
         self.last_memory = item
 
         self._trim_memory()
+
+        # Save to core memory
+        try:
+            from core.memory import memory
+
+            result_dict = result.to_dict() if hasattr(result, "to_dict") else result
+            if isinstance(result_dict, dict):
+                memory.save_semantic(
+                    concept=str(
+                        result_dict.get("concept") or result_dict.get("text") or "semantic"
+                    ),
+                    relation=str(result_dict.get("relation") or "stored"),
+                    data=result_dict,
+                )
+        except Exception:
+            pass
 
         return item
 
@@ -343,135 +284,58 @@ class SemanticMemory:
 
     def store_memory(self, memory):
 
-        if not isinstance(
-            memory,
-            dict
-        ):
+        if not isinstance(memory, dict):
 
-            return self.store(
-                memory
-            )
+            return self.store(memory)
 
-        meaning = memory.get(
-            "meaning",
-            memory
-        )
+        meaning = memory.get("meaning", memory)
 
         return self.store(
             meaning=meaning,
-
-            category=memory.get(
-                "category",
-                "general"
-            ),
-
-            importance=memory.get(
-                "importance",
-                self.DEFAULT_IMPORTANCE
-            ),
-
-            confidence=memory.get(
-                "confidence",
-                self.DEFAULT_CONFIDENCE
-            ),
-
-            source=memory.get(
-                "source"
-            ),
-
-            metadata=memory.get(
-                "metadata"
-            ),
-
-            concepts=memory.get(
-                "concepts"
-            ),
-
-            keywords=memory.get(
-                "keywords"
-            ),
+            category=memory.get("category", "general"),
+            importance=memory.get("importance", self.DEFAULT_IMPORTANCE),
+            confidence=memory.get("confidence", self.DEFAULT_CONFIDENCE),
+            source=memory.get("source"),
+            metadata=memory.get("metadata"),
+            concepts=memory.get("concepts"),
+            keywords=memory.get("keywords"),
         )
 
     # ========================================================
     # SEARCH MEMORY
     # ========================================================
 
-    def search(
-        self,
-        keyword,
-        limit=None
-    ):
+    def search(self, keyword, limit=None):
 
         self.total_searches += 1
 
-        keyword = self.normalize_text(
-            keyword
-        )
+        keyword = self.normalize_text(keyword)
 
         if not keyword:
             return []
 
         result = []
 
-        for item in reversed(
-            self.memory
-        ):
+        for item in reversed(self.memory):
 
             searchable = " ".join(
                 [
-                    str(
-                        item.get(
-                            "meaning",
-                            ""
-                        )
-                    ),
-
-                    str(
-                        item.get(
-                            "category",
-                            ""
-                        )
-                    ),
-
-                    " ".join(
-                        str(value)
-                        for value in item.get(
-                            "keywords",
-                            []
-                        )
-                    ),
-
-                    " ".join(
-                        str(value)
-                        for value in item.get(
-                            "concepts",
-                            []
-                        )
-                    ),
+                    str(item.get("meaning", "")),
+                    str(item.get("category", "")),
+                    " ".join(str(value) for value in item.get("keywords", [])),
+                    " ".join(str(value) for value in item.get("concepts", [])),
                 ]
             ).lower()
 
             if keyword in searchable:
 
-                item["recall_count"] = (
-                    item.get(
-                        "recall_count",
-                        0
-                    )
-                    + 1
-                )
+                item["recall_count"] = item.get("recall_count", 0) + 1
 
                 self.total_recalls += 1
 
-                result.append(
-                    item
-                )
+                result.append(item)
 
-                if (
-                    limit is not None
-                    and
-                    len(result) >= int(limit)
-                ):
+                if limit is not None and len(result) >= int(limit):
                     break
 
         return result
@@ -480,51 +344,27 @@ class SemanticMemory:
     # SEARCH BY CATEGORY
     # ========================================================
 
-    def search_category(
-        self,
-        category,
-        limit=None
-    ):
+    def search_category(self, category, limit=None):
 
-        category = self.normalize_text(
-            category
-        )
+        category = self.normalize_text(category)
 
         if not category:
             return []
 
         result = [
-
             item
-
-            for item in reversed(
-                self.memory
-            )
-
-            if self.normalize_text(
-                item.get(
-                    "category",
-                    ""
-                )
-            ) == category
+            for item in reversed(self.memory)
+            if self.normalize_text(item.get("category", "")) == category
         ]
 
         if limit is not None:
 
             try:
                 limit = int(limit)
-            except (
-                TypeError,
-                ValueError
-            ):
+            except (TypeError, ValueError):
                 limit = 20
 
-            result = result[
-                :max(
-                    0,
-                    limit
-                )
-            ]
+            result = result[: max(0, limit)]
 
         return result
 
@@ -532,48 +372,24 @@ class SemanticMemory:
     # SEARCH BY CONCEPT
     # ========================================================
 
-    def search_concept(
-        self,
-        concept,
-        limit=None
-    ):
+    def search_concept(self, concept, limit=None):
 
-        concept = self.normalize_text(
-            concept
-        )
+        concept = self.normalize_text(concept)
 
         if not concept:
             return []
 
         result = []
 
-        for item in reversed(
-            self.memory
-        ):
+        for item in reversed(self.memory):
 
-            concepts = [
-
-                self.normalize_text(
-                    value
-                )
-
-                for value in item.get(
-                    "concepts",
-                    []
-                )
-            ]
+            concepts = [self.normalize_text(value) for value in item.get("concepts", [])]
 
             if concept in concepts:
 
-                result.append(
-                    item
-                )
+                result.append(item)
 
-                if (
-                    limit is not None
-                    and
-                    len(result) >= int(limit)
-                ):
+                if limit is not None and len(result) >= int(limit):
                     break
 
         return result
@@ -582,91 +398,40 @@ class SemanticMemory:
     # SEMANTIC FILTER
     # ========================================================
 
-    def filter(
-        self,
-        category=None,
-        concept=None,
-        min_importance=None,
-        min_confidence=None
-    ):
+    def filter(self, category=None, concept=None, min_importance=None, min_confidence=None):
 
         results = []
 
-        normalized_category = (
-            self.normalize_text(category)
-            if category is not None
-            else None
-        )
+        normalized_category = self.normalize_text(category) if category is not None else None
 
-        normalized_concept = (
-            self.normalize_text(concept)
-            if concept is not None
-            else None
-        )
+        normalized_concept = self.normalize_text(concept) if concept is not None else None
 
         if min_importance is not None:
-            min_importance = self.normalize_score(
-                min_importance
-            )
+            min_importance = self.normalize_score(min_importance)
 
         if min_confidence is not None:
-            min_confidence = self.normalize_score(
-                min_confidence
-            )
+            min_confidence = self.normalize_score(min_confidence)
 
-        for item in reversed(
-            self.memory
-        ):
+        for item in reversed(self.memory):
 
             if (
                 normalized_category is not None
-                and
-                self.normalize_text(
-                    item.get(
-                        "category",
-                        ""
-                    )
-                )
-                != normalized_category
+                and self.normalize_text(item.get("category", "")) != normalized_category
             ):
                 continue
 
-            if (
-                normalized_concept is not None
-                and
-                normalized_concept not in [
-                    self.normalize_text(value)
-                    for value in item.get(
-                        "concepts",
-                        []
-                    )
-                ]
-            ):
+            if normalized_concept is not None and normalized_concept not in [
+                self.normalize_text(value) for value in item.get("concepts", [])
+            ]:
                 continue
 
-            if (
-                min_importance is not None
-                and
-                item.get(
-                    "importance",
-                    0
-                ) < min_importance
-            ):
+            if min_importance is not None and item.get("importance", 0) < min_importance:
                 continue
 
-            if (
-                min_confidence is not None
-                and
-                item.get(
-                    "confidence",
-                    0
-                ) < min_confidence
-            ):
+            if min_confidence is not None and item.get("confidence", 0) < min_confidence:
                 continue
 
-            results.append(
-                item
-            )
+            results.append(item)
 
         return results
 
@@ -674,49 +439,30 @@ class SemanticMemory:
     # GET RECENT
     # ========================================================
 
-    def get_recent(
-        self,
-        limit=20
-    ):
+    def get_recent(self, limit=20):
 
         try:
             limit = int(limit)
 
-        except (
-            TypeError,
-            ValueError
-        ):
+        except (TypeError, ValueError):
             limit = 20
 
         if limit <= 0:
             return []
 
-        return self.memory[
-            -limit:
-        ]
+        return self.memory[-limit:]
 
     # ========================================================
     # RECALL
     # ========================================================
 
-    def recall(
-        self,
-        limit=20
-    ):
+    def recall(self, limit=20):
 
-        results = self.get_recent(
-            limit
-        )
+        results = self.get_recent(limit)
 
         for item in results:
 
-            item["recall_count"] = (
-                item.get(
-                    "recall_count",
-                    0
-                )
-                + 1
-            )
+            item["recall_count"] = item.get("recall_count", 0) + 1
 
             self.total_recalls += 1
 
@@ -734,116 +480,45 @@ class SemanticMemory:
     # GET IMPORTANT MEMORIES
     # ========================================================
 
-    def important(
-        self,
-        limit=20,
-        threshold=0.7
-    ):
+    def important(self, limit=20, threshold=0.7):
 
         try:
             limit = int(limit)
-        except (
-            TypeError,
-            ValueError
-        ):
+        except (TypeError, ValueError):
             limit = 20
 
-        threshold = self.normalize_score(
-            threshold
-        )
+        threshold = self.normalize_score(threshold)
 
-        result = [
-
-            item
-
-            for item in self.memory
-
-            if item.get(
-                "importance",
-                0
-            ) >= threshold
-        ]
+        result = [item for item in self.memory if item.get("importance", 0) >= threshold]
 
         result.sort(
-
             key=lambda item: (
-
-                item.get(
-                    "importance",
-                    0
-                )
-
-                *
-
-                item.get(
-                    "confidence",
-                    0
-                )
-
-                *
-
-                item.get(
-                    "strength",
-                    1
-                )
+                item.get("importance", 0) * item.get("confidence", 0) * item.get("strength", 1)
             ),
-
-            reverse=True
+            reverse=True,
         )
 
-        return result[
-            :max(
-                0,
-                limit
-            )
-        ]
+        return result[: max(0, limit)]
 
     # ========================================================
     # RELATED MEMORIES
     # ========================================================
 
-    def related(
-        self,
-        memory,
-        limit=10
-    ):
+    def related(self, memory, limit=10):
 
-        if not isinstance(
-            memory,
-            dict
-        ):
+        if not isinstance(memory, dict):
             return []
 
         try:
             limit = int(limit)
-        except (
-            TypeError,
-            ValueError
-        ):
+        except (TypeError, ValueError):
             limit = 10
 
-        target_concepts = {
-            self.normalize_text(value)
-            for value in memory.get(
-                "concepts",
-                []
-            )
-        }
+        target_concepts = {self.normalize_text(value) for value in memory.get("concepts", [])}
 
-        target_keywords = {
-            self.normalize_text(value)
-            for value in memory.get(
-                "keywords",
-                []
-            )
-        }
+        target_keywords = {self.normalize_text(value) for value in memory.get("keywords", [])}
 
-        target_category = self.normalize_text(
-            memory.get(
-                "category",
-                ""
-            )
-        )
+        target_category = self.normalize_text(memory.get("category", ""))
 
         scored = []
 
@@ -852,142 +527,54 @@ class SemanticMemory:
             if item is memory:
                 continue
 
-            concepts = {
-                self.normalize_text(value)
-                for value in item.get(
-                    "concepts",
-                    []
-                )
-            }
+            concepts = {self.normalize_text(value) for value in item.get("concepts", [])}
 
-            keywords = {
-                self.normalize_text(value)
-                for value in item.get(
-                    "keywords",
-                    []
-                )
-            }
+            keywords = {self.normalize_text(value) for value in item.get("keywords", [])}
 
-            category = self.normalize_text(
-                item.get(
-                    "category",
-                    ""
-                )
-            )
+            category = self.normalize_text(item.get("category", ""))
 
-            concept_score = len(
-                target_concepts
-                &
-                concepts
-            )
+            concept_score = len(target_concepts & concepts)
 
-            keyword_score = len(
-                target_keywords
-                &
-                keywords
-            )
+            keyword_score = len(target_keywords & keywords)
 
-            category_score = (
-                2
-                if (
-                    target_category
-                    and
-                    target_category == category
-                )
-                else 0
-            )
+            category_score = 2 if (target_category and target_category == category) else 0
 
-            score = (
-                concept_score * 3
-                +
-                keyword_score
-                +
-                category_score
-            )
+            score = concept_score * 3 + keyword_score + category_score
 
             if score > 0:
 
-                scored.append(
-                    (
-                        score,
-                        item
-                    )
-                )
+                scored.append((score, item))
 
-        scored.sort(
-            key=lambda pair: pair[0],
-            reverse=True
-        )
+        scored.sort(key=lambda pair: pair[0], reverse=True)
 
-        return [
-            item
-            for _, item in scored[
-                :max(
-                    0,
-                    limit
-                )
-            ]
-        ]
+        return [item for _, item in scored[: max(0, limit)]]
 
     # ========================================================
     # REINFORCE MEMORY
     # ========================================================
 
-    def reinforce(
-        self,
-        memory_id,
-        amount=0.1
-    ):
+    def reinforce(self, memory_id, amount=0.1):
 
         try:
-            memory_id = int(
-                memory_id
-            )
+            memory_id = int(memory_id)
 
-        except (
-            TypeError,
-            ValueError
-        ):
+        except (TypeError, ValueError):
             return None
 
-        amount = self.normalize_score(
-            amount,
-            default=0.1
-        )
+        amount = self.normalize_score(amount, default=0.1)
 
         for item in self.memory:
 
-            if item.get(
-                "id"
-            ) != memory_id:
+            if item.get("id") != memory_id:
                 continue
 
-            item["strength"] = min(
-                1.0,
+            item["strength"] = min(1.0, item.get("strength", self.DEFAULT_STRENGTH) + amount)
 
-                item.get(
-                    "strength",
-                    self.DEFAULT_STRENGTH
-                )
-                +
-                amount
-            )
-
-            item["reinforcement_count"] = (
-                item.get(
-                    "reinforcement_count",
-                    0
-                )
-                +
-                1
-            )
+            item["reinforcement_count"] = item.get("reinforcement_count", 0) + 1
 
             self.total_reinforced += 1
 
-            item["updated"] = (
-                datetime.now()
-                .isoformat()
-            )
+            item["updated"] = datetime.now().isoformat()
 
             return item
 
@@ -997,21 +584,12 @@ class SemanticMemory:
     # UPDATE MEMORY
     # ========================================================
 
-    def update(
-        self,
-        memory_id,
-        **changes
-    ):
+    def update(self, memory_id, **changes):
 
         try:
-            memory_id = int(
-                memory_id
-            )
+            memory_id = int(memory_id)
 
-        except (
-            TypeError,
-            ValueError
-        ):
+        except (TypeError, ValueError):
             return None
 
         allowed = {
@@ -1027,9 +605,7 @@ class SemanticMemory:
 
         for item in self.memory:
 
-            if item.get(
-                "id"
-            ) != memory_id:
+            if item.get("id") != memory_id:
                 continue
 
             for key, value in changes.items():
@@ -1037,68 +613,28 @@ class SemanticMemory:
                 if key not in allowed:
                     continue
 
-                if key in {
-                    "importance",
-                    "confidence"
-                }:
+                if key in {"importance", "confidence"}:
 
-                    value = self.normalize_score(
-                        value
-                    )
+                    value = self.normalize_score(value)
 
                 elif key == "metadata":
 
-                    value = (
-                        deepcopy(value)
-                        if isinstance(
-                            value,
-                            dict
-                        )
-                        else {}
-                    )
+                    value = deepcopy(value) if isinstance(value, dict) else {}
 
-                elif key in {
-                    "concepts",
-                    "keywords"
-                }:
+                elif key in {"concepts", "keywords"}:
 
-                    value = (
-                        list(value)
-                        if isinstance(
-                            value,
-                            (list, tuple, set)
-                        )
-                        else []
-                    )
+                    value = list(value) if isinstance(value, (list, tuple, set)) else []
 
                 item[key] = value
 
             # Rebuild semantic indexes when meaning changes.
             if "meaning" in changes:
 
-                item["keywords"] = (
-                    self.extract_keywords(
-                        item.get(
-                            "meaning",
-                            ""
-                        )
-                    )
-                )
+                item["keywords"] = self.extract_keywords(item.get("meaning", ""))
 
-                item["concepts"] = (
-                    self.extract_concepts(
-                        item.get(
-                            "meaning",
-                            ""
-                        )
-                    )
+                item["concepts"] = self.extract_concepts(item.get("meaning", ""))
 
-                )
-
-            item["updated"] = (
-                datetime.now()
-                .isoformat()
-            )
+            item["updated"] = datetime.now().isoformat()
 
             self.last_memory = item
 
@@ -1110,44 +646,23 @@ class SemanticMemory:
     # DELETE MEMORY
     # ========================================================
 
-    def delete(
-        self,
-        memory_id
-    ):
+    def delete(self, memory_id):
 
         try:
-            memory_id = int(
-                memory_id
-            )
+            memory_id = int(memory_id)
 
-        except (
-            TypeError,
-            ValueError
-        ):
+        except (TypeError, ValueError):
             return False
 
-        for index, item in enumerate(
-            self.memory
-        ):
+        for index, item in enumerate(self.memory):
 
-            if item.get(
-                "id"
-            ) == memory_id:
+            if item.get("id") == memory_id:
 
-                removed = self.memory.pop(
-                    index
-                )
+                removed = self.memory.pop(index)
 
-                if (
-                    self.last_memory
-                    is removed
-                ):
+                if self.last_memory is removed:
 
-                    self.last_memory = (
-                        self.memory[-1]
-                        if self.memory
-                        else None
-                    )
+                    self.last_memory = self.memory[-1] if self.memory else None
 
                 return True
 
@@ -1171,9 +686,7 @@ class SemanticMemory:
 
     def count(self):
 
-        return len(
-            self.memory
-        )
+        return len(self.memory)
 
     # ========================================================
     # CATEGORIES
@@ -1185,19 +698,9 @@ class SemanticMemory:
 
         for item in self.memory:
 
-            category = item.get(
-                "category",
-                "general"
-            )
+            category = item.get("category", "general")
 
-            result[category] = (
-                result.get(
-                    category,
-                    0
-                )
-                +
-                1
-            )
+            result[category] = result.get(category, 0) + 1
 
         return result
 
@@ -1211,19 +714,9 @@ class SemanticMemory:
 
         for item in self.memory:
 
-            for concept in item.get(
-                "concepts",
-                []
-            ):
+            for concept in item.get("concepts", []):
 
-                result[concept] = (
-                    result.get(
-                        concept,
-                        0
-                    )
-                    +
-                    1
-                )
+                result[concept] = result.get(concept, 0) + 1
 
         return result
 
@@ -1237,112 +730,32 @@ class SemanticMemory:
 
             return {
                 "total": 0,
-
                 "categories": 0,
-
                 "concepts": 0,
-
                 "average_importance": 0,
-
                 "average_confidence": 0,
-
                 "average_strength": 0,
-
-                "searches":
-                    self.total_searches,
-
-                "recalls":
-                    self.total_recalls,
-
-                "reinforced":
-                    self.total_reinforced,
+                "searches": self.total_searches,
+                "recalls": self.total_recalls,
+                "reinforced": self.total_reinforced,
             }
 
-        importance = [
+        importance = [self.normalize_score(item.get("importance", 0)) for item in self.memory]
 
-            self.normalize_score(
-                item.get(
-                    "importance",
-                    0
-                )
-            )
+        confidence = [self.normalize_score(item.get("confidence", 0)) for item in self.memory]
 
-            for item in self.memory
-        ]
-
-        confidence = [
-
-            self.normalize_score(
-                item.get(
-                    "confidence",
-                    0
-                )
-            )
-
-            for item in self.memory
-        ]
-
-        strength = [
-
-            self.normalize_score(
-                item.get(
-                    "strength",
-                    0
-                )
-            )
-
-            for item in self.memory
-        ]
+        strength = [self.normalize_score(item.get("strength", 0)) for item in self.memory]
 
         return {
-
-            "total":
-                len(
-                    self.memory
-                ),
-
-            "categories":
-                len(
-                    self.categories()
-                ),
-
-            "concepts":
-                len(
-                    self.concepts()
-                ),
-
-            "average_importance":
-                round(
-                    sum(importance)
-                    /
-                    len(importance),
-                    3
-                ),
-
-            "average_confidence":
-                round(
-                    sum(confidence)
-                    /
-                    len(confidence),
-                    3
-                ),
-
-            "average_strength":
-                round(
-                    sum(strength)
-                    /
-                    len(strength),
-                    3
-                ),
-
-            "searches":
-                self.total_searches,
-
-            "recalls":
-                self.total_recalls,
-
-            "reinforced":
-                self.total_reinforced,
+            "total": len(self.memory),
+            "categories": len(self.categories()),
+            "concepts": len(self.concepts()),
+            "average_importance": round(sum(importance) / len(importance), 3),
+            "average_confidence": round(sum(confidence) / len(confidence), 3),
+            "average_strength": round(sum(strength) / len(strength), 3),
+            "searches": self.total_searches,
+            "recalls": self.total_recalls,
+            "reinforced": self.total_reinforced,
         }
 
     # ========================================================
@@ -1351,15 +764,11 @@ class SemanticMemory:
 
     def _trim_memory(self):
 
-        if len(
-            self.memory
-        ) <= self.max_memory:
+        if len(self.memory) <= self.max_memory:
 
             return
 
-        del self.memory[
-            :-self.max_memory
-        ]
+        del self.memory[: -self.max_memory]
 
     # ========================================================
     # CLEANUP
@@ -1371,9 +780,7 @@ class SemanticMemory:
 
         return {
             "status": "ok",
-            "items": len(
-                self.memory
-            ),
+            "items": len(self.memory),
             "max_memory": self.max_memory,
         }
 
@@ -1381,14 +788,9 @@ class SemanticMemory:
     # HISTORY
     # ========================================================
 
-    def history(
-        self,
-        limit=20
-    ):
+    def history(self, limit=20):
 
-        return self.get_recent(
-            limit
-        )
+        return self.get_recent(limit)
 
     # ========================================================
     # STATUS
@@ -1399,45 +801,16 @@ class SemanticMemory:
         stats = self.statistics()
 
         return {
-
-            "module":
-                "semantic_memory",
-
-            "items":
-                len(
-                    self.memory
-                ),
-
-            "max_memory":
-                self.max_memory,
-
-            "total_stored":
-                self.total_stored,
-
-            "categories":
-                stats.get(
-                    "categories",
-                    0
-                ),
-
-            "concepts":
-                stats.get(
-                    "concepts",
-                    0
-                ),
-
-            "searches":
-                self.total_searches,
-
-            "recalls":
-                self.total_recalls,
-
-            "reinforced":
-                self.total_reinforced,
-
-            "has_latest":
-                self.last_memory is not None,
-
+            "module": "semantic_memory",
+            "items": len(self.memory),
+            "max_memory": self.max_memory,
+            "total_stored": self.total_stored,
+            "categories": stats.get("categories", 0),
+            "concepts": stats.get("concepts", 0),
+            "searches": self.total_searches,
+            "recalls": self.total_recalls,
+            "reinforced": self.total_reinforced,
+            "has_latest": self.last_memory is not None,
         }
 
 
@@ -1453,4 +826,3 @@ semantic_memory = SemanticMemory()
 # ============================================================
 
 SemanticMemoryEngine = SemanticMemory
-

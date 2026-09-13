@@ -65,17 +65,14 @@ MIN_PATTERN_FREQUENCY = 2
 # PATTERN ENGINE
 # ============================================================
 
+
 class PatternEngine:
 
     def __init__(self):
 
-        self.patterns = deque(
-            maxlen=MAX_PATTERN_HISTORY
-        )
+        self.patterns = deque(maxlen=MAX_PATTERN_HISTORY)
 
-        self.observation_history = deque(
-            maxlen=MAX_HISTORY
-        )
+        self.observation_history = deque(maxlen=MAX_HISTORY)
 
         self.frequency = Counter()
 
@@ -109,16 +106,13 @@ class PatternEngine:
 
         self._initialized_at = datetime.now().isoformat()
 
-        logger.info(
-            "Pattern Engine v3.1 initialized."
-        )
+        logger.info("Pattern Engine v3.1 initialized.")
 
     # ========================================================
     # PUBLIC API
     # ========================================================
 
     def detect(self, observations):
-
         """
         Analyze one observation or a collection of observations.
 
@@ -138,206 +132,107 @@ class PatternEngine:
 
         try:
 
-            normalized = self._normalize_observations(
-                observations
-            )
+            normalized = self._normalize_observations(observations)
 
             if not normalized:
+
+                # Save pattern to memory
+                try:
+                    from core.memory import memory
+
+                    if isinstance(result, dict):
+                        memory.save_pattern(
+                            name=str(result.get("name") or result.get("pattern") or "unknown"),
+                            confidence=float(result.get("confidence") or 0),
+                            data=result,
+                        )
+                except Exception:
+                    pass
 
                 return self._empty_result()
 
             self.scan_count += 1
 
-            self.total_observations += len(
-                normalized
-            )
+            self.total_observations += len(normalized)
 
             for observation in normalized:
 
-                self._remember_observation(
-                    observation
-                )
+                self._remember_observation(observation)
 
-            structure = self._analyze_structure(
-                normalized
-            )
+            structure = self._analyze_structure(normalized)
 
-            fields = self._analyze_fields(
-                normalized
-            )
+            fields = self._analyze_fields(normalized)
 
-            values = self._analyze_values(
-                normalized
-            )
+            values = self._analyze_values(normalized)
 
-            text = self._analyze_text(
-                normalized
-            )
+            text = self._analyze_text(normalized)
 
-            entities = self._analyze_entities(
-                normalized
-            )
+            entities = self._analyze_entities(normalized)
 
-            concepts = self._analyze_concepts(
-                normalized
-            )
+            concepts = self._analyze_concepts(normalized)
 
-            sentiment = self._analyze_sentiment(
-                normalized
-            )
+            sentiment = self._analyze_sentiment(normalized)
 
-            behavior = self._analyze_behavior(
-                normalized
-            )
+            behavior = self._analyze_behavior(normalized)
 
-            numerical = self._analyze_numerical(
-                normalized
-            )
+            numerical = self._analyze_numerical(normalized)
 
-            temporal = self._analyze_temporal(
-                normalized
-            )
+            temporal = self._analyze_temporal(normalized)
 
-            sequences = self._analyze_sequences(
-                normalized
-            )
+            sequences = self._analyze_sequences(normalized)
 
-            relationships = self._analyze_relationships(
-                normalized
-            )
+            relationships = self._analyze_relationships(normalized)
 
-            cooccurrence = self._analyze_cooccurrence(
-                normalized
-            )
+            cooccurrence = self._analyze_cooccurrence(normalized)
 
-            recurrence = self._analyze_recurrence(
-                normalized
-            )
+            recurrence = self._analyze_recurrence(normalized)
 
-            trends = self._analyze_trends(
-                normalized
-            )
+            trends = self._analyze_trends(normalized)
 
-            anomalies = self._analyze_anomalies(
-                normalized,
-                numerical
-            )
+            anomalies = self._analyze_anomalies(normalized, numerical)
 
-            novelty = self._analyze_novelty(
-                normalized
-            )
+            novelty = self._analyze_novelty(normalized)
 
-            semantic = self._analyze_semantic_patterns(
-                normalized
-            )
+            semantic = self._analyze_semantic_patterns(normalized)
 
-            fingerprint = self._create_fingerprint(
-                normalized
-            )
+            fingerprint = self._create_fingerprint(normalized)
 
             confidence = self._calculate_confidence(
-                structure,
-                fields,
-                values,
-                text,
-                entities,
-                concepts,
-                relationships
+                structure, fields, values, text, entities, concepts, relationships
             )
 
             result = {
-
-                "timestamp":
-                    datetime.now().isoformat(),
-
-                "engine":
-                    "Pattern Engine",
-
-                "version":
-                    "3.1",
-
-                "scan":
-                    self.scan_count,
-
-                "observation_count":
-                    len(normalized),
-
-                "structure":
-                    structure,
-
-                "fields":
-                    fields,
-
-                "values":
-                    values,
-
-                "text":
-                    text,
-
-                "entities":
-                    entities,
-
-                "concepts":
-                    concepts,
-
-                "sentiment":
-                    sentiment,
-
-                "behavior":
-                    behavior,
-
-                "numerical":
-                    numerical,
-
-                "temporal":
-                    temporal,
-
-                "sequences":
-                    sequences,
-
-                "relationships":
-                    relationships,
-
-                "cooccurrence":
-                    cooccurrence,
-
-                "recurrence":
-                    recurrence,
-
-                "trends":
-                    trends,
-
-                "anomalies":
-                    anomalies,
-
-                "novelty":
-                    novelty,
-
-                "semantic":
-                    semantic,
-
-                "fingerprint":
-                    fingerprint,
-
-                "confidence":
-                    confidence,
-
-                "summary":
-                    self._build_summary(
-                        structure,
-                        fields,
-                        text,
-                        entities,
-                        concepts,
-                        trends,
-                        anomalies,
-                        novelty
-                    )
+                "timestamp": datetime.now().isoformat(),
+                "engine": "Pattern Engine",
+                "version": "3.1",
+                "scan": self.scan_count,
+                "observation_count": len(normalized),
+                "structure": structure,
+                "fields": fields,
+                "values": values,
+                "text": text,
+                "entities": entities,
+                "concepts": concepts,
+                "sentiment": sentiment,
+                "behavior": behavior,
+                "numerical": numerical,
+                "temporal": temporal,
+                "sequences": sequences,
+                "relationships": relationships,
+                "cooccurrence": cooccurrence,
+                "recurrence": recurrence,
+                "trends": trends,
+                "anomalies": anomalies,
+                "novelty": novelty,
+                "semantic": semantic,
+                "fingerprint": fingerprint,
+                "confidence": confidence,
+                "summary": self._build_summary(
+                    structure, fields, text, entities, concepts, trends, anomalies, novelty
+                ),
             }
 
-            self._register_patterns(
-                result
-            )
+            self._register_patterns(result)
 
             self.last_result = result
 
@@ -345,29 +240,15 @@ class PatternEngine:
 
         except Exception as e:
 
-            logger.exception(
-                "Pattern detection failed: %s",
-                e
-            )
+            logger.exception("Pattern detection failed: %s", e)
 
             return {
-                "timestamp":
-                    datetime.now().isoformat(),
-
-                "engine":
-                    "Pattern Engine",
-
-                "version":
-                    "3.1",
-
-                "error":
-                    str(e),
-
-                "patterns":
-                    {},
-
-                "confidence":
-                    0
+                "timestamp": datetime.now().isoformat(),
+                "engine": "Pattern Engine",
+                "version": "3.1",
+                "error": str(e),
+                "patterns": {},
+                "confidence": 0,
             }
 
     # ========================================================
@@ -386,19 +267,11 @@ class PatternEngine:
 
         if isinstance(data, str):
 
-            return [
-                {
-                    "text": data
-                }
-            ]
+            return [{"text": data}]
 
         if isinstance(data, (int, float, bool)):
 
-            return [
-                {
-                    "value": data
-                }
-            ]
+            return [{"value": data}]
 
         if isinstance(data, (list, tuple, set)):
 
@@ -408,49 +281,25 @@ class PatternEngine:
 
                 if isinstance(item, dict):
 
-                    result.append(
-                        self._safe_copy(item)
-                    )
+                    result.append(self._safe_copy(item))
 
-                elif isinstance(
-                    item,
-                    (str, int, float, bool)
-                ):
+                elif isinstance(item, (str, int, float, bool)):
 
-                    result.append(
-                        {
-                            "value": item
-                        }
-                    )
+                    result.append({"value": item})
 
                 else:
 
-                    result.append(
-                        {
-                            "value":
-                                self._safe_string(item)
-                        }
-                    )
+                    result.append({"value": self._safe_string(item)})
 
             return result
 
-        return [
-            {
-                "value":
-                    self._safe_string(data)
-            }
-        ]
+        return [{"value": self._safe_string(data)}]
 
     # ========================================================
     # SAFE COPY
     # ========================================================
 
-    def _safe_copy(
-        self,
-        data,
-        depth=0,
-        seen=None
-    ):
+    def _safe_copy(self, data, depth=0, seen=None):
 
         if seen is None:
 
@@ -474,15 +323,9 @@ class PatternEngine:
 
             for key, value in data.items():
 
-                safe_key = self._safe_string(
-                    key
-                )
+                safe_key = self._safe_string(key)
 
-                result[safe_key] = self._safe_copy(
-                    value,
-                    depth + 1,
-                    seen
-                )
+                result[safe_key] = self._safe_copy(value, depth + 1, seen)
 
             seen.discard(object_id)
 
@@ -502,22 +345,13 @@ class PatternEngine:
 
             for value in list(data)[:MAX_SEQUENCE_LENGTH]:
 
-                result.append(
-                    self._safe_copy(
-                        value,
-                        depth + 1,
-                        seen
-                    )
-                )
+                result.append(self._safe_copy(value, depth + 1, seen))
 
             seen.discard(object_id)
 
             return result
 
-        if isinstance(
-            data,
-            (str, int, float, bool)
-        ):
+        if isinstance(data, (str, int, float, bool)):
 
             if isinstance(data, float):
 
@@ -555,23 +389,15 @@ class PatternEngine:
     # REMEMBER
     # ========================================================
 
-    def _remember_observation(
-        self,
-        observation
-    ):
+    def _remember_observation(self, observation):
 
-        self.observation_history.append(
-            self._safe_copy(observation)
-        )
+        self.observation_history.append(self._safe_copy(observation))
 
     # ========================================================
     # STRUCTURE ANALYSIS
     # ========================================================
 
-    def _analyze_structure(
-        self,
-        observations
-    ):
+    def _analyze_structure(self, observations):
 
         type_counter = Counter()
 
@@ -581,52 +407,32 @@ class PatternEngine:
 
         for item in observations:
 
-            type_counter[
-                type(item).__name__
-            ] += 1
+            type_counter[type(item).__name__] += 1
 
             depth = self._depth(item)
 
-            depth_counter[
-                depth
-            ] += 1
+            depth_counter[depth] += 1
 
             if isinstance(item, dict):
 
                 for key in item.keys():
 
-                    key_count[
-                        str(key)
-                    ] += 1
+                    key_count[str(key)] += 1
 
-        self.type_frequency.update(
-            type_counter
-        )
+        self.type_frequency.update(type_counter)
 
         return {
-
-            "types":
-                dict(type_counter),
-
-            "depth":
-                dict(depth_counter),
-
-            "keys":
-                dict(key_count),
-
-            "count":
-                len(observations)
+            "types": dict(type_counter),
+            "depth": dict(depth_counter),
+            "keys": dict(key_count),
+            "count": len(observations),
         }
 
     # ========================================================
     # DEPTH
     # ========================================================
 
-    def _depth(
-        self,
-        value,
-        level=0
-    ):
+    def _depth(self, value, level=0):
 
         if level >= MAX_NESTED_DEPTH:
 
@@ -638,13 +444,7 @@ class PatternEngine:
 
                 return level
 
-            return max(
-                self._depth(
-                    item,
-                    level + 1
-                )
-                for item in value.values()
-            )
+            return max(self._depth(item, level + 1) for item in value.values())
 
         if isinstance(value, list):
 
@@ -652,13 +452,7 @@ class PatternEngine:
 
                 return level
 
-            return max(
-                self._depth(
-                    item,
-                    level + 1
-                )
-                for item in value
-            )
+            return max(self._depth(item, level + 1) for item in value)
 
         return level
 
@@ -666,16 +460,11 @@ class PatternEngine:
     # FIELD ANALYSIS
     # ========================================================
 
-    def _analyze_fields(
-        self,
-        observations
-    ):
+    def _analyze_fields(self, observations):
 
         fields = Counter()
 
-        field_types = defaultdict(
-            Counter
-        )
+        field_types = defaultdict(Counter)
 
         for item in observations:
 
@@ -689,80 +478,36 @@ class PatternEngine:
 
                 fields[key] += 1
 
-                field_types[key][
-                    type(value).__name__
-                ] += 1
+                field_types[key][type(value).__name__] += 1
 
-        self.key_frequency.update(
-            fields
-        )
+        self.key_frequency.update(fields)
 
         return {
-
-            "frequency":
-                dict(fields),
-
-            "types":
-                {
-                    key:
-                        dict(counter)
-
-                    for key, counter
-                    in field_types.items()
-                },
-
-            "unique_fields":
-                len(fields)
+            "frequency": dict(fields),
+            "types": {key: dict(counter) for key, counter in field_types.items()},
+            "unique_fields": len(fields),
         }
 
     # ========================================================
     # VALUE ANALYSIS
     # ========================================================
 
-    def _analyze_values(
-        self,
-        observations
-    ):
+    def _analyze_values(self, observations):
 
         values = Counter()
 
         for item in observations:
 
-            self._collect_values(
-                item,
-                values
-            )
+            self._collect_values(item, values)
 
-        self.value_frequency.update(
-            values
-        )
+        self.value_frequency.update(values)
 
         return {
-
-            "frequent":
-                [
-                    {
-                        "value":
-                            key,
-
-                        "count":
-                            count
-                    }
-
-                    for key, count
-                    in values.most_common(20)
-                ],
-
-            "unique":
-                len(values)
+            "frequent": [{"value": key, "count": count} for key, count in values.most_common(20)],
+            "unique": len(values),
         }
 
-    def _collect_values(
-        self,
-        value,
-        counter,
-        depth=0
-    ):
+    def _collect_values(self, value, counter, depth=0):
 
         if depth > MAX_NESTED_DEPTH:
 
@@ -772,40 +517,25 @@ class PatternEngine:
 
             for key, item in value.items():
 
-                counter[
-                    self._value_signature(key)
-                ] += 1
+                counter[self._value_signature(key)] += 1
 
-                self._collect_values(
-                    item,
-                    counter,
-                    depth + 1
-                )
+                self._collect_values(item, counter, depth + 1)
 
         elif isinstance(value, list):
 
             for item in value[:MAX_SEQUENCE_LENGTH]:
 
-                self._collect_values(
-                    item,
-                    counter,
-                    depth + 1
-                )
+                self._collect_values(item, counter, depth + 1)
 
         else:
 
-            counter[
-                self._value_signature(value)
-            ] += 1
+            counter[self._value_signature(value)] += 1
 
     # ========================================================
     # VALUE SIGNATURE
     # ========================================================
 
-    def _value_signature(
-        self,
-        value
-    ):
+    def _value_signature(self, value):
 
         if isinstance(value, str):
 
@@ -823,10 +553,7 @@ class PatternEngine:
     # TEXT ANALYSIS
     # ========================================================
 
-    def _analyze_text(
-        self,
-        observations
-    ):
+    def _analyze_text(self, observations):
 
         tokens = []
 
@@ -834,28 +561,17 @@ class PatternEngine:
 
         for item in observations:
 
-            self._extract_text(
-                item,
-                text_sources
-            )
+            self._extract_text(item, text_sources)
 
         for text in text_sources:
 
-            found = re.findall(
-                r"[A-Za-z0-9_./%+-]+",
-                text.lower()
-            )
+            found = re.findall(r"[A-Za-z0-9_./%+-]+", text.lower())
 
-            tokens.extend(
-                found[:MAX_TEXT_TOKENS]
-            )
+            tokens.extend(found[:MAX_TEXT_TOKENS])
 
-        self.token_frequency.update(
-            tokens
-        )
+        self.token_frequency.update(tokens)
 
         stopwords = {
-
             "the",
             "a",
             "an",
@@ -876,58 +592,24 @@ class PatternEngine:
             "it",
             "as",
             "at",
-            "by"
+            "by",
         }
 
-        meaningful = [
-            token
-            for token in tokens
-            if token not in stopwords
-            and len(token) > 1
-        ]
+        meaningful = [token for token in tokens if token not in stopwords and len(token) > 1]
 
-        counter = Counter(
-            meaningful
-        )
+        counter = Counter(meaningful)
 
         return {
-
-            "documents":
-                len(text_sources),
-
-            "characters":
-                sum(
-                    len(text)
-                    for text in text_sources
-                ),
-
-            "tokens":
-                len(tokens),
-
-            "unique_tokens":
-                len(set(tokens)),
-
-            "keywords":
-                [
-                    {
-                        "token":
-                            token,
-
-                        "frequency":
-                            count
-                    }
-
-                    for token, count
-                    in counter.most_common(30)
-                ]
+            "documents": len(text_sources),
+            "characters": sum(len(text) for text in text_sources),
+            "tokens": len(tokens),
+            "unique_tokens": len(set(tokens)),
+            "keywords": [
+                {"token": token, "frequency": count} for token, count in counter.most_common(30)
+            ],
         }
 
-    def _extract_text(
-        self,
-        value,
-        output,
-        depth=0
-    ):
+    def _extract_text(self, value, output, depth=0):
 
         if depth > MAX_NESTED_DEPTH:
 
@@ -937,9 +619,7 @@ class PatternEngine:
 
             if value.strip():
 
-                output.append(
-                    value[:10000]
-                )
+                output.append(value[:10000])
 
             return
 
@@ -951,11 +631,7 @@ class PatternEngine:
 
                     output.append(key)
 
-                self._extract_text(
-                    item,
-                    output,
-                    depth + 1
-                )
+                self._extract_text(item, output, depth + 1)
 
             return
 
@@ -963,20 +639,13 @@ class PatternEngine:
 
             for item in value[:MAX_SEQUENCE_LENGTH]:
 
-                self._extract_text(
-                    item,
-                    output,
-                    depth + 1
-                )
+                self._extract_text(item, output, depth + 1)
 
     # ========================================================
     # ENTITY ANALYSIS
     # ========================================================
 
-    def _analyze_entities(
-        self,
-        observations
-    ):
+    def _analyze_entities(self, observations):
 
         entities = Counter()
 
@@ -986,19 +655,13 @@ class PatternEngine:
 
                 continue
 
-            source = item.get(
-                "entities",
-                []
-            )
+            source = item.get("entities", [])
 
             if isinstance(source, dict):
 
                 source = [source]
 
-            if not isinstance(
-                source,
-                list
-            ):
+            if not isinstance(source, list):
 
                 continue
 
@@ -1006,91 +669,42 @@ class PatternEngine:
 
                 if isinstance(entity, dict):
 
-                    name = entity.get(
-                        "name"
-                    )
+                    name = entity.get("name")
 
-                    entity_type = entity.get(
-                        "type",
-                        "UNKNOWN"
-                    )
+                    entity_type = entity.get("type", "UNKNOWN")
 
                     if name:
 
-                        signature = (
-                            f"{name}:{entity_type}"
-                        )
+                        signature = f"{name}:{entity_type}"
 
-                        entities[
-                            signature
-                        ] += 1
+                        entities[signature] += 1
 
-        self.entity_frequency.update(
-            entities
-        )
+        self.entity_frequency.update(entities)
 
-        return {
-
-            "detected":
-                dict(entities),
-
-            "unique":
-                len(entities)
-        }
+        return {"detected": dict(entities), "unique": len(entities)}
 
     # ========================================================
     # CONCEPT ANALYSIS
     # ========================================================
 
-    def _analyze_concepts(
-        self,
-        observations
-    ):
+    def _analyze_concepts(self, observations):
 
         concepts = Counter()
 
-        concept_fields = {
-
-            "concepts",
-            "keywords",
-            "topics",
-            "themes",
-            "categories",
-            "tags"
-        }
+        concept_fields = {"concepts", "keywords", "topics", "themes", "categories", "tags"}
 
         for item in observations:
 
-            self._extract_named_values(
-                item,
-                concept_fields,
-                concepts
-            )
+            self._extract_named_values(item, concept_fields, concepts)
 
-        self.concept_frequency.update(
-            concepts
-        )
+        self.concept_frequency.update(concepts)
 
         return {
-
-            "concepts":
-                dict(concepts),
-
-            "top":
-                [
-                    concept
-                    for concept, _
-                    in concepts.most_common(20)
-                ]
+            "concepts": dict(concepts),
+            "top": [concept for concept, _ in concepts.most_common(20)],
         }
 
-    def _extract_named_values(
-        self,
-        value,
-        field_names,
-        counter,
-        depth=0
-    ):
+    def _extract_named_values(self, value, field_names, counter, depth=0):
 
         if depth > MAX_NESTED_DEPTH:
 
@@ -1100,68 +714,39 @@ class PatternEngine:
 
             for key, item in value.items():
 
-                key_lower = str(
-                    key
-                ).lower()
+                key_lower = str(key).lower()
 
                 if key_lower in field_names:
 
-                    if isinstance(
-                        item,
-                        str
-                    ):
+                    if isinstance(item, str):
 
-                        counter[
-                            item.lower()
-                        ] += 1
+                        counter[item.lower()] += 1
 
-                    elif isinstance(
-                        item,
-                        list
-                    ):
+                    elif isinstance(item, list):
 
                         for entry in item:
 
-                            if isinstance(
-                                entry,
-                                str
-                            ):
+                            if isinstance(entry, str):
 
-                                counter[
-                                    entry.lower()
-                                ] += 1
+                                counter[entry.lower()] += 1
 
-                self._extract_named_values(
-                    item,
-                    field_names,
-                    counter,
-                    depth + 1
-                )
+                self._extract_named_values(item, field_names, counter, depth + 1)
 
         elif isinstance(value, list):
 
             for item in value:
 
-                self._extract_named_values(
-                    item,
-                    field_names,
-                    counter,
-                    depth + 1
-                )
+                self._extract_named_values(item, field_names, counter, depth + 1)
 
     # ========================================================
     # SENTIMENT
     # ========================================================
 
-    def _analyze_sentiment(
-        self,
-        observations
-    ):
+    def _analyze_sentiment(self, observations):
 
         counter = Counter()
 
         positive_words = {
-
             "positive",
             "bullish",
             "strong",
@@ -1175,11 +760,10 @@ class PatternEngine:
             "up",
             "profit",
             "win",
-            "healthy"
+            "healthy",
         }
 
         negative_words = {
-
             "negative",
             "bearish",
             "weak",
@@ -1192,38 +776,20 @@ class PatternEngine:
             "down",
             "risk",
             "problem",
-            "error"
+            "error",
         }
 
-        neutral_words = {
-
-            "neutral",
-            "stable",
-            "hold",
-            "unknown",
-            "normal"
-        }
+        neutral_words = {"neutral", "stable", "hold", "unknown", "normal"}
 
         for item in observations:
 
-            text = self._flatten_text(
-                item
-            ).lower()
+            text = self._flatten_text(item).lower()
 
-            positive = sum(
-                text.count(word)
-                for word in positive_words
-            )
+            positive = sum(text.count(word) for word in positive_words)
 
-            negative = sum(
-                text.count(word)
-                for word in negative_words
-            )
+            negative = sum(text.count(word) for word in negative_words)
 
-            neutral = sum(
-                text.count(word)
-                for word in neutral_words
-            )
+            neutral = sum(text.count(word) for word in neutral_words)
 
             if positive > negative:
 
@@ -1241,34 +807,22 @@ class PatternEngine:
 
                 counter["unknown"] += 1
 
-        self.sentiment_frequency.update(
-            counter
-        )
+        self.sentiment_frequency.update(counter)
 
         return {
-
-            "distribution":
-                dict(counter),
-
-            "dominant":
-                counter.most_common(1)[0][0]
-                if counter
-                else "unknown"
+            "distribution": dict(counter),
+            "dominant": counter.most_common(1)[0][0] if counter else "unknown",
         }
 
     # ========================================================
     # BEHAVIOR
     # ========================================================
 
-    def _analyze_behavior(
-        self,
-        observations
-    ):
+    def _analyze_behavior(self, observations):
 
         behavior = Counter()
 
         positive = {
-
             "buy",
             "bullish",
             "increase",
@@ -1277,180 +831,78 @@ class PatternEngine:
             "up",
             "gain",
             "win",
-            "success"
+            "success",
         }
 
-        negative = {
-
-            "sell",
-            "bearish",
-            "decrease",
-            "decline",
-            "down",
-            "loss",
-            "fail",
-            "failure"
-        }
+        negative = {"sell", "bearish", "decrease", "decline", "down", "loss", "fail", "failure"}
 
         for item in observations:
 
-            text = self._flatten_text(
-                item
-            ).lower()
+            text = self._flatten_text(item).lower()
 
-            if any(
-                word in text
-                for word in positive
-            ):
+            if any(word in text for word in positive):
 
                 behavior["positive"] += 1
 
-            if any(
-                word in text
-                for word in negative
-            ):
+            if any(word in text for word in negative):
 
                 behavior["negative"] += 1
 
-            if (
-                not any(
-                    word in text
-                    for word in positive
-                )
-                and
-                not any(
-                    word in text
-                    for word in negative
-                )
+            if not any(word in text for word in positive) and not any(
+                word in text for word in negative
             ):
 
                 behavior["neutral"] += 1
 
-        return dict(
-            behavior
-        )
+        return dict(behavior)
 
     # ========================================================
     # NUMERICAL ANALYSIS
     # ========================================================
 
-    def _analyze_numerical(
-        self,
-        observations
-    ):
+    def _analyze_numerical(self, observations):
 
         numbers = []
 
-        self._collect_numbers(
-            observations,
-            numbers
-        )
+        self._collect_numbers(observations, numbers)
 
         if not numbers:
 
-            return {
+            return {"count": 0, "mean": None, "minimum": None, "maximum": None, "range": None}
 
-                "count":
-                    0,
+        mean = sum(numbers) / len(numbers)
 
-                "mean":
-                    None,
+        minimum = min(numbers)
 
-                "minimum":
-                    None,
+        maximum = max(numbers)
 
-                "maximum":
-                    None,
-
-                "range":
-                    None
-            }
-
-        mean = sum(
-            numbers
-        ) / len(numbers)
-
-        minimum = min(
-            numbers
-        )
-
-        maximum = max(
-            numbers
-        )
-
-        variance = sum(
-            (
-                value - mean
-            ) ** 2
-            for value in numbers
-        ) / len(numbers)
+        variance = sum((value - mean) ** 2 for value in numbers) / len(numbers)
 
         return {
-
-            "count":
-                len(numbers),
-
-            "mean":
-                round(
-                    mean,
-                    8
-                ),
-
-            "minimum":
-                minimum,
-
-            "maximum":
-                maximum,
-
-            "range":
-                maximum - minimum,
-
-            "variance":
-                round(
-                    variance,
-                    8
-                ),
-
-            "standard_deviation":
-                round(
-                    math.sqrt(
-                        variance
-                    ),
-                    8
-                )
+            "count": len(numbers),
+            "mean": round(mean, 8),
+            "minimum": minimum,
+            "maximum": maximum,
+            "range": maximum - minimum,
+            "variance": round(variance, 8),
+            "standard_deviation": round(math.sqrt(variance), 8),
         }
 
-    def _collect_numbers(
-        self,
-        value,
-        output
-    ):
+    def _collect_numbers(self, value, output):
 
-        if isinstance(
-            value,
-            bool
-        ):
+        if isinstance(value, bool):
 
             return
 
-        if isinstance(
-            value,
-            (int, float)
-        ):
+        if isinstance(value, (int, float)):
 
             if isinstance(value, float):
 
-                if (
-                    math.isnan(value)
-                    or
-                    math.isinf(value)
-                ):
+                if math.isnan(value) or math.isinf(value):
 
                     return
 
-            output.append(
-                float(value)
-            )
+            output.append(float(value))
 
             return
 
@@ -1458,10 +910,7 @@ class PatternEngine:
 
             for item in value.values():
 
-                self._collect_numbers(
-                    item,
-                    output
-                )
+                self._collect_numbers(item, output)
 
             return
 
@@ -1469,314 +918,167 @@ class PatternEngine:
 
             for item in value:
 
-                self._collect_numbers(
-                    item,
-                    output
-                )
+                self._collect_numbers(item, output)
 
     # ========================================================
     # TEMPORAL ANALYSIS
     # ========================================================
 
-    def _analyze_temporal(
-        self,
-        observations
-    ):
+    def _analyze_temporal(self, observations):
 
         timestamps = []
 
         for item in observations:
 
-            if not isinstance(
-                item,
-                dict
-            ):
+            if not isinstance(item, dict):
 
                 continue
 
-            for key in (
-                "timestamp",
-                "time",
-                "datetime",
-                "date"
-            ):
+            for key in ("timestamp", "time", "datetime", "date"):
 
-                value = item.get(
-                    key
-                )
+                value = item.get(key)
 
                 if value:
 
-                    timestamps.append(
-                        self._safe_string(
-                            value
-                        )
-                    )
+                    timestamps.append(self._safe_string(value))
 
                     break
 
-        return {
-
-            "count":
-                len(timestamps),
-
-            "timestamps":
-                timestamps[-20:]
-        }
+        return {"count": len(timestamps), "timestamps": timestamps[-20:]}
 
     # ========================================================
     # SEQUENCE ANALYSIS
     # ========================================================
 
-    def _analyze_sequences(
-        self,
-        observations
-    ):
+    def _analyze_sequences(self, observations):
 
         sequences = []
 
         for item in observations:
 
-            if isinstance(
-                item,
-                dict
-            ):
+            if isinstance(item, dict):
 
                 for key, value in item.items():
 
-                    if isinstance(
-                        value,
-                        list
-                    ):
+                    if isinstance(value, list):
 
                         if 2 <= len(value) <= MAX_SEQUENCE_LENGTH:
 
-                            signatures = [
-                                self._value_signature(
-                                    entry
-                                )
-                                for entry in value
-                            ]
+                            signatures = [self._value_signature(entry) for entry in value]
 
-                            sequences.append({
+                            sequences.append(
+                                {
+                                    "field": str(key),
+                                    "length": len(signatures),
+                                    "sequence": signatures[:100],
+                                }
+                            )
 
-                                "field":
-                                    str(key),
-
-                                "length":
-                                    len(signatures),
-
-                                "sequence":
-                                    signatures[:100]
-                            })
-
-        return {
-
-            "detected":
-                sequences[:20],
-
-            "count":
-                len(sequences)
-        }
+        return {"detected": sequences[:20], "count": len(sequences)}
 
     # ========================================================
     # RELATIONSHIP ANALYSIS
     # ========================================================
 
-    def _analyze_relationships(
-        self,
-        observations
-    ):
+    def _analyze_relationships(self, observations):
 
         relationships = Counter()
 
         for item in observations:
 
-            if not isinstance(
-                item,
-                dict
-            ):
+            if not isinstance(item, dict):
 
                 continue
 
-            keys = [
-                str(key)
-                for key in item.keys()
-            ]
+            keys = [str(key) for key in item.keys()]
 
             for index, first in enumerate(keys):
 
-                for second in keys[index + 1:]:
+                for second in keys[index + 1 :]:
 
-                    pair = (
-                        first,
-                        second
-                    )
+                    pair = (first, second)
 
-                    relationships[
-                        pair
-                    ] += 1
+                    relationships[pair] += 1
 
-        self.relationship_frequency.update(
-            relationships
-        )
+        self.relationship_frequency.update(relationships)
 
         return {
-
-            "relationships":
-                [
-                    {
-                        "fields":
-                            list(pair),
-
-                        "frequency":
-                            count
-                    }
-
-                    for pair, count
-                    in relationships.most_common(30)
-                ]
+            "relationships": [
+                {"fields": list(pair), "frequency": count}
+                for pair, count in relationships.most_common(30)
+            ]
         }
 
     # ========================================================
     # COOCCURRENCE
     # ========================================================
 
-    def _analyze_cooccurrence(
-        self,
-        observations
-    ):
+    def _analyze_cooccurrence(self, observations):
 
         cooccurrence = Counter()
 
         for item in observations:
 
-            tokens = set(
-                re.findall(
-                    r"[A-Za-z0-9_./%+-]+",
-                    self._flatten_text(
-                        item
-                    ).lower()
-                )
-            )
+            tokens = set(re.findall(r"[A-Za-z0-9_./%+-]+", self._flatten_text(item).lower()))
 
-            tokens = list(
-                tokens
-            )[:100]
+            tokens = list(tokens)[:100]
 
             for index, first in enumerate(tokens):
 
-                for second in tokens[index + 1:]:
+                for second in tokens[index + 1 :]:
 
-                    pair = tuple(
-                        sorted(
-                            (
-                                first,
-                                second
-                            )
-                        )
-                    )
+                    pair = tuple(sorted((first, second)))
 
-                    cooccurrence[
-                        pair
-                    ] += 1
+                    cooccurrence[pair] += 1
 
         return {
-
-            "pairs":
-                [
-                    {
-                        "terms":
-                            list(pair),
-
-                        "frequency":
-                            count
-                    }
-
-                    for pair, count
-                    in cooccurrence.most_common(30)
-                ]
+            "pairs": [
+                {"terms": list(pair), "frequency": count}
+                for pair, count in cooccurrence.most_common(30)
+            ]
         }
 
     # ========================================================
     # RECURRENCE
     # ========================================================
 
-    def _analyze_recurrence(
-        self,
-        observations
-    ):
+    def _analyze_recurrence(self, observations):
 
         fingerprints = Counter()
 
         for item in observations:
 
-            fingerprint = self._fingerprint(
-                item
-            )
+            fingerprint = self._fingerprint(item)
 
-            fingerprints[
-                fingerprint
-            ] += 1
+            fingerprints[fingerprint] += 1
 
         recurring = [
-            {
-                "fingerprint":
-                    fingerprint,
-
-                "count":
-                    count
-            }
-
-            for fingerprint, count
-            in fingerprints.items()
+            {"fingerprint": fingerprint, "count": count}
+            for fingerprint, count in fingerprints.items()
             if count > 1
         ]
 
-        return {
-
-            "recurring":
-                recurring[:30],
-
-            "count":
-                len(recurring)
-        }
+        return {"recurring": recurring[:30], "count": len(recurring)}
 
     # ========================================================
     # TREND ANALYSIS
     # ========================================================
 
-    def _analyze_trends(
-        self,
-        observations
-    ):
+    def _analyze_trends(self, observations):
 
         numbers = []
 
-        self._collect_numbers(
-            observations,
-            numbers
-        )
+        self._collect_numbers(observations, numbers)
 
         if len(numbers) < 2:
 
-            return {
-
-                "direction":
-                    "unknown",
-
-                "strength":
-                    0
-            }
+            return {"direction": "unknown", "strength": 0}
 
         increases = 0
 
         decreases = 0
 
-        for index in range(
-            1,
-            len(numbers)
-        ):
+        for index in range(1, len(numbers)):
 
             if numbers[index] > numbers[index - 1]:
 
@@ -1786,22 +1088,11 @@ class PatternEngine:
 
                 decreases += 1
 
-        total = (
-            increases
-            +
-            decreases
-        )
+        total = increases + decreases
 
         if total == 0:
 
-            return {
-
-                "direction":
-                    "stable",
-
-                "strength":
-                    0
-            }
+            return {"direction": "stable", "strength": 0}
 
         if increases > decreases:
 
@@ -1815,122 +1106,52 @@ class PatternEngine:
 
             direction = "mixed"
 
-        strength = (
-            abs(
-                increases
-                -
-                decreases
-            )
-            /
-            total
-        )
+        strength = abs(increases - decreases) / total
 
         return {
-
-            "direction":
-                direction,
-
-            "increases":
-                increases,
-
-            "decreases":
-                decreases,
-
-            "strength":
-                round(
-                    strength,
-                    4
-                )
+            "direction": direction,
+            "increases": increases,
+            "decreases": decreases,
+            "strength": round(strength, 4),
         }
 
     # ========================================================
     # ANOMALY DETECTION
     # ========================================================
 
-    def _analyze_anomalies(
-        self,
-        observations,
-        numerical
-    ):
+    def _analyze_anomalies(self, observations, numerical):
 
-        standard_deviation = numerical.get(
-            "standard_deviation"
-        )
+        standard_deviation = numerical.get("standard_deviation")
 
-        mean = numerical.get(
-            "mean"
-        )
+        mean = numerical.get("mean")
 
-        if (
-            standard_deviation is None
-            or
-            mean is None
-            or
-            standard_deviation == 0
-        ):
+        if standard_deviation is None or mean is None or standard_deviation == 0:
 
-            return {
-
-                "detected":
-                    False,
-
-                "count":
-                    0
-            }
+            return {"detected": False, "count": 0}
 
         numbers = []
 
-        self._collect_numbers(
-            observations,
-            numbers
-        )
+        self._collect_numbers(observations, numbers)
 
         anomalies = []
 
-        threshold = (
-            standard_deviation * 2
-        )
+        threshold = standard_deviation * 2
 
         for value in numbers:
 
-            distance = abs(
-                value - mean
-            )
+            distance = abs(value - mean)
 
             if distance > threshold:
 
-                anomalies.append({
+                anomalies.append({"value": value, "distance": round(distance, 8)})
 
-                    "value":
-                        value,
-
-                    "distance":
-                        round(
-                            distance,
-                            8
-                        )
-                })
-
-        return {
-
-            "detected":
-                bool(anomalies),
-
-            "count":
-                len(anomalies),
-
-            "values":
-                anomalies[:30]
-        }
+        return {"detected": bool(anomalies), "count": len(anomalies), "values": anomalies[:30]}
 
     # ========================================================
     # NOVELTY
     # ========================================================
 
-    def _analyze_novelty(
-        self,
-        observations
-    ):
+    def _analyze_novelty(self, observations):
 
         new_count = 0
 
@@ -1938,17 +1159,9 @@ class PatternEngine:
 
         for item in observations:
 
-            fingerprint = self._fingerprint(
-                item
-            )
+            fingerprint = self._fingerprint(item)
 
-            if (
-                self.pattern_fingerprints.get(
-                    fingerprint,
-                    0
-                )
-                > 0
-            ):
+            if self.pattern_fingerprints.get(fingerprint, 0) > 0:
 
                 known_count += 1
 
@@ -1956,106 +1169,42 @@ class PatternEngine:
 
                 new_count += 1
 
-        total = (
-            new_count
-            +
-            known_count
-        )
+        total = new_count + known_count
 
-        score = (
-            new_count / total
-            if total
-            else 0
-        )
+        score = new_count / total if total else 0
 
         return {
-
-            "new":
-                new_count,
-
-            "known":
-                known_count,
-
-            "score":
-                round(
-                    score,
-                    4
-                ),
-
-            "classification":
-                (
-                    "high_novelty"
-                    if score >= 0.7
-                    else
-                    "moderate_novelty"
-                    if score >= 0.3
-                    else
-                    "familiar"
-                )
+            "new": new_count,
+            "known": known_count,
+            "score": round(score, 4),
+            "classification": (
+                "high_novelty"
+                if score >= 0.7
+                else "moderate_novelty" if score >= 0.3 else "familiar"
+            ),
         }
 
     # ========================================================
     # SEMANTIC PATTERN ANALYSIS
     # ========================================================
 
-    def _analyze_semantic_patterns(
-        self,
-        observations
-    ):
+    def _analyze_semantic_patterns(self, observations):
 
         semantic = {
-
-            "topics":
-                Counter(),
-
-            "intent":
-                Counter(),
-
-            "actions":
-                Counter(),
-
-            "states":
-                Counter()
+            "topics": Counter(),
+            "intent": Counter(),
+            "actions": Counter(),
+            "states": Counter(),
         }
 
         intent_words = {
-
-            "question":
-                [
-                    "why",
-                    "what",
-                    "how",
-                    "when",
-                    "where"
-                ],
-
-            "request":
-                [
-                    "need",
-                    "want",
-                    "request",
-                    "please"
-                ],
-
-            "prediction":
-                [
-                    "predict",
-                    "forecast",
-                    "likely",
-                    "future"
-                ],
-
-            "decision":
-                [
-                    "buy",
-                    "sell",
-                    "hold",
-                    "decide"
-                ]
+            "question": ["why", "what", "how", "when", "where"],
+            "request": ["need", "want", "request", "please"],
+            "prediction": ["predict", "forecast", "likely", "future"],
+            "decision": ["buy", "sell", "hold", "decide"],
         }
 
         action_words = {
-
             "increase",
             "decrease",
             "buy",
@@ -2068,11 +1217,10 @@ class PatternEngine:
             "update",
             "create",
             "remove",
-            "store"
+            "store",
         }
 
         state_words = {
-
             "active",
             "inactive",
             "stable",
@@ -2082,223 +1230,120 @@ class PatternEngine:
             "healthy",
             "error",
             "online",
-            "offline"
+            "offline",
         }
 
         for item in observations:
 
-            text = self._flatten_text(
-                item
-            ).lower()
+            text = self._flatten_text(item).lower()
 
             for intent, words in intent_words.items():
 
-                if any(
-                    word in text
-                    for word in words
-                ):
+                if any(word in text for word in words):
 
-                    semantic[
-                        "intent"
-                    ][intent] += 1
+                    semantic["intent"][intent] += 1
 
             for word in action_words:
 
                 if word in text:
 
-                    semantic[
-                        "actions"
-                    ][word] += 1
+                    semantic["actions"][word] += 1
 
             for word in state_words:
 
                 if word in text:
 
-                    semantic[
-                        "states"
-                    ][word] += 1
+                    semantic["states"][word] += 1
 
         return {
-
-            "intent":
-                dict(
-                    semantic["intent"]
-                ),
-
-            "actions":
-                dict(
-                    semantic["actions"]
-                ),
-
-            "states":
-                dict(
-                    semantic["states"]
-                )
+            "intent": dict(semantic["intent"]),
+            "actions": dict(semantic["actions"]),
+            "states": dict(semantic["states"]),
         }
 
     # ========================================================
     # FINGERPRINT
     # ========================================================
 
-    def _fingerprint(
-        self,
-        value
-    ):
+    def _fingerprint(self, value):
 
-        safe = self._safe_copy(
-            value
-        )
+        safe = self._safe_copy(value)
 
-        text = repr(
-            safe
-        )
+        text = repr(safe)
 
-        return hashlib.sha256(
-            text.encode(
-                "utf-8",
-                errors="ignore"
-            )
-        ).hexdigest()[:16]
+        return hashlib.sha256(text.encode("utf-8", errors="ignore")).hexdigest()[:16]
 
-    def _create_fingerprint(
-        self,
-        observations
-    ):
+    def _create_fingerprint(self, observations):
 
-        signatures = [
-            self._fingerprint(
-                item
-            )
-            for item in observations
-        ]
+        signatures = [self._fingerprint(item) for item in observations]
 
-        combined = "|".join(
-            signatures
-        )
+        combined = "|".join(signatures)
 
-        return hashlib.sha256(
-            combined.encode(
-                "utf-8",
-                errors="ignore"
-            )
-        ).hexdigest()[:20]
+        return hashlib.sha256(combined.encode("utf-8", errors="ignore")).hexdigest()[:20]
 
     # ========================================================
     # REGISTER PATTERNS
     # ========================================================
 
-    def _register_patterns(
-        self,
-        result
-    ):
+    def _register_patterns(self, result):
 
-        fingerprint = result.get(
-            "fingerprint"
-        )
+        fingerprint = result.get("fingerprint")
 
         if fingerprint:
 
-            self.pattern_fingerprints[
-                fingerprint
-            ] += 1
+            self.pattern_fingerprints[fingerprint] += 1
 
-        for item in result.get(
-            "text",
-            {}
-        ).get(
-            "keywords",
-            []
-        ):
+        for item in result.get("text", {}).get("keywords", []):
 
-            token = item.get(
-                "token"
-            )
+            token = item.get("token")
 
             if token:
 
-                self.frequency[
-                    token
-                ] += item.get(
-                    "frequency",
-                    0
-                )
+                self.frequency[token] += item.get("frequency", 0)
 
         self.total_patterns += 1
 
-        self.patterns.append(
-            self._safe_copy(
-                result
-            )
-        )
+        self.patterns.append(self._safe_copy(result))
 
     # ========================================================
     # CONFIDENCE
     # ========================================================
 
     def _calculate_confidence(
-        self,
-        structure,
-        fields,
-        values,
-        text,
-        entities,
-        concepts,
-        relationships
+        self, structure, fields, values, text, entities, concepts, relationships
     ):
 
         score = 0
 
-        if structure.get(
-            "count",
-            0
-        ):
+        if structure.get("count", 0):
 
             score += 15
 
-        if fields.get(
-            "unique_fields",
-            0
-        ):
+        if fields.get("unique_fields", 0):
 
             score += 15
 
-        if values.get(
-            "unique",
-            0
-        ):
+        if values.get("unique", 0):
 
             score += 15
 
-        if text.get(
-            "tokens",
-            0
-        ):
+        if text.get("tokens", 0):
 
             score += 15
 
-        if entities.get(
-            "unique",
-            0
-        ):
+        if entities.get("unique", 0):
 
             score += 10
 
-        if concepts.get(
-            "top"
-        ):
+        if concepts.get("top"):
 
             score += 10
 
-        if relationships.get(
-            "relationships"
-        ):
+        if relationships.get("relationships"):
 
             score += 10
 
-        score = min(
-            score,
-            100
-        )
+        score = min(score, 100)
 
         return score
 
@@ -2307,172 +1352,88 @@ class PatternEngine:
     # ========================================================
 
     def _build_summary(
-        self,
-        structure,
-        fields,
-        text,
-        entities,
-        concepts,
-        trends,
-        anomalies,
-        novelty
+        self, structure, fields, text, entities, concepts, trends, anomalies, novelty
     ):
 
         parts = []
 
-        count = structure.get(
-            "count",
-            0
-        )
+        count = structure.get("count", 0)
 
-        parts.append(
-            f"Analyzed {count} observation(s)."
-        )
+        parts.append(f"Analyzed {count} observation(s).")
 
-        unique_fields = fields.get(
-            "unique_fields",
-            0
-        )
+        unique_fields = fields.get("unique_fields", 0)
 
         if unique_fields:
 
-            parts.append(
-                f"{unique_fields} unique field(s) detected."
-            )
+            parts.append(f"{unique_fields} unique field(s) detected.")
 
-        tokens = text.get(
-            "unique_tokens",
-            0
-        )
+        tokens = text.get("unique_tokens", 0)
 
         if tokens:
 
-            parts.append(
-                f"{tokens} unique text token(s) identified."
-            )
+            parts.append(f"{tokens} unique text token(s) identified.")
 
-        entity_count = entities.get(
-            "unique",
-            0
-        )
+        entity_count = entities.get("unique", 0)
 
         if entity_count:
 
-            parts.append(
-                f"{entity_count} entity pattern(s) detected."
-            )
+            parts.append(f"{entity_count} entity pattern(s) detected.")
 
-        concept_count = len(
-            concepts.get(
-                "top",
-                []
-            )
-        )
+        concept_count = len(concepts.get("top", []))
 
         if concept_count:
 
-            parts.append(
-                f"{concept_count} concept(s) identified."
-            )
+            parts.append(f"{concept_count} concept(s) identified.")
 
-        direction = trends.get(
-            "direction"
-        )
+        direction = trends.get("direction")
 
         if direction != "unknown":
 
-            parts.append(
-                f"Numerical trend: {direction}."
-            )
+            parts.append(f"Numerical trend: {direction}.")
 
-        if anomalies.get(
-            "detected"
-        ):
+        if anomalies.get("detected"):
 
-            parts.append(
-                f"{anomalies.get('count', 0)} numerical anomaly/anomalies detected."
-            )
+            parts.append(f"{anomalies.get('count', 0)} numerical anomaly/anomalies detected.")
 
-        parts.append(
-            f"Novelty: {novelty.get('classification', 'unknown')}."
-        )
+        parts.append(f"Novelty: {novelty.get('classification', 'unknown')}.")
 
-        return " ".join(
-            parts
-        )
+        return " ".join(parts)
 
     # ========================================================
     # FLATTEN TEXT
     # ========================================================
 
-    def _flatten_text(
-        self,
-        value,
-        depth=0
-    ):
+    def _flatten_text(self, value, depth=0):
 
         if depth > MAX_NESTED_DEPTH:
 
             return ""
 
-        if isinstance(
-            value,
-            str
-        ):
+        if isinstance(value, str):
 
             return value
 
-        if isinstance(
-            value,
-            (int, float, bool)
-        ):
+        if isinstance(value, (int, float, bool)):
 
-            return self._safe_string(
-                value
-            )
+            return self._safe_string(value)
 
-        if isinstance(
-            value,
-            dict
-        ):
+        if isinstance(value, dict):
 
             parts = []
 
             for key, item in value.items():
 
-                parts.append(
-                    self._safe_string(
-                        key
-                    )
-                )
+                parts.append(self._safe_string(key))
 
-                parts.append(
-                    self._flatten_text(
-                        item,
-                        depth + 1
-                    )
-                )
+                parts.append(self._flatten_text(item, depth + 1))
 
-            return " ".join(
-                parts
-            )
+            return " ".join(parts)
 
-        if isinstance(
-            value,
-            list
-        ):
+        if isinstance(value, list):
 
-            return " ".join(
-                self._flatten_text(
-                    item,
-                    depth + 1
-                )
-                for item in value
-            )
+            return " ".join(self._flatten_text(item, depth + 1) for item in value)
 
-        return self._safe_string(
-            value
-        )
+        return self._safe_string(value)
 
     # ========================================================
     # EMPTY RESULT
@@ -2481,147 +1442,66 @@ class PatternEngine:
     def _empty_result(self):
 
         return {
-
-            "timestamp":
-                datetime.now().isoformat(),
-
-            "engine":
-                "Pattern Engine",
-
-            "version":
-                "3.1",
-
-            "scan":
-                self.scan_count,
-
-            "observation_count":
-                0,
-
-            "structure":
-                {},
-
-            "fields":
-                {},
-
-            "values":
-                {},
-
-            "text":
-                {},
-
-            "entities":
-                {},
-
-            "concepts":
-                {},
-
-            "sentiment":
-                {},
-
-            "behavior":
-                {},
-
-            "numerical":
-                {},
-
-            "temporal":
-                {},
-
-            "sequences":
-                {},
-
-            "relationships":
-                {},
-
-            "cooccurrence":
-                {},
-
-            "recurrence":
-                {},
-
-            "trends":
-                {},
-
-            "anomalies":
-                {},
-
-            "novelty":
-                {},
-
-            "semantic":
-                {},
-
-            "fingerprint":
-                None,
-
-            "confidence":
-                0,
-
-            "summary":
-                "No observations available."
+            "timestamp": datetime.now().isoformat(),
+            "engine": "Pattern Engine",
+            "version": "3.1",
+            "scan": self.scan_count,
+            "observation_count": 0,
+            "structure": {},
+            "fields": {},
+            "values": {},
+            "text": {},
+            "entities": {},
+            "concepts": {},
+            "sentiment": {},
+            "behavior": {},
+            "numerical": {},
+            "temporal": {},
+            "sequences": {},
+            "relationships": {},
+            "cooccurrence": {},
+            "recurrence": {},
+            "trends": {},
+            "anomalies": {},
+            "novelty": {},
+            "semantic": {},
+            "fingerprint": None,
+            "confidence": 0,
+            "summary": "No observations available.",
         }
 
     # ========================================================
     # GET PATTERNS
     # ========================================================
 
-    def get_patterns(
-        self,
-        limit=10
-    ):
+    def get_patterns(self, limit=10):
 
         try:
 
-            limit = max(
-                1,
-                min(
-                    int(limit),
-                    MAX_PATTERN_HISTORY
-                )
-            )
+            limit = max(1, min(int(limit), MAX_PATTERN_HISTORY))
 
         except Exception:
 
             limit = 10
 
-        return list(
-            self.patterns
-        )[-limit:]
+        return list(self.patterns)[-limit:]
 
     # ========================================================
     # GET FREQUENT PATTERNS
     # ========================================================
 
-    def get_frequent_patterns(
-        self,
-        limit=20
-    ):
+    def get_frequent_patterns(self, limit=20):
 
         try:
 
-            limit = max(
-                1,
-                int(limit)
-            )
+            limit = max(1, int(limit))
 
         except Exception:
 
             limit = 20
 
         return [
-
-            {
-                "pattern":
-                    key,
-
-                "frequency":
-                    count
-            }
-
-            for key, count
-            in self.frequency.most_common(
-                limit
-            )
+            {"pattern": key, "frequency": count} for key, count in self.frequency.most_common(limit)
         ]
 
     # ========================================================
@@ -2631,52 +1511,16 @@ class PatternEngine:
     def get_state(self):
 
         return {
-
-            "engine":
-                "Pattern Engine",
-
-            "version":
-                "3.1",
-
-            "scans":
-                self.scan_count,
-
-            "observations":
-                self.total_observations,
-
-            "patterns":
-                self.total_patterns,
-
-            "history":
-                len(
-                    self.patterns
-                ),
-
-            "unique_fingerprints":
-                len(
-                    self.pattern_fingerprints
-                ),
-
-            "top_tokens":
-                dict(
-                    self.token_frequency.most_common(
-                        20
-                    )
-                ),
-
-            "top_entities":
-                dict(
-                    self.entity_frequency.most_common(
-                        20
-                    )
-                ),
-
-            "top_concepts":
-                dict(
-                    self.concept_frequency.most_common(
-                        20
-                    )
-                )
+            "engine": "Pattern Engine",
+            "version": "3.1",
+            "scans": self.scan_count,
+            "observations": self.total_observations,
+            "patterns": self.total_patterns,
+            "history": len(self.patterns),
+            "unique_fingerprints": len(self.pattern_fingerprints),
+            "top_tokens": dict(self.token_frequency.most_common(20)),
+            "top_entities": dict(self.entity_frequency.most_common(20)),
+            "top_concepts": dict(self.concept_frequency.most_common(20)),
         }
 
     # ========================================================
@@ -2694,46 +1538,18 @@ class PatternEngine:
         """
 
         return {
-
-            "module":
-                "pattern_engine",
-
-            "name":
-                "Pattern Engine",
-
-            "version":
-                "3.1",
-
-            "online":
-                True,
-
-            "status":
-                "ONLINE",
-
-            "scans":
-                self.scan_count,
-
-            "observations":
-                self.total_observations,
-
-            "patterns":
-                self.total_patterns,
-
-            "history":
-                len(
-                    self.patterns
-                ),
-
-            "unique_fingerprints":
-                len(
-                    self.pattern_fingerprints
-                ),
-
-            "initialized_at":
-                self._initialized_at,
-
-            "timestamp":
-                datetime.now().isoformat(),
+            "module": "pattern_engine",
+            "name": "Pattern Engine",
+            "version": "3.1",
+            "online": True,
+            "status": "ONLINE",
+            "scans": self.scan_count,
+            "observations": self.total_observations,
+            "patterns": self.total_patterns,
+            "history": len(self.patterns),
+            "unique_fingerprints": len(self.pattern_fingerprints),
+            "initialized_at": self._initialized_at,
+            "timestamp": datetime.now().isoformat(),
         }
 
     # ========================================================
@@ -2778,18 +1594,13 @@ class PatternEngine:
 
             self.last_result = None
 
-            logger.info(
-                "Pattern Engine reset."
-            )
+            logger.info("Pattern Engine reset.")
 
             return True
 
         except Exception as e:
 
-            logger.exception(
-                "Pattern Engine reset failed: %s",
-                e
-            )
+            logger.exception("Pattern Engine reset failed: %s", e)
 
             return False
 
@@ -2805,6 +1616,7 @@ pattern = PatternEngine()
 # COMPATIBILITY STATUS FUNCTION
 # ============================================================
 
+
 def status() -> dict:
     """
     Module-level status access for integration test compatibility.
@@ -2818,22 +1630,13 @@ def status() -> dict:
 # ============================================================
 
 __all__ = [
-
     "PatternEngine",
-
     "pattern",
-
     "status",
-
     "MAX_HISTORY",
-
     "MAX_PATTERN_HISTORY",
-
     "MAX_TEXT_TOKENS",
-
     "MAX_NESTED_DEPTH",
-
     "MAX_SEQUENCE_LENGTH",
-
     "MIN_PATTERN_FREQUENCY",
 ]

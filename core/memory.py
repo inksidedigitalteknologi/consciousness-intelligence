@@ -24,7 +24,6 @@
 #
 # ============================================================
 
-
 import sqlite3
 import json
 import logging
@@ -35,12 +34,7 @@ import time
 from pathlib import Path
 from datetime import datetime
 
-
 logger = logging.getLogger(__name__)
-
-
-
-
 
 # ============================================================
 #
@@ -48,51 +42,17 @@ logger = logging.getLogger(__name__)
 #
 # ============================================================
 
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+DATABASE_DIR = BASE_DIR / "database"
 
-DATABASE_DIR = (
+DATABASE_DIR.mkdir(exist_ok=True)
 
-    BASE_DIR /
-    "database"
+MEMORY_DB = DATABASE_DIR / "memory.db"
 
-)
+BACKUP_DIR = DATABASE_DIR / "backup"
 
-
-DATABASE_DIR.mkdir(
-    exist_ok=True
-)
-
-
-
-MEMORY_DB = (
-
-    DATABASE_DIR /
-    "memory.db"
-
-)
-
-
-
-BACKUP_DIR = (
-
-    DATABASE_DIR /
-    "backup"
-
-)
-
-
-BACKUP_DIR.mkdir(
-    exist_ok=True
-)
-
-
-
-
-
-
-
+BACKUP_DIR.mkdir(exist_ok=True)
 
 # ============================================================
 #
@@ -103,40 +63,15 @@ BACKUP_DIR.mkdir(
 
 class MemoryEngine:
 
-
-
     def __init__(self):
 
-
-        self.db_path = str(
-
-            MEMORY_DB
-
-        )
-
-
+        self.db_path = str(MEMORY_DB)
 
         self.lock = threading.RLock()
 
-
-
         self.initialize()
 
-
-
-        logger.info(
-
-            "Long Term Memory Engine v2.0 initialized."
-
-        )
-
-
-
-
-
-
-
-
+        logger.info("Long Term Memory Engine v2.0 initialized.")
 
     # ========================================================
     #
@@ -144,27 +79,21 @@ class MemoryEngine:
     #
     # ========================================================
 
+    def connect(self):
+        """Connect with WAL mode for better concurrency."""
 
-    def connect(
-        self
-    ):
+        conn = sqlite3.connect(self.db_path, check_same_thread=False, timeout=30.0)
 
+        # WAL mode — better concurrent read/write
+        try:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
+            conn.execute("PRAGMA cache_size=-64000")  # 64MB cache
+            conn.execute("PRAGMA temp_store=MEMORY")
+        except Exception:
+            pass
 
-        return sqlite3.connect(
-
-            self.db_path,
-
-            check_same_thread=False
-
-        )
-
-
-
-
-
-
-
-
+        return conn
 
     # ========================================================
     #
@@ -172,22 +101,13 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def initialize(
-        self
-    ):
-
+    def initialize(self):
 
         try:
 
-
             with self.connect() as conn:
 
-
-
                 cursor = conn.cursor()
-
-
 
                 # ============================================
                 #
@@ -195,9 +115,7 @@ class MemoryEngine:
                 #
                 # ============================================
 
-
-                cursor.execute(
-                """
+                cursor.execute("""
 
                 CREATE TABLE IF NOT EXISTS observations
 
@@ -205,27 +123,17 @@ class MemoryEngine:
 
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-
                     timestamp TEXT,
-
 
                     source TEXT,
 
-
                     data TEXT,
-
 
                     result TEXT
 
-
                 )
 
-                """
-                )
-
-
-
-
+                """)
 
                 # ============================================
                 #
@@ -233,9 +141,7 @@ class MemoryEngine:
                 #
                 # ============================================
 
-
-                cursor.execute(
-                """
+                cursor.execute("""
 
                 CREATE TABLE IF NOT EXISTS knowledge
 
@@ -243,25 +149,15 @@ class MemoryEngine:
 
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-
                     timestamp TEXT,
-
 
                     category TEXT,
 
-
                     content TEXT
 
-
                 )
 
-                """
-                )
-
-
-
-
-
+                """)
 
                 # ============================================
                 #
@@ -269,9 +165,7 @@ class MemoryEngine:
                 #
                 # ============================================
 
-
-                cursor.execute(
-                """
+                cursor.execute("""
 
                 CREATE TABLE IF NOT EXISTS patterns
 
@@ -279,29 +173,17 @@ class MemoryEngine:
 
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-
                     timestamp TEXT,
-
 
                     name TEXT,
 
-
                     confidence REAL,
-
 
                     data TEXT
 
-
                 )
 
-                """
-                )
-
-
-
-
-
-
+                """)
 
                 # ============================================
                 #
@@ -309,9 +191,7 @@ class MemoryEngine:
                 #
                 # ============================================
 
-
-                cursor.execute(
-                """
+                cursor.execute("""
 
                 CREATE TABLE IF NOT EXISTS decisions
 
@@ -319,29 +199,17 @@ class MemoryEngine:
 
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-
                     timestamp TEXT,
-
 
                     decision TEXT,
 
-
                     reason TEXT,
-
 
                     confidence REAL
 
-
                 )
 
-                """
-                )
-
-
-
-
-
-
+                """)
 
                 # ============================================
                 #
@@ -351,9 +219,7 @@ class MemoryEngine:
                 #
                 # ============================================
 
-
-                cursor.execute(
-                """
+                cursor.execute("""
 
                 CREATE TABLE IF NOT EXISTS experiences
 
@@ -361,41 +227,25 @@ class MemoryEngine:
 
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-
                     timestamp TEXT,
-
 
                     symbol TEXT,
 
-
                     action TEXT,
-
 
                     entry REAL,
 
-
                     exit REAL,
-
 
                     profit REAL,
 
-
                     result TEXT,
-
 
                     data TEXT
 
-
                 )
 
-                """
-                )
-
-
-
-
-
-
+                """)
 
                 # ============================================
                 #
@@ -403,9 +253,7 @@ class MemoryEngine:
                 #
                 # ============================================
 
-
-                cursor.execute(
-                """
+                cursor.execute("""
 
                 CREATE TABLE IF NOT EXISTS semantic_memory
 
@@ -413,28 +261,17 @@ class MemoryEngine:
 
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-
                     timestamp TEXT,
-
 
                     concept TEXT,
 
-
                     relation TEXT,
-
 
                     data TEXT
 
-
                 )
 
-                """
-                )
-
-
-
-
-
+                """)
 
                 # ============================================
                 #
@@ -442,47 +279,29 @@ class MemoryEngine:
                 #
                 # ============================================
 
-
-                cursor.execute(
-                """
+                cursor.execute("""
 
                 CREATE INDEX IF NOT EXISTS idx_obs_time
 
                 ON observations(timestamp)
 
-                """
-                )
+                """)
 
-
-
-                cursor.execute(
-                """
+                cursor.execute("""
 
                 CREATE INDEX IF NOT EXISTS idx_pattern_name
 
                 ON patterns(name)
 
-                """
-                )
-
-
-
+                """)
 
                 conn.commit()
 
-
-
         except Exception as e:
 
+            logger.exception("Memory initialization failed: %s", e)
+            # ========================================================
 
-            logger.exception(
-
-                "Memory initialization failed: %s",
-
-                e
-
-            )
-                # ========================================================
     #
     # REMEMBER
     #
@@ -492,32 +311,9 @@ class MemoryEngine:
     #
     # ========================================================
 
+    def remember(self, data, result=None, source="brain"):
 
-    def remember(
-        self,
-        data,
-        result=None,
-        source="brain"
-    ):
-
-
-        return self.save_observation(
-
-            data,
-
-            result,
-
-            source
-
-        )
-
-
-
-
-
-
-
-
+        return self.save_observation(data, result, source)
 
     # ========================================================
     #
@@ -527,27 +323,16 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def save_observation(
-        self,
-        data,
-        result=None,
-        source="brain"
-    ):
-
+    def save_observation(self, data, result=None, source="brain"):
 
         try:
 
-
             with self.lock:
-
 
                 with self.connect() as conn:
 
-
                     conn.execute(
-
-                    """
+                        """
 
                     INSERT INTO observations
 
@@ -563,79 +348,28 @@ class MemoryEngine:
 
                     )
 
-
                     VALUES
 
                     (?,?,?,?)
 
                     """,
-
-                    (
-
-                        datetime.now()
-
-                        .isoformat(),
-
-
-
-                        source,
-
-
-
-                        json.dumps(
-
-                            data,
-
-                            default=str
-
+                        (
+                            datetime.now().isoformat(),
+                            source,
+                            json.dumps(data, default=str),
+                            json.dumps(result, default=str),
                         ),
-
-
-
-                        json.dumps(
-
-                            result,
-
-                            default=str
-
-                        )
-
                     )
-
-                    )
-
 
                     conn.commit()
 
-
-
             return True
-
-
-
 
         except Exception as e:
 
-
-            logger.exception(
-
-                "Save observation failed: %s",
-
-                e
-
-            )
-
+            logger.exception("Save observation failed: %s", e)
 
             return False
-
-
-
-
-
-
-
-
-
 
     # ========================================================
     #
@@ -645,28 +379,16 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def save_knowledge(
-        self,
-        content,
-        category="general"
-    ):
-
+    def save_knowledge(self, content, category="general"):
 
         try:
 
-
-
             with self.lock:
-
-
 
                 with self.connect() as conn:
 
-
                     conn.execute(
-
-                    """
+                        """
 
                     INSERT INTO knowledge
 
@@ -680,74 +402,23 @@ class MemoryEngine:
 
                     )
 
-
                     VALUES
 
                     (?,?,?)
 
                     """,
-
-                    (
-
-                        datetime.now()
-
-                        .isoformat(),
-
-
-
-                        category,
-
-
-
-                        json.dumps(
-
-                            content,
-
-                            default=str
-
-                        )
-
+                        (datetime.now().isoformat(), category, json.dumps(content, default=str)),
                     )
-
-                    )
-
-
 
                     conn.commit()
 
-
-
             return True
-
-
-
-
 
         except Exception as e:
 
-
-
-            logger.exception(
-
-                "Save knowledge failed: %s",
-
-                e
-
-            )
-
-
+            logger.exception("Save knowledge failed: %s", e)
 
             return False
-
-
-
-
-
-
-
-
-
-
 
     # ========================================================
     #
@@ -757,29 +428,16 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def save_pattern(
-        self,
-        name,
-        confidence,
-        data=None
-    ):
-
+    def save_pattern(self, name, confidence, data=None):
 
         try:
 
-
-
             with self.lock:
-
-
 
                 with self.connect() as conn:
 
-
                     conn.execute(
-
-                    """
+                        """
 
                     INSERT INTO patterns
 
@@ -795,82 +453,28 @@ class MemoryEngine:
 
                     )
 
-
                     VALUES
 
                     (?,?,?,?)
 
                     """,
-
-                    (
-
-                        datetime.now()
-
-                        .isoformat(),
-
-
-
-                        name,
-
-
-
-                        float(
-
-                            confidence
-
+                        (
+                            datetime.now().isoformat(),
+                            name,
+                            float(confidence),
+                            json.dumps(data, default=str),
                         ),
-
-
-
-                        json.dumps(
-
-                            data,
-
-                            default=str
-
-                        )
-
                     )
-
-                    )
-
-
 
                     conn.commit()
 
-
-
             return True
-
-
-
-
 
         except Exception as e:
 
-
-
-            logger.exception(
-
-                "Save pattern failed: %s",
-
-                e
-
-            )
-
-
+            logger.exception("Save pattern failed: %s", e)
 
             return False
-
-
-
-
-
-
-
-
-
-
 
     # ========================================================
     #
@@ -880,29 +484,16 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def save_decision(
-        self,
-        decision,
-        reason,
-        confidence=0
-    ):
-
+    def save_decision(self, decision, reason, confidence=0):
 
         try:
 
-
-
             with self.lock:
-
-
 
                 with self.connect() as conn:
 
-
                     conn.execute(
-
-                    """
+                        """
 
                     INSERT INTO decisions
 
@@ -918,81 +509,23 @@ class MemoryEngine:
 
                     )
 
-
                     VALUES
 
                     (?,?,?,?)
 
                     """,
-
-                    (
-
-                        datetime.now()
-
-                        .isoformat(),
-
-
-
-                        str(
-
-                            decision
-
-                        ),
-
-
-
-                        str(
-
-                            reason
-
-                        ),
-
-
-
-                        float(
-
-                            confidence
-
-                        )
-
+                        (datetime.now().isoformat(), str(decision), str(reason), float(confidence)),
                     )
-
-                    )
-
 
                     conn.commit()
 
-
-
             return True
-
-
-
-
 
         except Exception as e:
 
-
-
-            logger.exception(
-
-                "Save decision failed: %s",
-
-                e
-
-            )
-
+            logger.exception("Save decision failed: %s", e)
 
             return False
-
-
-
-
-
-
-
-
-
 
     # ========================================================
     #
@@ -1002,82 +535,28 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def save_experience(
-        self,
-        data
-    ):
-
+    def save_experience(self, data):
 
         try:
 
+            symbol = data.get("symbol", "")
 
-            symbol = data.get(
+            action = data.get("action", "")
 
-                "symbol",
+            entry = data.get("entry", 0)
 
-                ""
+            exit_price = data.get("exit", 0)
 
-            )
+            profit = data.get("profit", 0)
 
-
-            action = data.get(
-
-                "action",
-
-                ""
-
-            )
-
-
-            entry = data.get(
-
-                "entry",
-
-                0
-
-            )
-
-
-            exit_price = data.get(
-
-                "exit",
-
-                0
-
-            )
-
-
-            profit = data.get(
-
-                "profit",
-
-                0
-
-            )
-
-
-            result = data.get(
-
-                "result",
-
-                ""
-
-            )
-
-
-
+            result = data.get("result", "")
 
             with self.lock:
 
-
-
                 with self.connect() as conn:
 
-
                     conn.execute(
-
-                    """
+                        """
 
                     INSERT INTO experiences
 
@@ -1101,90 +580,32 @@ class MemoryEngine:
 
                     )
 
-
                     VALUES
 
                     (?,?,?,?,?,?,?,?)
 
                     """,
-
-                    (
-
-                        datetime.now()
-
-                        .isoformat(),
-
-
-
-                        symbol,
-
-
-
-                        action,
-
-
-
-                        float(entry),
-
-
-
-                        float(exit_price),
-
-
-
-                        float(profit),
-
-
-
-                        result,
-
-
-
-                        json.dumps(
-
-                            data,
-
-                            default=str
-
-                        )
-
+                        (
+                            datetime.now().isoformat(),
+                            symbol,
+                            action,
+                            float(entry),
+                            float(exit_price),
+                            float(profit),
+                            result,
+                            json.dumps(data, default=str),
+                        ),
                     )
-
-                    )
-
 
                     conn.commit()
 
-
-
             return True
-
-
-
 
         except Exception as e:
 
-
-
-            logger.exception(
-
-                "Save experience failed: %s",
-
-                e
-
-            )
-
+            logger.exception("Save experience failed: %s", e)
 
             return False
-
-
-
-
-
-
-
-
-
 
     # ========================================================
     #
@@ -1194,29 +615,16 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def save_semantic(
-        self,
-        concept,
-        relation,
-        data=None
-    ):
-
+    def save_semantic(self, concept, relation, data=None):
 
         try:
 
-
-
             with self.lock:
-
-
 
                 with self.connect() as conn:
 
-
                     conn.execute(
-
-                    """
+                        """
 
                     INSERT INTO semantic_memory
 
@@ -1232,66 +640,30 @@ class MemoryEngine:
 
                     )
 
-
                     VALUES
 
                     (?,?,?,?)
 
                     """,
-
-                    (
-
-                        datetime.now()
-
-                        .isoformat(),
-
-
-
-                        concept,
-
-
-
-                        relation,
-
-
-
-                        json.dumps(
-
-                            data,
-
-                            default=str
-
-                        )
-
+                        (
+                            datetime.now().isoformat(),
+                            concept,
+                            relation,
+                            json.dumps(data, default=str),
+                        ),
                     )
-
-                    )
-
 
                     conn.commit()
 
-
-
             return True
-
-
-
 
         except Exception as e:
 
-
-
-            logger.exception(
-
-                "Save semantic failed: %s",
-
-                e
-
-            )
-
+            logger.exception("Save semantic failed: %s", e)
 
             return False
-                # ========================================================
+            # ========================================================
+
     #
     # RECALL SYSTEM
     #
@@ -1305,71 +677,16 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def recall(
-        self,
-        limit=100
-    ):
-
+    def recall(self, limit=100):
 
         return {
-
-
-            "observations":
-
-                self.get_observations(
-                    limit
-                ),
-
-
-
-            "knowledge":
-
-                self.get_knowledge(
-                    limit
-                ),
-
-
-
-            "patterns":
-
-                self.get_patterns(
-                    limit
-                ),
-
-
-
-            "decisions":
-
-                self.get_decisions(
-                    limit
-                ),
-
-
-
-            "experiences":
-
-                self.get_experiences(
-                    limit
-                ),
-
-
-
-            "semantic":
-
-                self.get_semantic(
-                    limit
-                )
-
+            "observations": self.get_observations(limit),
+            "knowledge": self.get_knowledge(limit),
+            "patterns": self.get_patterns(limit),
+            "decisions": self.get_decisions(limit),
+            "experiences": self.get_experiences(limit),
+            "semantic": self.get_semantic(limit),
         }
-
-
-
-
-
-
-
-
 
     # ========================================================
     #
@@ -1377,53 +694,29 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def _fetch(
-        self,
-        table,
-        limit=100
-    ):
-
+    def _fetch(self, table, limit=100):
 
         try:
 
-
             allowed = [
-
                 "observations",
-
                 "knowledge",
-
                 "patterns",
-
                 "decisions",
-
                 "experiences",
-
-                "semantic_memory"
-
+                "semantic_memory",
             ]
-
-
 
             if table not in allowed:
 
-
                 return []
-
-
-
 
             with self.connect() as conn:
 
-
                 cursor = conn.cursor()
 
-
-
                 cursor.execute(
-
-                f"""
+                    f"""
 
                 SELECT *
 
@@ -1434,46 +727,16 @@ class MemoryEngine:
                 LIMIT ?
 
                 """,
-
-                (
-
-                    limit,
-
+                    (limit,),
                 )
-
-                )
-
-
 
                 return cursor.fetchall()
 
-
-
-
-
         except Exception as e:
 
-
-            logger.exception(
-
-                "Fetch failed %s: %s",
-
-                table,
-
-                e
-
-            )
-
+            logger.exception("Fetch failed %s: %s", table, e)
 
             return []
-
-
-
-
-
-
-
-
 
     # ========================================================
     #
@@ -1481,28 +744,9 @@ class MemoryEngine:
     #
     # ========================================================
 
+    def get_observations(self, limit=100):
 
-    def get_observations(
-        self,
-        limit=100
-    ):
-
-
-        return self._fetch(
-
-            "observations",
-
-            limit
-
-        )
-
-
-
-
-
-
-
-
+        return self._fetch("observations", limit)
 
     # ========================================================
     #
@@ -1510,28 +754,9 @@ class MemoryEngine:
     #
     # ========================================================
 
+    def get_knowledge(self, limit=100):
 
-    def get_knowledge(
-        self,
-        limit=100
-    ):
-
-
-        return self._fetch(
-
-            "knowledge",
-
-            limit
-
-        )
-
-
-
-
-
-
-
-
+        return self._fetch("knowledge", limit)
 
     # ========================================================
     #
@@ -1539,28 +764,9 @@ class MemoryEngine:
     #
     # ========================================================
 
+    def get_patterns(self, limit=100):
 
-    def get_patterns(
-        self,
-        limit=100
-    ):
-
-
-        return self._fetch(
-
-            "patterns",
-
-            limit
-
-        )
-
-
-
-
-
-
-
-
+        return self._fetch("patterns", limit)
 
     # ========================================================
     #
@@ -1568,28 +774,9 @@ class MemoryEngine:
     #
     # ========================================================
 
+    def get_decisions(self, limit=100):
 
-    def get_decisions(
-        self,
-        limit=100
-    ):
-
-
-        return self._fetch(
-
-            "decisions",
-
-            limit
-
-        )
-
-
-
-
-
-
-
-
+        return self._fetch("decisions", limit)
 
     # ========================================================
     #
@@ -1599,28 +786,9 @@ class MemoryEngine:
     #
     # ========================================================
 
+    def get_experiences(self, limit=100):
 
-    def get_experiences(
-        self,
-        limit=100
-    ):
-
-
-        return self._fetch(
-
-            "experiences",
-
-            limit
-
-        )
-
-
-
-
-
-
-
-
+        return self._fetch("experiences", limit)
 
     # ========================================================
     #
@@ -1628,28 +796,9 @@ class MemoryEngine:
     #
     # ========================================================
 
+    def get_semantic(self, limit=100):
 
-    def get_semantic(
-        self,
-        limit=100
-    ):
-
-
-        return self._fetch(
-
-            "semantic_memory",
-
-            limit
-
-        )
-
-
-
-
-
-
-
-
+        return self._fetch("semantic_memory", limit)
 
     # ========================================================
     #
@@ -1661,39 +810,22 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def search(
-        self,
-        keyword,
-        limit=50
-    ):
-
+    def search(self, keyword, limit=50):
 
         results = []
 
-
-
         try:
 
-
-            keyword = str(
-                keyword
-            )
-
-
+            keyword = str(keyword)
 
             with self.connect() as conn:
 
-
                 cursor = conn.cursor()
-
-
 
                 # Knowledge search
 
                 cursor.execute(
-
-                """
+                    """
 
                 SELECT *
 
@@ -1706,36 +838,15 @@ class MemoryEngine:
                 LIMIT ?
 
                 """,
-
-                (
-
-                    f"%{keyword}%",
-
-                    limit
-
+                    (f"%{keyword}%", limit),
                 )
 
-                )
-
-
-
-                results.extend(
-
-                    cursor.fetchall()
-
-                )
-
-
-
-
-
+                results.extend(cursor.fetchall())
 
                 # Pattern search
 
-
                 cursor.execute(
-
-                """
+                    """
 
                 SELECT *
 
@@ -1748,36 +859,15 @@ class MemoryEngine:
                 LIMIT ?
 
                 """,
-
-                (
-
-                    f"%{keyword}%",
-
-                    limit
-
+                    (f"%{keyword}%", limit),
                 )
 
-                )
-
-
-
-                results.extend(
-
-                    cursor.fetchall()
-
-                )
-
-
-
-
-
+                results.extend(cursor.fetchall())
 
                 # Experience search
 
-
                 cursor.execute(
-
-                """
+                    """
 
                 SELECT *
 
@@ -1790,52 +880,16 @@ class MemoryEngine:
                 LIMIT ?
 
                 """,
-
-                (
-
-                    f"%{keyword}%",
-
-                    limit
-
+                    (f"%{keyword}%", limit),
                 )
 
-                )
-
-
-                results.extend(
-
-                    cursor.fetchall()
-
-                )
-
-
-
-
+                results.extend(cursor.fetchall())
 
         except Exception as e:
 
-
-            logger.exception(
-
-                "Memory search failed: %s",
-
-                e
-
-            )
-
-
-
+            logger.exception("Memory search failed: %s", e)
 
         return results
-
-
-
-
-
-
-
-
-
 
     # ========================================================
     #
@@ -1845,72 +899,25 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def find_similar(
-        self,
-        keyword,
-        limit=20
-    ):
-
+    def find_similar(self, keyword, limit=20):
 
         matches = []
 
-
-
         try:
 
-
-
-            data = self.search(
-
-                keyword,
-
-                limit
-
-            )
-
-
+            data = self.search(keyword, limit)
 
             for item in data:
 
-
-                matches.append(
-
-                    {
-
-                    "memory":
-
-                        item,
-
-
-                    "similarity":
-
-                        1.0
-
-                    }
-
-                )
-
-
-
-
+                matches.append({"memory": item, "similarity": 1.0})
 
         except Exception as e:
 
-
-
-            logger.exception(
-
-                "Similarity search failed: %s",
-
-                e
-
-            )
-
-
+            logger.exception("Similarity search failed: %s", e)
 
         return matches
-            # ========================================================
+        # ========================================================
+
     #
     # MEMORY STATISTICS
     #
@@ -1918,133 +925,48 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def stats(
-        self
-    ):
-
+    def stats(self):
 
         result = {}
 
-
-
         tables = [
-
             "observations",
-
             "knowledge",
-
             "patterns",
-
             "decisions",
-
             "experiences",
-
-            "semantic_memory"
-
+            "semantic_memory",
         ]
-
-
 
         try:
 
-
-
             with self.connect() as conn:
-
-
 
                 cursor = conn.cursor()
 
-
-
                 for table in tables:
 
-
-
-                    cursor.execute(
-
-                    f"""
+                    cursor.execute(f"""
 
                     SELECT COUNT(*)
 
                     FROM {table}
 
-                    """
-
-                    )
-
-
+                    """)
 
                     count = cursor.fetchone()[0]
 
-
-
                     result[table] = count
 
-
-
-
-
-
             result["database"] = {
-
-
-                "size_mb":
-
-                    round(
-
-                        Path(
-
-                            self.db_path
-
-                        ).stat()
-
-                        .st_size
-
-                        /
-
-                        1024
-
-                        /
-
-                        1024,
-
-                        3
-
-                    )
-
+                "size_mb": round(Path(self.db_path).stat().st_size / 1024 / 1024, 3)
             }
-
-
-
 
         except Exception as e:
 
-
-
-            logger.exception(
-
-                "Memory stats error: %s",
-
-                e
-
-            )
-
-
-
+            logger.exception("Memory stats error: %s", e)
 
         return result
-
-
-
-
-
-
-
-
-
-
 
     # ========================================================
     #
@@ -2054,81 +976,23 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def health(
-        self
-    ):
-
+    def health(self):
 
         try:
 
-
-
             with self.connect() as conn:
 
-
-
-                conn.execute(
-
-                    "SELECT 1"
-
-                )
-
-
+                conn.execute("SELECT 1")
 
             return {
-
-
-                "status":
-
-                    "ONLINE",
-
-
-                "database":
-
-                    self.db_path,
-
-
-                "time":
-
-                    datetime.now()
-
-                    .isoformat()
-
-
+                "status": "ONLINE",
+                "database": self.db_path,
+                "time": datetime.now().isoformat(),
             }
-
-
-
 
         except Exception as e:
 
-
-
-            return {
-
-
-                "status":
-
-                    "ERROR",
-
-
-                "error":
-
-                    str(e)
-
-            }
-
-
-
-
-
-
-
-
-
-
-
+            return {"status": "ERROR", "error": str(e)}
 
     # ========================================================
     #
@@ -2138,47 +1002,21 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def cleanup(
-        self,
-        days=180
-    ):
-
+    def cleanup(self, days=180):
 
         try:
 
-
             with self.lock:
-
-
 
                 with self.connect() as conn:
 
-
-
                     cursor = conn.cursor()
 
-
-
-                    tables = [
-
-                        "observations",
-
-                        "experiences",
-
-                        "decisions"
-
-                    ]
-
-
+                    tables = ["observations", "experiences", "decisions"]
 
                     for table in tables:
 
-
-
-                        cursor.execute(
-
-                        f"""
+                        cursor.execute(f"""
 
                         DELETE FROM {table}
 
@@ -2190,48 +1028,17 @@ class MemoryEngine:
 
                         )
 
-                        """
-
-                        )
-
-
-
+                        """)
 
                     conn.commit()
 
-
-
-
             return True
-
-
-
-
 
         except Exception as e:
 
-
-
-            logger.exception(
-
-                "Cleanup failed: %s",
-
-                e
-
-            )
-
+            logger.exception("Cleanup failed: %s", e)
 
             return False
-
-
-
-
-
-
-
-
-
-
 
     # ========================================================
     #
@@ -2239,71 +1046,25 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def optimize(
-        self
-    ):
-
+    def optimize(self):
 
         try:
 
-
-
             with self.lock:
-
-
 
                 with self.connect() as conn:
 
+                    conn.execute("VACUUM")
 
-
-                    conn.execute(
-
-                        "VACUUM"
-
-                    )
-
-
-
-                    conn.execute(
-
-                        "ANALYZE"
-
-                    )
-
-
-
+                    conn.execute("ANALYZE")
 
             return True
 
-
-
-
-
         except Exception as e:
 
-
-
-            logger.exception(
-
-                "Optimize failed: %s",
-
-                e
-
-            )
-
-
+            logger.exception("Optimize failed: %s", e)
 
             return False
-
-
-
-
-
-
-
-
-
 
     # ========================================================
     #
@@ -2311,93 +1072,112 @@ class MemoryEngine:
     #
     # ========================================================
 
+    def _cleanup_old_backups(self, keep: int = 3, max_age_days: int = 0) -> dict:
+        """Hapus backup lama — simpan N terbaru, hapus sisanya.
 
-    def backup(
-        self
-    ):
+        Args:
+            keep: Jumlah backup terbaru yang disimpan
+            max_age_days: Kalau > 0, hanya hapus backup yang lebih tua.
+                          Kalau 0, hapus semua kecuali `keep` terbaru.
+        """
+        result = {"deleted": 0, "freed_mb": 0.0}
+        try:
+            if not BACKUP_DIR.exists():
+                return result
 
+            files = sorted(
+                BACKUP_DIR.glob("memory_backup_*.db"),
+                key=lambda f: f.stat().st_mtime,
+                reverse=True,
+            )
+
+            if len(files) <= keep:
+                return result
+
+            freed_bytes = 0
+            cutoff = time.time() - (max_age_days * 86400) if max_age_days > 0 else 0
+
+            for f in files[keep:]:
+                try:
+                    if max_age_days > 0 and f.stat().st_mtime >= cutoff:
+                        continue
+
+                    size = f.stat().st_size
+                    f.unlink()
+                    result["deleted"] += 1
+                    freed_bytes += size
+                except Exception as e:
+                    logger.warning(f"Failed to delete {f.name}: {e}")
+
+            result["freed_mb"] = round(freed_bytes / 1024 / 1024, 2)
+
+            if result["deleted"] > 0:
+                logger.info(
+                    f"🧹 Cleaned {result['deleted']} backups, " f"freed {result['freed_mb']} MB"
+                )
+
+        except Exception as e:
+            logger.warning(f"Backup cleanup error: {e}")
+
+        return result
+
+    def _check_disk_space(self, required_mb: int = 200) -> bool:
+        """Cek apakah ada cukup ruang disk untuk backup."""
+        try:
+            stat = shutil.disk_usage(str(BACKUP_DIR))
+            free_mb = stat.free / 1024 / 1024
+            return free_mb >= required_mb
+        except Exception:
+            return True
+
+    def list_backups(self) -> list:
+        """List semua backup files dengan metadata."""
+        try:
+            if not BACKUP_DIR.exists():
+                return []
+            files = []
+            for f in BACKUP_DIR.glob("memory_backup_*.db"):
+                stat = f.stat()
+                files.append(
+                    {
+                        "name": f.name,
+                        "size_mb": round(stat.st_size / 1024 / 1024, 2),
+                        "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                    }
+                )
+            files.sort(key=lambda x: x["modified"], reverse=True)
+            return files
+        except Exception as e:
+            logger.warning(f"List backups error: {e}")
+            return []
+
+    def backup(self):
 
         try:
 
+            filename = "memory_backup_" + datetime.now().strftime("%Y%m%d_%H%M%S") + ".db"
 
+            destination = BACKUP_DIR / filename
 
-            filename = (
+            # Check disk space before backup (need 2x db size)
+            if not self._check_disk_space(required_mb=200):
+                logger.warning("Low disk space — skipping backup")
+                return None
 
+            shutil.copy2(self.db_path, destination)
 
-                "memory_backup_"
+            # Auto-cleanup old backups
+            self._cleanup_old_backups(keep=3, max_age_days=0)
 
-                +
+            logger.info(f"💾 Backup created: {filename}")
 
-                datetime.now()
-
-                .strftime(
-
-                    "%Y%m%d_%H%M%S"
-
-                )
-
-                +
-
-                ".db"
-
-
-            )
-
-
-
-            destination = (
-
-                BACKUP_DIR /
-
-                filename
-
-            )
-
-
-
-            shutil.copy2(
-
-                self.db_path,
-
-                destination
-
-            )
-
-
-
-            return str(
-
-                destination
-
-            )
-
-
-
-
+            return str(destination)
 
         except Exception as e:
 
-
-
-            logger.exception(
-
-                "Backup failed: %s",
-
-                e
-
-            )
-
+            logger.exception("Backup failed: %s", e)
 
             return None
-
-
-
-
-
-
-
-
-
 
     # ========================================================
     #
@@ -2405,73 +1185,25 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def restore(
-        self,
-        backup_file
-    ):
-
+    def restore(self, backup_file):
 
         try:
 
-
-
-            source = Path(
-
-                backup_file
-
-            )
-
-
+            source = Path(backup_file)
 
             if not source.exists():
 
                 return False
 
-
-
-
-            shutil.copy2(
-
-                source,
-
-                self.db_path
-
-            )
-
-
-
+            shutil.copy2(source, self.db_path)
 
             return True
 
-
-
-
-
         except Exception as e:
 
-
-
-            logger.exception(
-
-                "Restore failed: %s",
-
-                e
-
-            )
-
-
+            logger.exception("Restore failed: %s", e)
 
             return False
-
-
-
-
-
-
-
-
-
 
     # ========================================================
     #
@@ -2481,43 +1213,13 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def snapshot(
-        self
-    ):
-
+    def snapshot(self):
 
         return {
-
-
-            "status":
-
-                self.health(),
-
-
-
-            "statistics":
-
-                self.stats(),
-
-
-
-            "timestamp":
-
-                datetime.now()
-
-                .isoformat()
-
-
+            "status": self.health(),
+            "statistics": self.stats(),
+            "timestamp": datetime.now().isoformat(),
         }
-
-
-
-
-
-
-
-
 
     # ========================================================
     #
@@ -2527,84 +1229,42 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def reset(
-        self
-    ):
-
+    def reset(self):
 
         try:
 
-
-
             with self.lock:
-
-
 
                 with self.connect() as conn:
 
-
-
                     tables = [
-
                         "observations",
-
                         "knowledge",
-
                         "patterns",
-
                         "decisions",
-
                         "experiences",
-
-                        "semantic_memory"
-
+                        "semantic_memory",
                     ]
-
-
 
                     for table in tables:
 
-
-
-                        conn.execute(
-
-                        f"""
+                        conn.execute(f"""
 
                         DELETE FROM {table}
 
-                        """
-
-                        )
-
-
-
+                        """)
 
                     conn.commit()
 
-
-
             return True
-
-
-
 
         except Exception as e:
 
-
-
-            logger.exception(
-
-                "Reset memory failed: %s",
-
-                e
-
-            )
-
-
+            logger.exception("Reset memory failed: %s", e)
 
             return False
-                # ========================================================
+            # ========================================================
+
     #
     # AUTO BACKUP SYSTEM
     #
@@ -2612,124 +1272,41 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def auto_backup(
-        self,
-        interval_hours=24
-    ):
-
+    def auto_backup(self, interval_hours=6):
 
         try:
 
-
             import threading
-
-
 
             def backup_loop():
 
-
                 while True:
-
-
 
                     try:
 
-
-
                         result = self.backup()
-
-
 
                         if result:
 
-
-
-                            logger.info(
-
-                                "Automatic memory backup created: %s",
-
-                                result
-
-                            )
-
-
-
+                            logger.info("Automatic memory backup created: %s", result)
 
                     except Exception as e:
 
+                        logger.exception("Auto backup error: %s", e)
 
+                    time.sleep(interval_hours * 3600)
 
-                        logger.exception(
-
-                            "Auto backup error: %s",
-
-                            e
-
-                        )
-
-
-
-
-                    time.sleep(
-
-                        interval_hours *
-
-                        3600
-
-                    )
-
-
-
-
-
-            thread = threading.Thread(
-
-
-                target=backup_loop,
-
-
-                daemon=True
-
-
-            )
-
-
+            thread = threading.Thread(target=backup_loop, daemon=True)
 
             thread.start()
 
-
-
             return True
-
-
-
-
 
         except Exception as e:
 
-
-
-            logger.exception(
-
-                "Auto backup start failed: %s",
-
-                e
-
-            )
-
+            logger.exception("Auto backup start failed: %s", e)
 
             return False
-
-
-
-
-
-
-
-
-
-
 
     # ========================================================
     #
@@ -2737,74 +1314,15 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def get_memory_for_learning(
-        self,
-        limit=200
-    ):
-
+    def get_memory_for_learning(self, limit=200):
 
         return {
-
-
-            "observations":
-
-                self.get_observations(
-
-                    limit
-
-                ),
-
-
-
-            "patterns":
-
-                self.get_patterns(
-
-                    limit
-
-                ),
-
-
-
-            "knowledge":
-
-                self.get_knowledge(
-
-                    limit
-
-                ),
-
-
-
-            "experiences":
-
-                self.get_experiences(
-
-                    limit
-
-                ),
-
-
-
-            "decisions":
-
-                self.get_decisions(
-
-                    limit
-
-                )
-
-
+            "observations": self.get_observations(limit),
+            "patterns": self.get_patterns(limit),
+            "knowledge": self.get_knowledge(limit),
+            "experiences": self.get_experiences(limit),
+            "decisions": self.get_decisions(limit),
         }
-
-
-
-
-
-
-
-
 
     # ========================================================
     #
@@ -2814,77 +1332,17 @@ class MemoryEngine:
     #
     # ========================================================
 
+    def observe(self, data, result=None):
 
-    def observe(
-        self,
-        data,
-        result=None
-    ):
+        return self.save_observation(data, result, "brain")
 
+    def learn(self, knowledge):
 
-        return self.save_observation(
+        return self.save_knowledge(knowledge, "learning")
 
-            data,
+    def remember_pattern(self, name, confidence, data=None):
 
-            result,
-
-            "brain"
-
-        )
-
-
-
-
-
-
-
-    def learn(
-        self,
-        knowledge
-    ):
-
-
-        return self.save_knowledge(
-
-            knowledge,
-
-            "learning"
-
-        )
-
-
-
-
-
-
-
-    def remember_pattern(
-        self,
-        name,
-        confidence,
-        data=None
-    ):
-
-
-        return self.save_pattern(
-
-            name,
-
-            confidence,
-
-            data
-
-        )
-
-
-
-
-
-
-
-
-
-
+        return self.save_pattern(name, confidence, data)
 
     # ========================================================
     #
@@ -2892,47 +1350,14 @@ class MemoryEngine:
     #
     # ========================================================
 
-
-    def status(
-        self
-    ):
-
+    def status(self):
 
         return {
-
-
-            "engine":
-
-                "LONG_TERM_MEMORY",
-
-
-
-            "status":
-
-                self.health(),
-
-
-
-            "records":
-
-                self.stats(),
-
-
-
-            "database":
-
-                self.db_path
-
-
-
+            "engine": "LONG_TERM_MEMORY",
+            "status": self.health(),
+            "records": self.stats(),
+            "database": self.db_path,
         }
-
-
-
-
-
-
-
 
 
 # ============================================================
@@ -2941,10 +1366,7 @@ class MemoryEngine:
 #
 # ============================================================
 
-
 memory = MemoryEngine()
-
-
 
 # ============================================================
 #
@@ -2952,31 +1374,42 @@ memory = MemoryEngine()
 #
 # ============================================================
 
-
 try:
 
-
-    memory.auto_backup(
-
-        interval_hours=24
-
-    )
-
-
+    memory.auto_backup(interval_hours=24)
 
 except Exception as e:
 
+    logger.warning("Auto backup disabled: %s", e)
+
+# ============================================================
+#
+# PERIODIC CLEANUP SCHEDULER
+#
+# ============================================================
 
 
-    logger.warning(
+def _periodic_cleanup_loop():
+    """Background: cleanup + optimize every 6 hours."""
+    while True:
+        try:
+            time.sleep(6 * 3600)
+            memory._cleanup_old_backups(keep=3, max_age_days=0)
+            memory.cleanup(days=180)
+            memory.optimize()
+            logger.info("🧹 Periodic memory cleanup completed")
+        except Exception as e:
+            logger.warning(f"Periodic cleanup error: {e}")
 
-        "Auto backup disabled: %s",
 
-        e
+try:
+    import threading as _threading
 
-    )
-
-
+    _cleanup_thread = _threading.Thread(target=_periodic_cleanup_loop, daemon=True)
+    _cleanup_thread.start()
+    logger.info("🧹 Periodic cleanup scheduler started (every 6h)")
+except Exception as e:
+    logger.warning(f"Cleanup scheduler failed: {e}")
 
 # ============================================================
 #
@@ -2984,6 +1417,6 @@ except Exception as e:
 #
 # INKSIDE INTELLIGENCE OS
 #
-# LONG TERM MEMORY ENGINE v2.0
+# LONG TERM MEMORY ENGINE v2.1
 #
 # ============================================================

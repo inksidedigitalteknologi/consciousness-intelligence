@@ -95,6 +95,7 @@ STATUS_COLORS = {
 # TIME HELPER
 # ============================================================
 
+
 def utc_now() -> str:
     """Return current UTC timestamp in ISO-8601 format."""
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -104,10 +105,11 @@ def utc_now() -> str:
 # GOAL MANAGER v3.0
 # ============================================================
 
+
 class GoalManager:
     """
     Super Comprehensive Goal Management System.
-    
+
     Features:
     - Create, update, delete goals
     - Track progress with history
@@ -120,15 +122,15 @@ class GoalManager:
     - Statistics & analytics
     - Auto-generation
     """
-    
+
     VERSION = GOAL_MANAGER_VERSION
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self.goals: List[Dict[str, Any]] = []
         self.completed: List[Dict[str, Any]] = []
         self.archived: List[Dict[str, Any]] = []
-        
+
         self.goal_count = 0
         self.total_created = 0
         self.total_completed = 0
@@ -138,25 +140,25 @@ class GoalManager:
         self.total_progress_updates = 0
         self.total_milestones = 0
         self.total_milestones_completed = 0
-        
+
         self.last_goal: Optional[Dict[str, Any]] = None
         self.last_action: Optional[str] = None
-        
+
         self.max_history = self.config.get("max_history", 500)
-        
+
         logger.info("Goal Manager v%s initialized.", self.VERSION)
-    
+
     # ========================================================
     # INTERNAL HELPERS
     # ========================================================
-    
+
     def _normalize_priority(self, priority: Any) -> str:
         """Normalize priority string."""
         if priority is None:
             return PRIORITY_NORMAL
-        
+
         value = str(priority).strip().upper()
-        
+
         aliases = {
             "URGENT": PRIORITY_CRITICAL,
             "CRITICAL": PRIORITY_CRITICAL,
@@ -166,9 +168,9 @@ class GoalManager:
             "MEDIUM": PRIORITY_NORMAL,
             "LOW": PRIORITY_LOW,
         }
-        
+
         return aliases.get(value, PRIORITY_NORMAL)
-    
+
     def _normalize_progress(self, progress: Any) -> float:
         """Normalize progress to 0-100."""
         try:
@@ -176,30 +178,35 @@ class GoalManager:
         except (TypeError, ValueError):
             value = 0.0
         return max(0.0, min(100.0, value))
-    
+
     def _normalize_text(self, value: Any, default: str = "") -> str:
         """Normalize text value."""
         if value is None:
             return default
         return str(value).strip()
-    
+
     def _goal_snapshot(self, goal: Dict[str, Any]) -> Dict[str, Any]:
         """Create a deep copy of a goal."""
         return deepcopy(goal)
-    
+
     def _find_index(self, goal_id: Any) -> int:
         """Find goal index by ID."""
         if goal_id is None:
             return -1
-        
+
         goal_id = str(goal_id)
         for index, goal in enumerate(self.goals):
             if str(goal.get("id")) == goal_id:
                 return index
         return -1
-    
-    def _record_history(self, goal: Dict[str, Any], action: str, 
-                       note: str = "", extra: Optional[Dict[str, Any]] = None) -> None:
+
+    def _record_history(
+        self,
+        goal: Dict[str, Any],
+        action: str,
+        note: str = "",
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """Record goal history entry."""
         entry = {
             "time": utc_now(),
@@ -208,20 +215,20 @@ class GoalManager:
             "status": goal.get("status"),
             "note": self._normalize_text(note),
         }
-        
+
         if extra:
             entry.update(deepcopy(extra))
-        
+
         goal.setdefault("history", []).append(entry)
-        
+
         # Trim history
         if len(goal["history"]) > self.max_history:
-            goal["history"] = goal["history"][-self.max_history:]
-    
+            goal["history"] = goal["history"][-self.max_history :]
+
     # ========================================================
     # CREATE GOAL
     # ========================================================
-    
+
     def create_goal(
         self,
         title: str,
@@ -233,11 +240,11 @@ class GoalManager:
         source_problem: Optional[str] = None,
         tags: Optional[List[str]] = None,
         metadata: Optional[Dict[str, Any]] = None,
-        auto_start: bool = True
+        auto_start: bool = True,
     ) -> Dict[str, Any]:
         """
         Create and register a new goal.
-        
+
         Args:
             title: Goal title (required)
             description: Goal description
@@ -249,16 +256,16 @@ class GoalManager:
             tags: List of tags
             metadata: Additional metadata
             auto_start: Start immediately
-            
+
         Returns:
             Created goal dictionary
         """
         title = self._normalize_text(title)
         if not title:
             raise ValueError("Goal title cannot be empty.")
-        
+
         normalized_priority = self._normalize_priority(priority)
-        
+
         goal = {
             "id": str(uuid.uuid4()),
             "created": utc_now(),
@@ -285,279 +292,285 @@ class GoalManager:
             "completion_count": 0,
             "progress_history": [],
         }
-        
+
         self._record_history(goal, "CREATED", "Goal created.")
-        
+
         self.goals.append(goal)
         self.goal_count += 1
         self.total_created += 1
         self.last_goal = goal
         self.last_action = "CREATED"
-        
+
         logger.info("Goal created: %s [%s]", title, goal["id"])
+        # Save goal to memory
+        try:
+            from core.memory import memory
+
+            if isinstance(result, dict):
+                memory.save_decision(
+                    decision=f"GOAL_CREATED_{result.get('id', 'unknown')}",
+                    reason=str(result.get("description") or result.get("title") or ""),
+                    confidence=1.0,
+                )
+        except Exception:
+            pass
+
         return goal
-    
+
     # ========================================================
     # UPDATE PROGRESS
     # ========================================================
-    
+
     def update_progress(
-        self,
-        goal_id: str,
-        progress: float,
-        note: str = ""
+        self, goal_id: str, progress: float, note: str = ""
     ) -> Optional[Dict[str, Any]]:
         """
         Update goal progress (0-100).
-        
+
         Args:
             goal_id: Goal ID
             progress: Progress value (0-100)
             note: Optional note
-            
+
         Returns:
             Updated goal or None
         """
         goal = self.get_goal(goal_id)
         if goal is None:
             return None
-        
+
         if goal.get("status") in {STATUS_CANCELLED, STATUS_COMPLETED, STATUS_ARCHIVED}:
             return goal
-        
+
         old_progress = goal.get("progress", 0)
         new_progress = self._normalize_progress(progress)
-        
+
         goal["progress"] = new_progress
         goal["updated"] = utc_now()
-        
+
         self.total_progress_updates += 1
-        
+
         # Record progress history
-        goal.setdefault("progress_history", []).append({
-            "time": utc_now(),
-            "old": old_progress,
-            "new": new_progress,
-            "note": self._normalize_text(note),
-        })
-        
+        goal.setdefault("progress_history", []).append(
+            {
+                "time": utc_now(),
+                "old": old_progress,
+                "new": new_progress,
+                "note": self._normalize_text(note),
+            }
+        )
+
         self._record_history(
             goal,
             "PROGRESS_UPDATED",
             note,
-            {"previous_progress": old_progress, "new_progress": new_progress}
+            {"previous_progress": old_progress, "new_progress": new_progress},
         )
-        
+
         if new_progress >= 100:
             self.complete_goal(goal_id, note=note or "Goal reached 100% progress.")
-        
+
         self.last_goal = goal
         self.last_action = "PROGRESS_UPDATED"
-        
+
         return goal
-    
+
     def increment_progress(
-        self,
-        goal_id: str,
-        amount: float,
-        note: str = ""
+        self, goal_id: str, amount: float, note: str = ""
     ) -> Optional[Dict[str, Any]]:
         """Increase progress by a relative amount."""
         goal = self.get_goal(goal_id)
         if goal is None:
             return None
-        
+
         current = goal.get("progress", 0)
         return self.update_progress(goal_id, current + float(amount), note=note)
-    
+
     # ========================================================
     # COMPLETE GOAL
     # ========================================================
-    
+
     def complete_goal(
-        self,
-        goal_id: str,
-        note: str = "",
-        achieved_value: Optional[Any] = None
+        self, goal_id: str, note: str = "", achieved_value: Optional[Any] = None
     ) -> bool:
         """
         Mark a goal as completed.
-        
+
         Args:
             goal_id: Goal ID
             note: Completion note
             achieved_value: Value achieved
-            
+
         Returns:
             True if completed
         """
         goal = self.get_goal(goal_id)
         if goal is None:
             return False
-        
+
         if goal.get("status") == STATUS_COMPLETED:
             return True
-        
+
         if goal.get("status") == STATUS_CANCELLED:
             return False
-        
+
         goal["progress"] = 100.0
         goal["status"] = STATUS_COMPLETED
         goal["completed_at"] = utc_now()
         goal["updated"] = utc_now()
         goal["completion_count"] = goal.get("completion_count", 0) + 1
         goal["achieved_value"] = achieved_value
-        
+
         self.completed.append(goal)
         self.total_completed += 1
-        
+
         self._record_history(goal, "COMPLETED", note or "Goal completed.")
-        
+
         self.last_goal = goal
         self.last_action = "COMPLETED"
-        
+
         logger.info("Goal completed: %s", goal.get("title"))
         return True
-    
+
     # ========================================================
     # PAUSE / RESUME
     # ========================================================
-    
+
     def pause_goal(self, goal_id: str, note: str = "") -> bool:
         """Pause an active goal."""
         goal = self.get_goal(goal_id)
         if goal is None:
             return False
-        
+
         if goal.get("status") != STATUS_ACTIVE:
             return False
-        
+
         goal["status"] = STATUS_PAUSED
         goal["paused_at"] = utc_now()
         goal["updated"] = utc_now()
-        
+
         self.total_paused += 1
         self._record_history(goal, "PAUSED", note)
-        
+
         self.last_goal = goal
         self.last_action = "PAUSED"
-        
+
         return True
-    
+
     def resume_goal(self, goal_id: str, note: str = "") -> bool:
         """Resume a paused goal."""
         goal = self.get_goal(goal_id)
         if goal is None:
             return False
-        
+
         if goal.get("status") != STATUS_PAUSED:
             return False
-        
+
         goal["status"] = STATUS_ACTIVE
         goal["resumed_at"] = utc_now()
         goal["updated"] = utc_now()
-        
+
         self.total_resumed += 1
         self._record_history(goal, "RESUMED", note)
-        
+
         self.last_goal = goal
         self.last_action = "RESUMED"
-        
+
         return True
-    
+
     # ========================================================
     # CANCEL / REOPEN
     # ========================================================
-    
+
     def cancel_goal(self, goal_id: str, reason: str = "") -> bool:
         """Cancel a goal."""
         goal = self.get_goal(goal_id)
         if goal is None:
             return False
-        
+
         if goal.get("status") == STATUS_COMPLETED:
             return False
-        
+
         if goal.get("status") == STATUS_CANCELLED:
             return True
-        
+
         goal["status"] = STATUS_CANCELLED
         goal["cancelled_at"] = utc_now()
         goal["updated"] = utc_now()
         goal["cancel_reason"] = self._normalize_text(reason)
-        
+
         self.total_cancelled += 1
         self._record_history(goal, "CANCELLED", reason)
-        
+
         self.last_goal = goal
         self.last_action = "CANCELLED"
-        
+
         logger.info("Goal cancelled: %s", goal.get("title"))
         return True
-    
+
     def reopen_goal(self, goal_id: str, note: str = "") -> bool:
         """Reopen a completed or cancelled goal."""
         goal = self.get_goal(goal_id)
         if goal is None:
             return False
-        
+
         if goal.get("status") not in {STATUS_COMPLETED, STATUS_CANCELLED}:
             return False
-        
+
         goal["status"] = STATUS_ACTIVE
         goal["updated"] = utc_now()
         goal["completed_at"] = None
         goal["cancelled_at"] = None
         goal["progress"] = max(0.0, goal.get("progress", 0))
-        
+
         self._record_history(goal, "REOPENED", note)
-        
+
         self.last_goal = goal
         self.last_action = "REOPENED"
-        
+
         return True
-    
+
     def archive_goal(self, goal_id: str, note: str = "") -> bool:
         """Archive a completed goal."""
         goal = self.get_goal(goal_id)
         if goal is None:
             return False
-        
+
         if goal.get("status") != STATUS_COMPLETED:
             return False
-        
+
         goal["status"] = STATUS_ARCHIVED
         goal["archived_at"] = utc_now()
         goal["updated"] = utc_now()
-        
+
         self._record_history(goal, "ARCHIVED", note)
         self.archived.append(goal)
-        
+
         self.last_goal = goal
         self.last_action = "ARCHIVED"
-        
+
         return True
-    
+
     # ========================================================
     # MILESTONES
     # ========================================================
-    
+
     def add_milestone(
         self,
         goal_id: str,
         title: str,
         target: float = 100,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Optional[Dict[str, Any]]:
         """Add a milestone to a goal."""
         goal = self.get_goal(goal_id)
         if goal is None:
             return None
-        
+
         title = self._normalize_text(title)
         if not title:
             raise ValueError("Milestone title cannot be empty.")
-        
+
         milestone = {
             "id": str(uuid.uuid4()),
             "title": title,
@@ -568,87 +581,83 @@ class GoalManager:
             "completed_at": None,
             "metadata": deepcopy(metadata) if isinstance(metadata, dict) else {},
         }
-        
+
         goal.setdefault("milestones", []).append(milestone)
         goal["updated"] = utc_now()
-        
+
         self.total_milestones += 1
         self._record_history(goal, "MILESTONE_ADDED", title)
-        
+
         return milestone
-    
+
     def update_milestone(
-        self,
-        goal_id: str,
-        milestone_id: str,
-        progress: float,
-        note: str = ""
+        self, goal_id: str, milestone_id: str, progress: float, note: str = ""
     ) -> Optional[Dict[str, Any]]:
         """Update milestone progress."""
         goal = self.get_goal(goal_id)
         if goal is None:
             return None
-        
+
         value = self._normalize_progress(progress)
-        
+
         for milestone in goal.get("milestones", []):
             if str(milestone.get("id")) != str(milestone_id):
                 continue
-            
+
             milestone["progress"] = value
             milestone["updated"] = utc_now()
-            
+
             if value >= 100:
                 milestone["progress"] = 100.0
                 milestone["status"] = STATUS_COMPLETED
                 milestone["completed_at"] = utc_now()
                 self.total_milestones_completed += 1
-            
+
             goal["updated"] = utc_now()
             self._record_history(goal, "MILESTONE_UPDATED", note or milestone.get("title", ""))
-            
+
             return milestone
-        
+
         return None
-    
+
     # ========================================================
     # GET GOALS
     # ========================================================
-    
+
     def get_goal(self, goal_id: str) -> Optional[Dict[str, Any]]:
         """Get a goal by ID."""
         index = self._find_index(goal_id)
         if index < 0:
             return None
         return self.goals[index]
-    
+
     def get_goal_copy(self, goal_id: str) -> Optional[Dict[str, Any]]:
         """Get a copy of a goal."""
         goal = self.get_goal(goal_id)
         if goal is None:
             return None
         return self._goal_snapshot(goal)
-    
+
     def active_goals(self) -> List[Dict[str, Any]]:
         """Get all active goals."""
         return [g for g in self.goals if g.get("status") == STATUS_ACTIVE]
-    
+
     def paused_goals(self) -> List[Dict[str, Any]]:
         """Get all paused goals."""
         return [g for g in self.goals if g.get("status") == STATUS_PAUSED]
-    
+
     def completed_goals(self) -> List[Dict[str, Any]]:
         """Get all completed goals."""
         return [g for g in self.goals if g.get("status") == STATUS_COMPLETED]
-    
+
     def cancelled_goals(self) -> List[Dict[str, Any]]:
         """Get all cancelled goals."""
         return [g for g in self.goals if g.get("status") == STATUS_CANCELLED]
-    
+
     def archived_goals(self) -> List[Dict[str, Any]]:
         """Get all archived goals."""
         return list(self.archived)
-    
+
     def priority_goals(self) -> List[Dict[str, Any]]:
         """Get goals sorted by priority."""
         return sorted(
@@ -656,21 +665,21 @@ class GoalManager:
             key=lambda g: (
                 PRIORITY_WEIGHTS.get(g.get("priority", PRIORITY_NORMAL), 0),
                 g.get("progress", 0),
-                g.get("created", "")
+                g.get("created", ""),
             ),
-            reverse=True
+            reverse=True,
         )
-    
+
     def overdue_goals(self) -> List[Dict[str, Any]]:
         """Get overdue goals."""
         now = datetime.now(timezone.utc)
         result = []
-        
+
         for goal in self.active_goals():
             deadline = goal.get("deadline")
             if not deadline:
                 continue
-            
+
             try:
                 deadline_text = str(deadline).replace("Z", "+00:00")
                 deadline_dt = datetime.fromisoformat(deadline_text)
@@ -680,88 +689,92 @@ class GoalManager:
                     result.append(goal)
             except (TypeError, ValueError):
                 continue
-        
+
         return result
-    
+
     def goals_by_priority(self, priority: str) -> List[Dict[str, Any]]:
         """Filter goals by priority."""
         normalized = self._normalize_priority(priority)
         return [g for g in self.goals if g.get("priority") == normalized]
-    
+
     def goals_by_status(self, status: str) -> List[Dict[str, Any]]:
         """Filter goals by status."""
         status = self._normalize_text(status).upper()
         return [g for g in self.goals if g.get("status") == status]
-    
+
     def goals_by_tag(self, tag: str) -> List[Dict[str, Any]]:
         """Filter goals by tag."""
         tag = self._normalize_text(tag).lower()
         return [g for g in self.goals if tag in [t.lower() for t in g.get("tags", [])]]
-    
+
     # ========================================================
     # SEARCH
     # ========================================================
-    
+
     def search(self, keyword: str, limit: Optional[int] = None) -> List[Dict[str, Any]]:
         """Search goals by keyword."""
         keyword = self._normalize_text(keyword).lower()
         if not keyword:
             return []
-        
+
         results = []
         for goal in reversed(self.goals):
-            searchable = " ".join([
-                str(goal.get("title", "")),
-                str(goal.get("description", "")),
-                str(goal.get("learning_objective", "")),
-                str(goal.get("source_problem", "")),
-                " ".join(goal.get("tags", [])),
-            ]).lower()
-            
+            searchable = " ".join(
+                [
+                    str(goal.get("title", "")),
+                    str(goal.get("description", "")),
+                    str(goal.get("learning_objective", "")),
+                    str(goal.get("source_problem", "")),
+                    " ".join(goal.get("tags", [])),
+                ]
+            ).lower()
+
             if keyword in searchable:
                 results.append(goal)
                 if limit is not None and len(results) >= int(limit):
                     break
-        
+
         return results
-    
+
     # ========================================================
     # AUTO-GENERATE
     # ========================================================
-    
+
     def generate_from_problem(self, problem: str) -> Dict[str, Any]:
         """Auto-generate a goal from a system problem."""
         problem = self._normalize_text(problem)
         if not problem:
             raise ValueError("Problem cannot be empty.")
-        
+
         return self.create_goal(
             title=f"Improve {problem}",
             description="Automatically generated from system weakness detection.",
             priority=PRIORITY_HIGH,
             source_problem=problem,
             learning_objective=f"Learn how to improve {problem}.",
-            tags=["automatic", "diagnostic", "learning"]
+            tags=["automatic", "diagnostic", "learning"],
         )
-    
-    def generate_from_learning(self, objective: str, priority: str = PRIORITY_NORMAL) -> Dict[str, Any]:
+
+    def generate_from_learning(
+        self, objective: str, priority: str = PRIORITY_NORMAL
+    ) -> Dict[str, Any]:
         """Auto-generate a goal from a learning objective."""
         objective = self._normalize_text(objective)
         if not objective:
             raise ValueError("Learning objective cannot be empty.")
-        
+
         return self.create_goal(
             title=f"Learn {objective}",
             description="Learning goal generated from an intelligence objective.",
             priority=priority,
             learning_objective=objective,
-            tags=["learning", "automatic"]
+            tags=["learning", "automatic"],
         )
-    
+
     # ========================================================
     # STATISTICS
     # ========================================================
-    
+
     def summary(self) -> Dict[str, Any]:
         """Get goal summary."""
         active = self.active_goals()
@@ -769,10 +782,10 @@ class GoalManager:
         paused = self.paused_goals()
         cancelled = self.cancelled_goals()
         overdue = self.overdue_goals()
-        
+
         progress_values = [float(g.get("progress", 0)) for g in self.goals]
         avg_progress = sum(progress_values) / len(progress_values) if progress_values else 0.0
-        
+
         return {
             "total": len(self.goals),
             "active": len(active),
@@ -783,22 +796,22 @@ class GoalManager:
             "average_progress": round(avg_progress, 2),
             "completion_rate": round((len(completed) / max(1, len(self.goals))) * 100, 2),
         }
-    
+
     def statistics(self) -> Dict[str, Any]:
         """Get detailed statistics."""
         summary = self.summary()
-        
+
         priority_counts = {
             PRIORITY_LOW: 0,
             PRIORITY_NORMAL: 0,
             PRIORITY_HIGH: 0,
             PRIORITY_CRITICAL: 0,
         }
-        
+
         for goal in self.goals:
             priority = goal.get("priority", PRIORITY_NORMAL)
             priority_counts[priority] = priority_counts.get(priority, 0) + 1
-        
+
         return {
             **summary,
             "priority": priority_counts,
@@ -812,37 +825,37 @@ class GoalManager:
             "total_milestones_completed": self.total_milestones_completed,
             "avg_progress": summary["average_progress"],
         }
-    
+
     def latest(self) -> Optional[Dict[str, Any]]:
         """Get the latest goal."""
         return self.last_goal
-    
+
     def latest_action(self) -> Optional[str]:
         """Get the latest action."""
         return self.last_action
-    
+
     def history(self, limit: int = 20) -> List[Dict[str, Any]]:
         """Get goal history."""
         try:
             limit = int(limit)
         except (TypeError, ValueError):
             limit = 20
-        
+
         if limit <= 0:
             return []
-        
+
         return self.goals[-limit:]
-    
+
     # ========================================================
     # CLEAR & RESET
     # ========================================================
-    
+
     def clear(self) -> bool:
         """Clear all goals."""
         self.goals.clear()
         self.completed.clear()
         self.archived.clear()
-        
+
         self.goal_count = 0
         self.total_created = 0
         self.total_completed = 0
@@ -852,21 +865,21 @@ class GoalManager:
         self.total_progress_updates = 0
         self.total_milestones = 0
         self.total_milestones_completed = 0
-        
+
         self.last_goal = None
         self.last_action = None
-        
+
         logger.info("Goal Manager cleared.")
         return True
-    
+
     # ========================================================
     # STATUS
     # ========================================================
-    
+
     def status(self) -> Dict[str, Any]:
         """Get system status."""
         summary = self.summary()
-        
+
         return {
             "module": "goal_manager",
             "version": self.VERSION,
@@ -898,13 +911,28 @@ goal_manager = GoalManager()
 # COMPATIBILITY FUNCTIONS
 # ============================================================
 
-def create_goal(title, description="", priority="NORMAL", target=None,
-                deadline=None, learning_objective=None, source_problem=None,
-                tags=None, metadata=None):
+
+def create_goal(
+    title,
+    description="",
+    priority="NORMAL",
+    target=None,
+    deadline=None,
+    learning_objective=None,
+    source_problem=None,
+    tags=None,
+    metadata=None,
+):
     return goal_manager.create_goal(
-        title=title, description=description, priority=priority,
-        target=target, deadline=deadline, learning_objective=learning_objective,
-        source_problem=source_problem, tags=tags, metadata=metadata
+        title=title,
+        description=description,
+        priority=priority,
+        target=target,
+        deadline=deadline,
+        learning_objective=learning_objective,
+        source_problem=source_problem,
+        tags=tags,
+        metadata=metadata,
     )
 
 
@@ -940,6 +968,7 @@ def status():
 # SELF TEST
 # ============================================================
 
+
 def self_test() -> Dict[str, Any]:
     """Run comprehensive self-test."""
     print()
@@ -947,11 +976,11 @@ def self_test() -> Dict[str, Any]:
     print("  GOAL MANAGER v3.0 - SELF TEST")
     print("=" * 70)
     print()
-    
+
     tests_passed = 0
     tests_failed = 0
     results = {}
-    
+
     # Test 1: Initialization
     print("1. Testing initialization...")
     try:
@@ -963,7 +992,7 @@ def self_test() -> Dict[str, Any]:
         results["initialization"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Initialization failed: {e}")
-    
+
     # Test 2: Create Goal
     print("\n2. Testing create_goal...")
     try:
@@ -971,7 +1000,7 @@ def self_test() -> Dict[str, Any]:
             title="Test Goal",
             description="Test description",
             priority="HIGH",
-            tags=["test", "demo"]
+            tags=["test", "demo"],
         )
         if goal and goal.get("id"):
             results["create_goal"] = {"status": "PASS", "id": goal["id"]}
@@ -985,7 +1014,7 @@ def self_test() -> Dict[str, Any]:
         results["create_goal"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Create goal failed: {e}")
-    
+
     # Test 3: Update Progress
     print("\n3. Testing update_progress...")
     try:
@@ -1003,7 +1032,7 @@ def self_test() -> Dict[str, Any]:
         results["update_progress"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Update progress failed: {e}")
-    
+
     # Test 4: Complete Goal
     print("\n4. Testing complete_goal...")
     try:
@@ -1021,7 +1050,7 @@ def self_test() -> Dict[str, Any]:
         results["complete_goal"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Complete goal failed: {e}")
-    
+
     # Test 5: Statistics
     print("\n5. Testing statistics...")
     try:
@@ -1038,7 +1067,7 @@ def self_test() -> Dict[str, Any]:
         results["statistics"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Statistics failed: {e}")
-    
+
     # Test 6: Status
     print("\n6. Testing status...")
     try:
@@ -1055,7 +1084,7 @@ def self_test() -> Dict[str, Any]:
         results["status"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Status failed: {e}")
-    
+
     # Summary
     print()
     print("=" * 70)
@@ -1065,7 +1094,7 @@ def self_test() -> Dict[str, Any]:
     print(f"  ❌ Failed: {tests_failed}")
     print(f"  📊 Total:  {tests_passed + tests_failed}")
     print("=" * 70)
-    
+
     return {
         "module": "goal_manager",
         "version": GOAL_MANAGER_VERSION,

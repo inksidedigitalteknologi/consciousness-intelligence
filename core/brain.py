@@ -24,18 +24,22 @@ logger = logging.getLogger(__name__)
 
 try:
     from core.deepseek import deepseek_ai
+
     DEEPSEEK_AVAILABLE = True
-    DEEPSEEK_ENABLED = deepseek_ai.enabled if hasattr(deepseek_ai, 'enabled') else False
+    DEEPSEEK_ENABLED = deepseek_ai.enabled if hasattr(deepseek_ai, "enabled") else False
 except ImportError:
     DEEPSEEK_AVAILABLE = False
     DEEPSEEK_ENABLED = False
     deepseek_ai = None
 
-logger.info(f"🧠 AI Integration: {'ENABLED' if DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED else 'DISABLED'}")
+logger.info(
+    f"🧠 AI Integration: {'ENABLED' if DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED else 'DISABLED'}"
+)
 
 # ============================================================
 # ENUMS & CONSTANTS
 # ============================================================
+
 
 class BrainState(Enum):
     INITIALIZING = "INITIALIZING"
@@ -70,6 +74,7 @@ class ProcessingPriority(Enum):
 # ============================================================
 # DATA CLASSES
 # ============================================================
+
 
 @dataclass
 class CognitiveState:
@@ -116,6 +121,7 @@ class DecisionSupport:
 # SAFE IMPORT HELPER
 # ============================================================
 
+
 def safe_import(module_path: str, class_name: str) -> Optional[Any]:
     try:
         module = __import__(module_path, fromlist=[class_name])
@@ -128,6 +134,7 @@ def safe_import(module_path: str, class_name: str) -> Optional[Any]:
 # ============================================================
 # COGNITIVE BRAIN CLASS
 # ============================================================
+
 
 class Brain:
     """
@@ -254,6 +261,7 @@ class Brain:
         # SELF MODEL — persistence diri
         try:
             from core.self_model import self_model as _global_self_model
+
             self.self_model = _global_self_model
             # Sync cycles dari self_model
             saved_cycles = self.self_model.get_age_cycles()
@@ -267,9 +275,11 @@ class Brain:
                 self.metrics["decision_count"] = saved_metrics.get("decision_count", 0)
                 self.metrics["learning_count"] = saved_metrics.get("learning_count", 0)
                 self.metrics["prediction_count"] = saved_metrics.get("prediction_count", 0)
-                logger.info(f"🧬 Self model loaded — cycles={saved_cycles}, "
-                           f"decisions={self.metrics['decision_count']}, "
-                           f"successful={self.successful_cycles}")
+                logger.info(
+                    f"🧬 Self model loaded — cycles={saved_cycles}, "
+                    f"decisions={self.metrics['decision_count']}, "
+                    f"successful={self.successful_cycles}"
+                )
             # Sync emotion
             self.current_emotion = self.self_model.get_emotion()
         except Exception as e:
@@ -300,7 +310,7 @@ class Brain:
         return True
 
     def get_metrics(self):
-        return self.metrics if hasattr(self, 'metrics') else {}
+        return self.metrics if hasattr(self, "metrics") else {}
 
     def get_state(self):
         try:
@@ -313,7 +323,7 @@ class Brain:
                 "state_value": "ERROR",
                 "cycles": self.cycles,
                 "errors": self.errors,
-                "error": str(e)
+                "error": str(e),
             }
 
     def get_forecast(self):
@@ -321,12 +331,7 @@ class Brain:
             return self.forecast()
         except Exception as e:
             logger.debug(f"Get forecast error: {e}")
-            return {
-                "forecast": "NEUTRAL",
-                "confidence": 0,
-                "is_fallback": True,
-                "error": str(e)
-            }
+            return {"forecast": "NEUTRAL", "confidence": 0, "is_fallback": True, "error": str(e)}
 
     def get_status(self):
         return self.status()
@@ -537,7 +542,9 @@ class Brain:
                 cognitive_state.perception = self._perceive(data)
                 cognitive_state.memory = self._store_memory(cognitive_state.perception)
                 cognitive_state.patterns = self._recognize_patterns(cognitive_state.perception)
-                cognitive_state.learning = self._learn(cognitive_state.perception, cognitive_state.patterns)
+                cognitive_state.learning = self._learn(
+                    cognitive_state.perception, cognitive_state.patterns
+                )
                 cognitive_state.reasoning = self._reason(cognitive_state)
                 cognitive_state.awareness = self._reflect_consciousness(cognitive_state)
                 cognitive_state.prediction = self._predict(cognitive_state)
@@ -558,7 +565,7 @@ class Brain:
                     self._feed_learning_engines(cognitive_state)
                 except Exception as e:
                     logger.debug(f"Learning engine feed error: {e}")
-                
+
                 # Update self model
                 if self.self_model is not None:
                     try:
@@ -591,13 +598,15 @@ class Brain:
                                 self._last_recorded_action = action
                         # Save setiap 10 cycle atau milestone
                         # Save metrics + self_model
-                        self.self_model.save_metrics({
-                            "successful_cycles": self.successful_cycles,
-                            "decision_count": self.metrics.get("decision_count", 0),
-                            "error_count": self.errors,
-                            "learning_count": self.metrics.get("learning_count", 0),
-                            "prediction_count": self.metrics.get("prediction_count", 0),
-                        })
+                        self.self_model.save_metrics(
+                            {
+                                "successful_cycles": self.successful_cycles,
+                                "decision_count": self.metrics.get("decision_count", 0),
+                                "error_count": self.errors,
+                                "learning_count": self.metrics.get("learning_count", 0),
+                                "prediction_count": self.metrics.get("prediction_count", 0),
+                            }
+                        )
                         if cyc == 1 or cyc % 2 == 0:
                             self.self_model.save()
                     except Exception as e:
@@ -642,7 +651,10 @@ class Brain:
             "reasoning": {"confidence": 0.3, "trend": "UNKNOWN"},
             "knowledge": {"updated": False},
             "awareness": {"state": "FALLBACK", "confidence": 0.3},
-            "prediction": {"forecast": random_data["forecast"], "confidence": random_data["confidence"]},
+            "prediction": {
+                "forecast": random_data["forecast"],
+                "confidence": random_data["confidence"],
+            },
             "decision": {
                 "action": random_data["action"],
                 "confidence": random_data["confidence"],
@@ -751,14 +763,19 @@ class Brain:
             if self.memory is not None:
                 result = self.execute(self.memory, "remember", memory_entry)
                 if result is not None:
-                    return {"stored": True, "result": result, "source": "external_memory", "importance": confidence}
+                    return {
+                        "stored": True,
+                        "result": result,
+                        "source": "external_memory",
+                        "importance": confidence,
+                    }
 
             self.short_term_memory.append(memory_entry)
             if len(self.short_term_memory) > self.short_term_limit:
                 oldest = self.short_term_memory.pop(0)
                 self.long_term_memory.append(oldest)
                 if len(self.long_term_memory) > self.long_term_limit:
-                    self.long_term_memory = self.long_term_memory[-self.long_term_limit:]
+                    self.long_term_memory = self.long_term_memory[-self.long_term_limit :]
 
             return {
                 "stored": True,
@@ -775,18 +792,18 @@ class Brain:
     def _to_dict_safe(self, obj: Any) -> Dict[str, Any]:
         if isinstance(obj, dict):
             return obj
-        if hasattr(obj, 'to_dict') and callable(obj.to_dict):
+        if hasattr(obj, "to_dict") and callable(obj.to_dict):
             try:
                 return obj.to_dict()
             except Exception:
                 pass
-        if hasattr(obj, '__dict__') and not isinstance(obj, dict):
-            return {k: v for k, v in obj.__dict__.items() if not k.startswith('_')}
+        if hasattr(obj, "__dict__") and not isinstance(obj, dict):
+            return {k: v for k, v in obj.__dict__.items() if not k.startswith("_")}
         return {"data": str(obj), "type": type(obj).__name__}
 
     def _extract_confidence(self, obj: Any, obj_dict: Dict[str, Any]) -> float:
         confidence = 0.5
-        for attr in ['confidence', 'score', 'strength', 'quality', 'certainty', 'importance']:
+        for attr in ["confidence", "score", "strength", "quality", "certainty", "importance"]:
             if hasattr(obj, attr):
                 try:
                     confidence = float(getattr(obj, attr))
@@ -794,7 +811,7 @@ class Brain:
                 except (ValueError, TypeError):
                     pass
         if confidence == 0.5 and isinstance(obj_dict, dict):
-            for key in ['confidence', 'score', 'strength', 'quality', 'certainty']:
+            for key in ["confidence", "score", "strength", "quality", "certainty"]:
                 if key in obj_dict:
                     try:
                         confidence = float(obj_dict[key])
@@ -825,31 +842,54 @@ class Brain:
             patterns = []
             raw = perception.get("raw", {})
             if "signal" in raw:
-                patterns.append({"type": "signal", "value": raw["signal"], "confidence": random.uniform(0.3, 0.8)})
+                patterns.append(
+                    {
+                        "type": "signal",
+                        "value": raw["signal"],
+                        "confidence": random.uniform(0.3, 0.8),
+                    }
+                )
             if "pattern" in raw:
-                patterns.append({"type": "structural", "value": raw["pattern"], "confidence": random.uniform(0.3, 0.8)})
+                patterns.append(
+                    {
+                        "type": "structural",
+                        "value": raw["pattern"],
+                        "confidence": random.uniform(0.3, 0.8),
+                    }
+                )
             if "trend" in raw:
-                patterns.append({"type": "trend", "value": raw["trend"], "confidence": random.uniform(0.3, 0.8)})
+                patterns.append(
+                    {"type": "trend", "value": raw["trend"], "confidence": random.uniform(0.3, 0.8)}
+                )
 
             if not patterns:
                 pattern_types = ["signal", "trend", "structural", "seasonal", "cyclical"]
                 for _ in range(random.randint(1, 3)):
-                    patterns.append({
-                        "type": random.choice(pattern_types),
-                        "value": f"pattern_{random.randint(1, 100)}",
-                        "confidence": random.uniform(0.3, 0.8)
-                    })
+                    patterns.append(
+                        {
+                            "type": random.choice(pattern_types),
+                            "value": f"pattern_{random.randint(1, 100)}",
+                            "confidence": random.uniform(0.3, 0.8),
+                        }
+                    )
 
             return {
                 "detected": patterns,
                 "count": len(patterns),
-                "confidence": sum(p.get("confidence", 0.5) for p in patterns) / max(1, len(patterns)),
+                "confidence": sum(p.get("confidence", 0.5) for p in patterns)
+                / max(1, len(patterns)),
                 "is_fallback": True,
             }
 
         except Exception as e:
             logger.debug(f"Pattern recognition error: {e}")
-            return {"detected": [], "count": 0, "confidence": 0.3, "error": str(e), "is_fallback": True}
+            return {
+                "detected": [],
+                "count": 0,
+                "confidence": 0.3,
+                "error": str(e),
+                "is_fallback": True,
+            }
 
     # ============================================================
     # LEARNING
@@ -879,7 +919,10 @@ class Brain:
                 "status": "learned",
                 "timestamp": datetime.now().isoformat(),
                 "patterns_processed": len(patterns.get("detected", [])),
-                "insights": [f"Pattern #{i+1} stored for future reference" for i in range(min(3, len(patterns.get("detected", []))))],
+                "insights": [
+                    f"Pattern #{i+1} stored for future reference"
+                    for i in range(min(3, len(patterns.get("detected", []))))
+                ],
                 "confidence": random.uniform(0.4, 0.8),
                 "is_fallback": True,
             }
@@ -914,14 +957,24 @@ class Brain:
                 "trend": direction,
                 "anomaly": random.choice(["NORMAL", "WARNING", "CRITICAL"]),
                 "prediction": {"direction": direction, "confidence": confidence},
-                "evidence": [f"Evidence #{i+1} from reasoning" for i in range(random.randint(1, 3))],
+                "evidence": [
+                    f"Evidence #{i+1} from reasoning" for i in range(random.randint(1, 3))
+                ],
                 "bias": random.choice(["POSITIVE", "NEGATIVE", "NEUTRAL"]),
                 "is_fallback": True,
             }
 
         except Exception as e:
             logger.debug(f"Reasoning error: {e}")
-            return {"confidence": 0.3, "trend": "UNKNOWN", "anomaly": "UNKNOWN", "prediction": {"direction": "NEUTRAL", "confidence": 0.3}, "evidence": [], "error": str(e), "is_fallback": True}
+            return {
+                "confidence": 0.3,
+                "trend": "UNKNOWN",
+                "anomaly": "UNKNOWN",
+                "prediction": {"direction": "NEUTRAL", "confidence": 0.3},
+                "evidence": [],
+                "error": str(e),
+                "is_fallback": True,
+            }
 
     # ============================================================
     # KNOWLEDGE UPDATE
@@ -946,7 +999,9 @@ class Brain:
                     p_concepts = perception.get("concepts", [])
                     content_parts.append(f"Observation type: {p_type}, sentiment: {p_sent}")
                     if p_concepts:
-                        content_parts.append(f"Concepts: {', '.join(str(c) for c in p_concepts[:5])}")
+                        content_parts.append(
+                            f"Concepts: {', '.join(str(c) for c in p_concepts[:5])}"
+                        )
 
                 if isinstance(reasoning, dict):
                     r_trend = reasoning.get("trend") or reasoning.get("context")
@@ -986,7 +1041,8 @@ class Brain:
                     tags.extend([str(c) for c in perception["concepts"][:3]])
 
                 item_id = self.execute(
-                    self.knowledge, "add",
+                    self.knowledge,
+                    "add",
                     content=content,
                     category="Cognitive Observation",
                     type="observation",
@@ -1018,7 +1074,12 @@ class Brain:
                 if result is not None:
                     return result
 
-            return {"updated": True, "timestamp": datetime.now().isoformat(), "knowledge_units": len(self.long_term_memory) + random.randint(0, 5), "is_fallback": True}
+            return {
+                "updated": True,
+                "timestamp": datetime.now().isoformat(),
+                "knowledge_units": len(self.long_term_memory) + random.randint(0, 5),
+                "is_fallback": True,
+            }
 
         except Exception as e:
             logger.debug(f"Knowledge update error: {e}")
@@ -1045,12 +1106,14 @@ class Brain:
                 "state": random.choice(states),
                 "confidence": random.uniform(0.4, 0.9),
                 "stability": random.choice(["STABLE", "VOLATILE", "ADAPTING"]),
-                "reflection": random.choice([
-                    "System is operating normally.",
-                    "Processing market data efficiently.",
-                    "Learning patterns from recent data.",
-                    "Preparing for decision making.",
-                ]),
+                "reflection": random.choice(
+                    [
+                        "System is operating normally.",
+                        "Processing market data efficiently.",
+                        "Learning patterns from recent data.",
+                        "Preparing for decision making.",
+                    ]
+                ),
                 "emotion": random.choice(emotions),
                 "awareness_level": random.uniform(0.3, 0.9),
                 "is_fallback": True,
@@ -1058,7 +1121,14 @@ class Brain:
 
         except Exception as e:
             logger.debug(f"Consciousness error: {e}")
-            return {"state": "FALLBACK", "confidence": 0.3, "stability": "UNKNOWN", "reflection": "Consciousness module unavailable.", "error": str(e), "is_fallback": True}
+            return {
+                "state": "FALLBACK",
+                "confidence": 0.3,
+                "stability": "UNKNOWN",
+                "reflection": "Consciousness module unavailable.",
+                "error": str(e),
+                "is_fallback": True,
+            }
 
     # ============================================================
     # PREDICTION
@@ -1096,7 +1166,13 @@ class Brain:
 
         except Exception as e:
             logger.debug(f"Prediction error: {e}")
-            return {"forecast": "NEUTRAL", "confidence": 0.3, "direction": "UNKNOWN", "error": str(e), "is_fallback": True}
+            return {
+                "forecast": "NEUTRAL",
+                "confidence": 0.3,
+                "direction": "UNKNOWN",
+                "error": str(e),
+                "is_fallback": True,
+            }
 
     # ============================================================
     # DECISION
@@ -1157,7 +1233,14 @@ class Brain:
 
         except Exception as e:
             logger.debug(f"Decision error: {e}")
-            return {"action": "HOLD", "reason": f"Decision error: {e}", "confidence": 0.3, "timestamp": datetime.now().isoformat(), "is_fallback": True, "error": str(e)}
+            return {
+                "action": "HOLD",
+                "reason": f"Decision error: {e}",
+                "confidence": 0.3,
+                "timestamp": datetime.now().isoformat(),
+                "is_fallback": True,
+                "error": str(e),
+            }
 
     def _simple_decision(self, intelligence: Dict[str, Any]) -> Dict[str, Any]:
         forecast = intelligence.get("forecast", "NEUTRAL")
@@ -1261,11 +1344,13 @@ class Brain:
             decision = state.decision
             if decision and isinstance(decision, dict):
                 result["confidence"] = max(result["confidence"], decision.get("confidence", 0.0))
-                result["signals"].append({
-                    "type": "decision",
-                    "action": decision.get("action", "UNKNOWN"),
-                    "confidence": decision.get("confidence", 0.0),
-                })
+                result["signals"].append(
+                    {
+                        "type": "decision",
+                        "action": decision.get("action", "UNKNOWN"),
+                        "confidence": decision.get("confidence", 0.0),
+                    }
+                )
 
             if result["confidence"] == 0:
                 random_data = self._generate_random_market_data()
@@ -1345,11 +1430,13 @@ class Brain:
             decision = state.get("decision", {})
             if isinstance(decision, dict):
                 result["confidence"] = max(result["confidence"], decision.get("confidence", 0.0))
-                result["signals"].append({
-                    "type": "decision",
-                    "action": decision.get("action", "UNKNOWN"),
-                    "confidence": decision.get("confidence", 0.0),
-                })
+                result["signals"].append(
+                    {
+                        "type": "decision",
+                        "action": decision.get("action", "UNKNOWN"),
+                        "confidence": decision.get("confidence", 0.0),
+                    }
+                )
 
             if result["confidence"] == 0:
                 random_data = self._generate_random_market_data()
@@ -1375,12 +1462,17 @@ class Brain:
             decision = {
                 "action": existing_decision.get("action", "HOLD"),
                 "reason": existing_decision.get("reason", "Insufficient information"),
-                "confidence": existing_decision.get("confidence", intelligence.get("confidence", 0.0)),
+                "confidence": existing_decision.get(
+                    "confidence", intelligence.get("confidence", 0.0)
+                ),
                 "alternatives": existing_decision.get("alternatives", []),
-                "risk_assessment": existing_decision.get("risk_assessment", {
-                    "level": intelligence.get("risk_level", "MEDIUM"),
-                    "factors": [],
-                }),
+                "risk_assessment": existing_decision.get(
+                    "risk_assessment",
+                    {
+                        "level": intelligence.get("risk_level", "MEDIUM"),
+                        "factors": [],
+                    },
+                ),
                 "expected_outcome": existing_decision.get("expected_outcome"),
                 "timestamp": datetime.now().isoformat(),
             }
@@ -1471,11 +1563,11 @@ class Brain:
 
             if self.consciousness is not None:
                 try:
-                    if hasattr(self.consciousness, 'get_state'):
+                    if hasattr(self.consciousness, "get_state"):
                         consciousness_data = self.consciousness.get_state()
-                    elif hasattr(self.consciousness, 'status'):
+                    elif hasattr(self.consciousness, "status"):
                         consciousness_data = self.consciousness.status()
-                    elif hasattr(self.consciousness, 'snapshot'):
+                    elif hasattr(self.consciousness, "snapshot"):
                         consciousness_data = self.consciousness.snapshot()
                 except Exception as e:
                     logger.debug(f"Consciousness data error: {e}")
@@ -1491,43 +1583,52 @@ class Brain:
                 logger.debug(f"Status data error: {e}")
 
             memory_stats = {
-                'short_term': len(self.short_term_memory) if hasattr(self, 'short_term_memory') else 0,
-                'long_term': len(self.long_term_memory) if hasattr(self, 'long_term_memory') else 0,
-                'working': len(self.working_memory) if hasattr(self, 'working_memory') else 0,
+                "short_term": (
+                    len(self.short_term_memory) if hasattr(self, "short_term_memory") else 0
+                ),
+                "long_term": len(self.long_term_memory) if hasattr(self, "long_term_memory") else 0,
+                "working": len(self.working_memory) if hasattr(self, "working_memory") else 0,
             }
 
             learning_stats = {
-                'learning_count': self.metrics.get('learning_count', 0),
-                'prediction_count': self.metrics.get('prediction_count', 0),
-                'decision_count': self.metrics.get('decision_count', 0),
-                'learning_active': self.learning_engine is not None,
-                'modules_available': self.available_modules_count,
+                "learning_count": self.metrics.get("learning_count", 0),
+                "prediction_count": self.metrics.get("prediction_count", 0),
+                "decision_count": self.metrics.get("decision_count", 0),
+                "learning_active": self.learning_engine is not None,
+                "modules_available": self.available_modules_count,
             }
 
-            if hasattr(self, 'goals'):
+            if hasattr(self, "goals"):
                 goal_stats = {
-                    'total': len(self.goals),
-                    'active': sum(1 for g in self.goals if g.get('status') == 'active'),
-                    'completed': sum(1 for g in self.goals if g.get('status') == 'completed'),
-                    'pending': sum(1 for g in self.goals if g.get('status') == 'pending'),
+                    "total": len(self.goals),
+                    "active": sum(1 for g in self.goals if g.get("status") == "active"),
+                    "completed": sum(1 for g in self.goals if g.get("status") == "completed"),
+                    "pending": sum(1 for g in self.goals if g.get("status") == "pending"),
                 }
 
             performance_data = {
-                'success_rate': self.metrics.get('success_rate', 0),
-                'error_rate': self.metrics.get('error_rate', 0),
-                'avg_processing_time': self.metrics.get('average_processing_time', 0),
-                'throughput': self.metrics.get('throughput', 0),
-                'health_score': self.health_score if hasattr(self, 'health_score') else 70,
-                'cycles': self.cycles,
-                'errors': self.errors,
-                'recovery_count': self.metrics.get('recovery_count', 0),
-                'healing_attempts': self.healing_attempts if hasattr(self, 'healing_attempts') else 0,
+                "success_rate": self.metrics.get("success_rate", 0),
+                "error_rate": self.metrics.get("error_rate", 0),
+                "avg_processing_time": self.metrics.get("average_processing_time", 0),
+                "throughput": self.metrics.get("throughput", 0),
+                "health_score": self.health_score if hasattr(self, "health_score") else 70,
+                "cycles": self.cycles,
+                "errors": self.errors,
+                "recovery_count": self.metrics.get("recovery_count", 0),
+                "healing_attempts": (
+                    self.healing_attempts if hasattr(self, "healing_attempts") else 0
+                ),
             }
 
             # Calculate metrics
             awareness_sources = []
             if consciousness_data and isinstance(consciousness_data, dict):
-                for key in ['awareness', 'awareness_level', 'consciousness_level', 'self_awareness']:
+                for key in [
+                    "awareness",
+                    "awareness_level",
+                    "consciousness_level",
+                    "self_awareness",
+                ]:
                     if key in consciousness_data:
                         try:
                             val = float(consciousness_data[key])
@@ -1537,15 +1638,15 @@ class Brain:
                             pass
 
             if snapshot_data and isinstance(snapshot_data, dict):
-                brain_data = snapshot_data.get('brain', {})
-                health = brain_data.get('health', {}).get('score', 70)
+                brain_data = snapshot_data.get("brain", {})
+                health = brain_data.get("health", {}).get("score", 70)
                 awareness_sources.append(health / 100)
 
             if status_data and isinstance(status_data, dict):
-                success_rate = status_data.get('success_rate', 50) / 100
+                success_rate = status_data.get("success_rate", 50) / 100
                 awareness_sources.append(min(0.95, 0.3 + success_rate * 0.6))
 
-            health_score = performance_data.get('health_score', 70) / 100
+            health_score = performance_data.get("health_score", 70) / 100
             awareness_sources.append(health_score)
 
             if awareness_sources:
@@ -1557,48 +1658,63 @@ class Brain:
             # Emotion
             emotion_sources = []
             emotion_map = {
-                'BULLISH': 'EXCITED', 'BEARISH': 'CAUTIOUS', 'NEUTRAL': 'CALM',
-                'POSITIVE': 'OPTIMISTIC', 'NEGATIVE': 'ANXIOUS', 'VOLATILE': 'ALERT', 'STABLE': 'CALM'
+                "BULLISH": "EXCITED",
+                "BEARISH": "CAUTIOUS",
+                "NEUTRAL": "CALM",
+                "POSITIVE": "OPTIMISTIC",
+                "NEGATIVE": "ANXIOUS",
+                "VOLATILE": "ALERT",
+                "STABLE": "CALM",
             }
 
             if consciousness_data and isinstance(consciousness_data, dict):
-                for key in ['emotional_state', 'emotion', 'mood', 'state']:
+                for key in ["emotional_state", "emotion", "mood", "state"]:
                     if key in consciousness_data:
                         val = str(consciousness_data[key]).upper()
                         if val in emotion_map:
                             emotion_sources.append(emotion_map[val])
-                        elif val in ['CALM', 'FOCUSED', 'CURIOUS', 'ALERT', 'CONTEMPLATIVE', 'EXCITED', 'OPTIMISTIC', 'CAUTIOUS', 'ANXIOUS']:
+                        elif val in [
+                            "CALM",
+                            "FOCUSED",
+                            "CURIOUS",
+                            "ALERT",
+                            "CONTEMPLATIVE",
+                            "EXCITED",
+                            "OPTIMISTIC",
+                            "CAUTIOUS",
+                            "ANXIOUS",
+                        ]:
                             emotion_sources.append(val)
 
             if snapshot_data and isinstance(snapshot_data, dict):
-                forecast = snapshot_data.get('market', {}).get('forecast', 'NEUTRAL')
+                forecast = snapshot_data.get("market", {}).get("forecast", "NEUTRAL")
                 if forecast in emotion_map:
                     emotion_sources.append(emotion_map[forecast])
 
-            error_rate = performance_data.get('error_rate', 0)
+            error_rate = performance_data.get("error_rate", 0)
             if error_rate > 30:
-                emotion_sources.append('ANXIOUS')
+                emotion_sources.append("ANXIOUS")
             elif error_rate > 15:
-                emotion_sources.append('CAUTIOUS')
+                emotion_sources.append("CAUTIOUS")
             elif error_rate < 5:
-                emotion_sources.append('CONFIDENT')
+                emotion_sources.append("CONFIDENT")
 
-            cycles = performance_data.get('cycles', 0)
+            cycles = performance_data.get("cycles", 0)
             if cycles > 1000:
-                emotion_sources.append('CONTEMPLATIVE')
+                emotion_sources.append("CONTEMPLATIVE")
             elif cycles > 500:
-                emotion_sources.append('FOCUSED')
+                emotion_sources.append("FOCUSED")
 
             if emotion_sources:
                 emotion_counts = Counter(emotion_sources)
                 emotion = emotion_counts.most_common(1)[0][0]
             else:
-                emotion = 'CALM'
+                emotion = "CALM"
 
             # Curiosity
             curiosity_sources = []
             if consciousness_data and isinstance(consciousness_data, dict):
-                for key in ['curiosity', 'curiosity_level', 'learning_drive']:
+                for key in ["curiosity", "curiosity_level", "learning_drive"]:
                     if key in consciousness_data:
                         try:
                             val = float(consciousness_data[key])
@@ -1607,16 +1723,16 @@ class Brain:
                         except (ValueError, TypeError):
                             pass
 
-            if learning_stats.get('learning_active', False):
+            if learning_stats.get("learning_active", False):
                 curiosity_sources.append(0.7)
-            if learning_stats.get('learning_count', 0) > 10:
-                curiosity_sources.append(min(0.95, 0.5 + learning_stats['learning_count'] / 200))
+            if learning_stats.get("learning_count", 0) > 10:
+                curiosity_sources.append(min(0.95, 0.5 + learning_stats["learning_count"] / 200))
 
-            pred_count = learning_stats.get('prediction_count', 0)
+            pred_count = learning_stats.get("prediction_count", 0)
             if pred_count > 0:
                 curiosity_sources.append(min(0.9, 0.4 + pred_count / 100))
 
-            cycles = performance_data.get('cycles', 0)
+            cycles = performance_data.get("cycles", 0)
             curiosity_sources.append(min(0.85, 0.3 + (cycles % 100) / 150))
 
             if curiosity_sources:
@@ -1628,7 +1744,7 @@ class Brain:
             # Insight depth
             insight_sources = []
             if consciousness_data and isinstance(consciousness_data, dict):
-                for key in ['insight_depth', 'insight', 'depth', 'clarity']:
+                for key in ["insight_depth", "insight", "depth", "clarity"]:
                     if key in consciousness_data:
                         try:
                             val = float(consciousness_data[key])
@@ -1638,16 +1754,16 @@ class Brain:
                             pass
 
             if snapshot_data and isinstance(snapshot_data, dict):
-                confidence = snapshot_data.get('decision', {}).get('confidence', 0.5)
+                confidence = snapshot_data.get("decision", {}).get("confidence", 0.5)
                 insight_sources.append(confidence)
 
-            if hasattr(self, 'last_result') and self.last_result:
-                reasoning = self.last_result.get('reasoning', {})
+            if hasattr(self, "last_result") and self.last_result:
+                reasoning = self.last_result.get("reasoning", {})
                 if isinstance(reasoning, dict):
-                    conf = reasoning.get('confidence', 0.5)
+                    conf = reasoning.get("confidence", 0.5)
                     insight_sources.append(conf)
 
-            success_rate = performance_data.get('success_rate', 50) / 100
+            success_rate = performance_data.get("success_rate", 50) / 100
             insight_sources.append(0.3 + success_rate * 0.6)
 
             if insight_sources:
@@ -1659,7 +1775,7 @@ class Brain:
             # Resilience
             resilience_sources = []
             if consciousness_data and isinstance(consciousness_data, dict):
-                for key in ['resilience', 'resiliency', 'recovery']:
+                for key in ["resilience", "resiliency", "recovery"]:
                     if key in consciousness_data:
                         try:
                             val = float(consciousness_data[key])
@@ -1668,19 +1784,19 @@ class Brain:
                         except (ValueError, TypeError):
                             pass
 
-            recovery_count = performance_data.get('recovery_count', 0)
+            recovery_count = performance_data.get("recovery_count", 0)
             if recovery_count > 0:
                 resilience_sources.append(min(0.9, 0.5 + recovery_count / 20))
 
-            healing = performance_data.get('healing_attempts', 0)
-            errors = performance_data.get('errors', 1)
+            healing = performance_data.get("healing_attempts", 0)
+            errors = performance_data.get("errors", 1)
             if errors > 0 and healing > 0:
                 resilience_sources.append(min(0.95, 0.3 + healing / errors))
 
-            error_rate = performance_data.get('error_rate', 0)
+            error_rate = performance_data.get("error_rate", 0)
             resilience_sources.append(max(0.2, 0.9 - error_rate / 100))
 
-            if hasattr(self, 'auto_healing_enabled') and self.auto_healing_enabled:
+            if hasattr(self, "auto_healing_enabled") and self.auto_healing_enabled:
                 resilience_sources.append(0.8)
 
             if resilience_sources:
@@ -1692,7 +1808,7 @@ class Brain:
             # Focus
             focus_sources = []
             if consciousness_data and isinstance(consciousness_data, dict):
-                for key in ['focus', 'attention', 'concentration', 'focus_level']:
+                for key in ["focus", "attention", "concentration", "focus_level"]:
                     if key in consciousness_data:
                         try:
                             val = float(consciousness_data[key])
@@ -1701,14 +1817,14 @@ class Brain:
                         except (ValueError, TypeError):
                             pass
 
-            success_rate = performance_data.get('success_rate', 50) / 100
+            success_rate = performance_data.get("success_rate", 50) / 100
             focus_sources.append(0.3 + success_rate * 0.6)
 
-            throughput = performance_data.get('throughput', 0)
+            throughput = performance_data.get("throughput", 0)
             if throughput > 0:
                 focus_sources.append(min(0.95, 0.3 + throughput / 10))
 
-            error_rate = performance_data.get('error_rate', 0)
+            error_rate = performance_data.get("error_rate", 0)
             if error_rate < 10:
                 focus_sources.append(0.8)
             elif error_rate < 20:
@@ -1716,7 +1832,7 @@ class Brain:
             else:
                 focus_sources.append(0.4)
 
-            active_goals = goal_stats.get('active', 0)
+            active_goals = goal_stats.get("active", 0)
             if active_goals > 0:
                 focus_sources.append(min(0.9, 0.4 + active_goals / 10))
 
@@ -1740,13 +1856,13 @@ class Brain:
                 memory_stats=memory_stats,
                 learning_stats=learning_stats,
                 goal_stats=goal_stats,
-                performance_data=performance_data
+                performance_data=performance_data,
             )
 
-            confidence = (awareness * 0.3 + insight_depth * 0.3 + resilience * 0.2 + focus * 0.2)
+            confidence = awareness * 0.3 + insight_depth * 0.3 + resilience * 0.2 + focus * 0.2
             confidence = max(0.1, min(0.98, confidence))
 
-            error_rate = performance_data.get('error_rate', 0)
+            error_rate = performance_data.get("error_rate", 0)
             if error_rate < 5:
                 stability = "STABLE"
             elif error_rate < 15:
@@ -1764,24 +1880,24 @@ class Brain:
                 reflection_quality = "POOR"
 
             return {
-                'awareness': awareness,
-                'emotion': emotion,
-                'curiosity': curiosity,
-                'insight_depth': insight_depth,
-                'resilience': resilience,
-                'focus': focus,
-                'insights': insights[:8],
-                'source': 'comprehensive',
-                'confidence': confidence,
-                'stability': stability,
-                'reflection_quality': reflection_quality,
-                'timestamp': datetime.now().isoformat(),
-                'metadata': {
-                    'cycles': performance_data.get('cycles', 0),
-                    'success_rate': performance_data.get('success_rate', 0),
-                    'health_score': performance_data.get('health_score', 70),
-                    'modules_available': learning_stats.get('modules_available', 0),
-                }
+                "awareness": awareness,
+                "emotion": emotion,
+                "curiosity": curiosity,
+                "insight_depth": insight_depth,
+                "resilience": resilience,
+                "focus": focus,
+                "insights": insights[:8],
+                "source": "comprehensive",
+                "confidence": confidence,
+                "stability": stability,
+                "reflection_quality": reflection_quality,
+                "timestamp": datetime.now().isoformat(),
+                "metadata": {
+                    "cycles": performance_data.get("cycles", 0),
+                    "success_rate": performance_data.get("success_rate", 0),
+                    "health_score": performance_data.get("health_score", 70),
+                    "modules_available": learning_stats.get("modules_available", 0),
+                },
             }
 
         except Exception as e:
@@ -1802,101 +1918,143 @@ class Brain:
         memory_stats: Dict[str, Any],
         learning_stats: Dict[str, Any],
         goal_stats: Dict[str, Any],
-        performance_data: Dict[str, Any]
+        performance_data: Dict[str, Any],
     ) -> List[str]:
         insights = []
 
         if awareness >= 0.8:
-            insights.append(f"🧠 High self-awareness ({awareness*100:.0f}%) — system has excellent understanding of its state and performance.")
+            insights.append(
+                f"🧠 High self-awareness ({awareness*100:.0f}%) — system has excellent understanding of its state and performance."
+            )
         elif awareness >= 0.5:
-            insights.append(f"🧠 Moderate self-awareness ({awareness*100:.0f}%) — system is aware but could improve monitoring.")
+            insights.append(
+                f"🧠 Moderate self-awareness ({awareness*100:.0f}%) — system is aware but could improve monitoring."
+            )
         else:
-            insights.append(f"🧠 Low self-awareness ({awareness*100:.0f}%) — system needs better state monitoring.")
+            insights.append(
+                f"🧠 Low self-awareness ({awareness*100:.0f}%) — system needs better state monitoring."
+            )
 
         emotion_messages = {
-            'CALM': "😌 Emotion: CALM — system is operating in a stable, balanced state.",
-            'FOCUSED': "🧘 Emotion: FOCUSED — system is concentrating on current tasks.",
-            'CURIOUS': "🤔 Emotion: CURIOUS — system is actively seeking new patterns and information.",
-            'ALERT': "⚡ Emotion: ALERT — system is monitoring for potential changes.",
-            'CONTEMPLATIVE': "🧠 Emotion: CONTEMPLATIVE — system is reflecting and analyzing deeply.",
-            'EXCITED': "🚀 Emotion: EXCITED — system is responding positively to market conditions.",
-            'OPTIMISTIC': "🌟 Emotion: OPTIMISTIC — system has a positive outlook.",
-            'CAUTIOUS': "⚠️ Emotion: CAUTIOUS — system is being careful and risk-aware.",
-            'ANXIOUS': "😰 Emotion: ANXIOUS — system detected concerning patterns.",
-            'CONFIDENT': "💪 Emotion: CONFIDENT — system is assured in its analysis."
+            "CALM": "😌 Emotion: CALM — system is operating in a stable, balanced state.",
+            "FOCUSED": "🧘 Emotion: FOCUSED — system is concentrating on current tasks.",
+            "CURIOUS": "🤔 Emotion: CURIOUS — system is actively seeking new patterns and information.",
+            "ALERT": "⚡ Emotion: ALERT — system is monitoring for potential changes.",
+            "CONTEMPLATIVE": "🧠 Emotion: CONTEMPLATIVE — system is reflecting and analyzing deeply.",
+            "EXCITED": "🚀 Emotion: EXCITED — system is responding positively to market conditions.",
+            "OPTIMISTIC": "🌟 Emotion: OPTIMISTIC — system has a positive outlook.",
+            "CAUTIOUS": "⚠️ Emotion: CAUTIOUS — system is being careful and risk-aware.",
+            "ANXIOUS": "😰 Emotion: ANXIOUS — system detected concerning patterns.",
+            "CONFIDENT": "💪 Emotion: CONFIDENT — system is assured in its analysis.",
         }
         insights.append(emotion_messages.get(emotion, f"💭 Emotion: {emotion}"))
 
         if curiosity >= 0.7:
-            insights.append(f"🔍 High curiosity ({curiosity*100:.0f}%) — system is actively exploring and learning from data.")
+            insights.append(
+                f"🔍 High curiosity ({curiosity*100:.0f}%) — system is actively exploring and learning from data."
+            )
         elif curiosity >= 0.4:
-            insights.append(f"🔍 Moderate curiosity ({curiosity*100:.0f}%) — system is learning steadily.")
+            insights.append(
+                f"🔍 Moderate curiosity ({curiosity*100:.0f}%) — system is learning steadily."
+            )
         else:
-            insights.append(f"🔍 Low curiosity ({curiosity*100:.0f}%) — system may need more data variety.")
+            insights.append(
+                f"🔍 Low curiosity ({curiosity*100:.0f}%) — system may need more data variety."
+            )
 
         if insight_depth >= 0.7:
-            insights.append(f"📊 Deep analytical clarity ({insight_depth*100:.0f}%) — system is generating high-quality insights.")
+            insights.append(
+                f"📊 Deep analytical clarity ({insight_depth*100:.0f}%) — system is generating high-quality insights."
+            )
         elif insight_depth >= 0.4:
-            insights.append(f"📊 Moderate analytical clarity ({insight_depth*100:.0f}%) — insights are forming.")
+            insights.append(
+                f"📊 Moderate analytical clarity ({insight_depth*100:.0f}%) — insights are forming."
+            )
         else:
-            insights.append(f"📊 Limited analytical clarity ({insight_depth*100:.0f}%) — need more data for better insights.")
+            insights.append(
+                f"📊 Limited analytical clarity ({insight_depth*100:.0f}%) — need more data for better insights."
+            )
 
         if resilience >= 0.7:
-            insights.append(f"🛡️ Strong resilience ({resilience*100:.0f}%) — system recovers well from issues.")
+            insights.append(
+                f"🛡️ Strong resilience ({resilience*100:.0f}%) — system recovers well from issues."
+            )
         elif resilience >= 0.4:
-            insights.append(f"🛡️ Moderate resilience ({resilience*100:.0f}%) — system can handle some disruptions.")
+            insights.append(
+                f"🛡️ Moderate resilience ({resilience*100:.0f}%) — system can handle some disruptions."
+            )
         else:
-            insights.append(f"🛡️ Low resilience ({resilience*100:.0f}%) — system needs better recovery mechanisms.")
+            insights.append(
+                f"🛡️ Low resilience ({resilience*100:.0f}%) — system needs better recovery mechanisms."
+            )
 
         if focus >= 0.7:
-            insights.append(f"🎯 Strong focus ({focus*100:.0f}%) — system is concentrating effectively on key signals.")
+            insights.append(
+                f"🎯 Strong focus ({focus*100:.0f}%) — system is concentrating effectively on key signals."
+            )
         elif focus >= 0.4:
-            insights.append(f"🎯 Moderate focus ({focus*100:.0f}%) — system is maintaining attention.")
+            insights.append(
+                f"🎯 Moderate focus ({focus*100:.0f}%) — system is maintaining attention."
+            )
         else:
-            insights.append(f"🎯 Low focus ({focus*100:.0f}%) — system is distracted or overloaded.")
+            insights.append(
+                f"🎯 Low focus ({focus*100:.0f}%) — system is distracted or overloaded."
+            )
 
-        success_rate = performance_data.get('success_rate', 0)
-        error_rate = performance_data.get('error_rate', 0)
-        cycles = performance_data.get('cycles', 0)
+        success_rate = performance_data.get("success_rate", 0)
+        error_rate = performance_data.get("error_rate", 0)
+        cycles = performance_data.get("cycles", 0)
 
         if success_rate >= 80:
-            insights.append(f"📈 Excellent performance — {success_rate:.1f}% success rate over {cycles} cycles.")
+            insights.append(
+                f"📈 Excellent performance — {success_rate:.1f}% success rate over {cycles} cycles."
+            )
         elif success_rate >= 50:
-            insights.append(f"📈 Good performance — {success_rate:.1f}% success rate over {cycles} cycles.")
+            insights.append(
+                f"📈 Good performance — {success_rate:.1f}% success rate over {cycles} cycles."
+            )
         else:
-            insights.append(f"📈 Performance needs improvement — {success_rate:.1f}% success rate, {error_rate:.1f}% error rate.")
+            insights.append(
+                f"📈 Performance needs improvement — {success_rate:.1f}% success rate, {error_rate:.1f}% error rate."
+            )
 
-        learning_count = learning_stats.get('learning_count', 0)
-        pred_count = learning_stats.get('prediction_count', 0)
-        dec_count = learning_stats.get('decision_count', 0)
+        learning_count = learning_stats.get("learning_count", 0)
+        pred_count = learning_stats.get("prediction_count", 0)
+        dec_count = learning_stats.get("decision_count", 0)
 
         if learning_count > 0 or pred_count > 0 or dec_count > 0:
-            insights.append(f"📚 Learning active — {learning_count} learning cycles, {pred_count} predictions, {dec_count} decisions.")
+            insights.append(
+                f"📚 Learning active — {learning_count} learning cycles, {pred_count} predictions, {dec_count} decisions."
+            )
 
-        if learning_stats.get('learning_active', False):
+        if learning_stats.get("learning_active", False):
             insights.append("🧠 Learning engine is ONLINE and processing.")
         else:
             insights.append("🧠 Learning engine is OFFLINE — limited learning capability.")
 
-        short = memory_stats.get('short_term', 0)
-        long = memory_stats.get('long_term', 0)
-        working = memory_stats.get('working', 0)
+        short = memory_stats.get("short_term", 0)
+        long = memory_stats.get("long_term", 0)
+        working = memory_stats.get("working", 0)
 
         if short > 0 or long > 0:
-            insights.append(f"💾 Memory status — Short-term: {short}, Long-term: {long}, Working: {working}.")
+            insights.append(
+                f"💾 Memory status — Short-term: {short}, Long-term: {long}, Working: {working}."
+            )
 
-        active = goal_stats.get('active', 0)
-        completed = goal_stats.get('completed', 0)
-        pending = goal_stats.get('pending', 0)
-        total = goal_stats.get('total', 0)
+        active = goal_stats.get("active", 0)
+        completed = goal_stats.get("completed", 0)
+        pending = goal_stats.get("pending", 0)
+        total = goal_stats.get("total", 0)
 
         if total > 0:
             if completed > 0:
-                insights.append(f"🎯 Goals — {completed} completed, {active} active, {pending} pending.")
+                insights.append(
+                    f"🎯 Goals — {completed} completed, {active} active, {pending} pending."
+                )
             else:
                 insights.append(f"🎯 Active goals: {active} — working towards completion.")
 
-        health = performance_data.get('health_score', 70)
+        health = performance_data.get("health_score", 70)
         if health >= 80:
             insights.append(f"❤️ System health: EXCELLENT ({health:.1f}%)")
         elif health >= 60:
@@ -1907,38 +2065,50 @@ class Brain:
             insights.append(f"❤️ System health: POOR ({health:.1f}%) — attention required!")
 
         if snapshot_data and isinstance(snapshot_data, dict):
-            market = snapshot_data.get('market', {})
+            market = snapshot_data.get("market", {})
             if market:
-                forecast = market.get('forecast', 'NEUTRAL')
-                market_confidence = market.get('confidence', 0)
-                anomaly = market.get('anomaly', 'NORMAL')
+                forecast = market.get("forecast", "NEUTRAL")
+                market_confidence = market.get("confidence", 0)
+                anomaly = market.get("anomaly", "NORMAL")
 
-                if anomaly == 'CRITICAL':
-                    insights.append(f"🚨 Market CRITICAL anomaly detected — immediate attention required!")
-                elif anomaly == 'WARNING':
-                    insights.append(f"⚠️ Market warning — {forecast} forecast with {market_confidence:.0f}% confidence.")
+                if anomaly == "CRITICAL":
+                    insights.append(
+                        f"🚨 Market CRITICAL anomaly detected — immediate attention required!"
+                    )
+                elif anomaly == "WARNING":
+                    insights.append(
+                        f"⚠️ Market warning — {forecast} forecast with {market_confidence:.0f}% confidence."
+                    )
                 else:
-                    insights.append(f"📊 Market status — {forecast} forecast with {market_confidence:.0f}% confidence.")
+                    insights.append(
+                        f"📊 Market status — {forecast} forecast with {market_confidence:.0f}% confidence."
+                    )
 
-        recovery_count = performance_data.get('recovery_count', 0)
-        healing = performance_data.get('healing_attempts', 0)
+        recovery_count = performance_data.get("recovery_count", 0)
+        healing = performance_data.get("healing_attempts", 0)
 
         if recovery_count > 0 or healing > 0:
             if recovery_count > 5:
-                insights.append(f"🔄 Frequent recovery events ({recovery_count}) — system may need optimization.")
+                insights.append(
+                    f"🔄 Frequent recovery events ({recovery_count}) — system may need optimization."
+                )
             else:
                 insights.append(f"🔄 Recovery: {recovery_count} successful recoveries.")
 
-        modules_available = learning_stats.get('modules_available', 0)
+        modules_available = learning_stats.get("modules_available", 0)
         if modules_available > 0:
             insights.append(f"⚙️ {modules_available} modules available for cognitive processing.")
 
         if awareness > 0.7 and insight_depth > 0.7 and focus > 0.7:
-            insights.append("🌟 Overall: System is in excellent cognitive state, ready for complex decisions.")
+            insights.append(
+                "🌟 Overall: System is in excellent cognitive state, ready for complex decisions."
+            )
         elif awareness > 0.5 and insight_depth > 0.5:
             insights.append("📈 Overall: System is functioning well, with room for improvement.")
         else:
-            insights.append("🔄 Overall: System is in development phase — building cognitive capacity.")
+            insights.append(
+                "🔄 Overall: System is in development phase — building cognitive capacity."
+            )
 
         seen = set()
         unique_insights = []
@@ -1950,27 +2120,36 @@ class Brain:
         return unique_insights[:8]
 
     def _generate_reflection_fallback(self) -> Dict[str, Any]:
-        emotions = ['CALM', 'FOCUSED', 'CURIOUS', 'ALERT', 'CONTEMPLATIVE', 'EXCITED', 'OPTIMISTIC', 'CAUTIOUS']
+        emotions = [
+            "CALM",
+            "FOCUSED",
+            "CURIOUS",
+            "ALERT",
+            "CONTEMPLATIVE",
+            "EXCITED",
+            "OPTIMISTIC",
+            "CAUTIOUS",
+        ]
         return {
-            'awareness': random.uniform(0.4, 0.8),
-            'emotion': random.choice(emotions),
-            'curiosity': random.uniform(0.3, 0.7),
-            'insight_depth': random.uniform(0.3, 0.7),
-            'resilience': random.uniform(0.4, 0.8),
-            'focus': random.uniform(0.3, 0.7),
-            'insights': [
+            "awareness": random.uniform(0.4, 0.8),
+            "emotion": random.choice(emotions),
+            "curiosity": random.uniform(0.3, 0.7),
+            "insight_depth": random.uniform(0.3, 0.7),
+            "resilience": random.uniform(0.4, 0.8),
+            "focus": random.uniform(0.3, 0.7),
+            "insights": [
                 "⚠️ System is operating in fallback reflection mode.",
                 "🔧 Some cognitive modules may be unavailable.",
                 "📡 Using simulated reflection data — check brain health.",
                 "🔄 Core systems are active but limited.",
                 "💡 Recommend checking consciousness module.",
             ],
-            'source': 'fallback',
-            'confidence': 0.3,
-            'stability': 'VOLATILE',
-            'reflection_quality': 'POOR',
-            'timestamp': datetime.now().isoformat(),
-            'metadata': {'error': True, 'fallback': True}
+            "source": "fallback",
+            "confidence": 0.3,
+            "stability": "VOLATILE",
+            "reflection_quality": "POOR",
+            "timestamp": datetime.now().isoformat(),
+            "metadata": {"error": True, "fallback": True},
         }
 
     # ============================================================
@@ -1983,9 +2162,9 @@ class Brain:
                 base = self.reflection()
                 return {
                     **base,
-                    'ai_enhanced': False,
-                    'ai_status': 'disabled',
-                    'ai_message': 'DeepSeek AI is not enabled. Set DEEPSEEK_ENABLED=true and provide API key.'
+                    "ai_enhanced": False,
+                    "ai_status": "disabled",
+                    "ai_message": "DeepSeek AI is not enabled. Set DEEPSEEK_ENABLED=true and provide API key.",
                 }
 
             base_reflection = self.reflection()
@@ -2023,93 +2202,107 @@ Berikan analisis yang jernih, reflektif, dan actionable.
                 context=context,
                 system_prompt="reflective",
                 temperature=0.7,
-                max_tokens=1024
+                max_tokens=1024,
             )
 
             ai_insights = self._generate_ai_insights(base_reflection, ai_reflection)
 
             return {
                 **base_reflection,
-                'ai_enhanced': True,
-                'ai_status': 'success',
-                'ai_reflection': ai_reflection,
-                'ai_insights': ai_insights,
-                'ai_timestamp': datetime.now().isoformat(),
-                'metadata': {
-                    **base_reflection.get('metadata', {}),
-                    'ai_enhanced_at': datetime.now().isoformat(),
-                    'ai_model': deepseek_ai.model,
-                }
+                "ai_enhanced": True,
+                "ai_status": "success",
+                "ai_reflection": ai_reflection,
+                "ai_insights": ai_insights,
+                "ai_timestamp": datetime.now().isoformat(),
+                "metadata": {
+                    **base_reflection.get("metadata", {}),
+                    "ai_enhanced_at": datetime.now().isoformat(),
+                    "ai_model": deepseek_ai.model,
+                },
             }
 
         except ImportError:
             base = self.reflection()
             return {
                 **base,
-                'ai_enhanced': False,
-                'ai_status': 'not_available',
-                'ai_message': 'DeepSeek module not available.'
+                "ai_enhanced": False,
+                "ai_status": "not_available",
+                "ai_message": "DeepSeek module not available.",
             }
         except Exception as e:
             logger.error(f"AI reflection error: {e}")
             base = self.reflection()
-            return {
-                **base,
-                'ai_enhanced': False,
-                'ai_status': 'error',
-                'ai_error': str(e)
-            }
+            return {**base, "ai_enhanced": False, "ai_status": "error", "ai_error": str(e)}
 
     def _generate_ai_insights(self, base_reflection: Dict, ai_reflection: str) -> List[str]:
         insights = []
 
-        awareness = base_reflection.get('awareness', 0.5)
+        awareness = base_reflection.get("awareness", 0.5)
         if awareness > 0.7:
-            insights.append(f"🧠 AI Perspective: System shows strong self-awareness ({awareness*100:.0f}%). Ready for complex decisions.")
+            insights.append(
+                f"🧠 AI Perspective: System shows strong self-awareness ({awareness*100:.0f}%). Ready for complex decisions."
+            )
         elif awareness > 0.4:
-            insights.append(f"🧠 AI Perspective: Moderate awareness ({awareness*100:.0f}%). Improving monitoring recommended.")
+            insights.append(
+                f"🧠 AI Perspective: Moderate awareness ({awareness*100:.0f}%). Improving monitoring recommended."
+            )
         else:
-            insights.append(f"🧠 AI Perspective: Low awareness ({awareness*100:.0f}%). Focus on state monitoring.")
+            insights.append(
+                f"🧠 AI Perspective: Low awareness ({awareness*100:.0f}%). Focus on state monitoring."
+            )
 
-        emotion = base_reflection.get('emotion', 'Unknown')
+        emotion = base_reflection.get("emotion", "Unknown")
         emotion_insights = {
-            'CALM': "😌 AI Observation: Calm state ideal for objective analysis.",
-            'FOCUSED': "🎯 AI Observation: Focused state optimal for execution.",
-            'CURIOUS': "🔍 AI Observation: Curious state good for pattern discovery.",
-            'ALERT': "⚡ AI Observation: Alert state indicates active monitoring.",
-            'CONTEMPLATIVE': "🧠 AI Observation: Contemplative state good for strategy formulation.",
-            'EXCITED': "🚀 AI Observation: Excited state may indicate high conviction.",
-            'OPTIMISTIC': "🌟 AI Observation: Optimistic state aligns with bullish markets.",
-            'CAUTIOUS': "⚠️ AI Observation: Cautious state appropriate for risk management.",
-            'ANXIOUS': "😰 AI Observation: Anxious state warrants attention to risk.",
-            'CONFIDENT': "💪 AI Observation: Confident state supports decisive action."
+            "CALM": "😌 AI Observation: Calm state ideal for objective analysis.",
+            "FOCUSED": "🎯 AI Observation: Focused state optimal for execution.",
+            "CURIOUS": "🔍 AI Observation: Curious state good for pattern discovery.",
+            "ALERT": "⚡ AI Observation: Alert state indicates active monitoring.",
+            "CONTEMPLATIVE": "🧠 AI Observation: Contemplative state good for strategy formulation.",
+            "EXCITED": "🚀 AI Observation: Excited state may indicate high conviction.",
+            "OPTIMISTIC": "🌟 AI Observation: Optimistic state aligns with bullish markets.",
+            "CAUTIOUS": "⚠️ AI Observation: Cautious state appropriate for risk management.",
+            "ANXIOUS": "😰 AI Observation: Anxious state warrants attention to risk.",
+            "CONFIDENT": "💪 AI Observation: Confident state supports decisive action.",
         }
         insights.append(emotion_insights.get(emotion, f"💭 AI Observation: Emotion: {emotion}"))
 
-        curiosity = base_reflection.get('curiosity', 0.5)
+        curiosity = base_reflection.get("curiosity", 0.5)
         if curiosity > 0.6:
-            insights.append(f"🔬 AI Observation: High curiosity ({curiosity*100:.0f}%) - system is actively learning.")
+            insights.append(
+                f"🔬 AI Observation: High curiosity ({curiosity*100:.0f}%) - system is actively learning."
+            )
         else:
-            insights.append(f"🔬 AI Observation: Curiosity at {curiosity*100:.0f}% - consider exposing to more data variety.")
+            insights.append(
+                f"🔬 AI Observation: Curiosity at {curiosity*100:.0f}% - consider exposing to more data variety."
+            )
 
-        stability = base_reflection.get('stability', 'Unknown')
-        if stability == 'STABLE':
+        stability = base_reflection.get("stability", "Unknown")
+        if stability == "STABLE":
             insights.append("📊 AI Observation: Stable state - good for consistent performance.")
-        elif stability == 'ADAPTING':
-            insights.append("📊 AI Observation: Adapting state - system is adjusting to new conditions.")
+        elif stability == "ADAPTING":
+            insights.append(
+                "📊 AI Observation: Adapting state - system is adjusting to new conditions."
+            )
         else:
             insights.append("📊 AI Observation: Volatile state - monitor closely for recovery.")
 
-        confidence = base_reflection.get('confidence', 0.5)
+        confidence = base_reflection.get("confidence", 0.5)
         if confidence > 0.6:
-            insights.append(f"📈 AI Observation: Confidence at {confidence*100:.0f}% - system is ready for action.")
+            insights.append(
+                f"📈 AI Observation: Confidence at {confidence*100:.0f}% - system is ready for action."
+            )
         else:
-            insights.append(f"📈 AI Observation: Confidence at {confidence*100:.0f}% - consider more data before major decisions.")
+            insights.append(
+                f"📈 AI Observation: Confidence at {confidence*100:.0f}% - consider more data before major decisions."
+            )
 
         if ai_reflection and len(ai_reflection) > 50:
-            sentences = ai_reflection.split('.')
+            sentences = ai_reflection.split(".")
             for sentence in sentences:
-                if len(sentence) > 20 and any(word in sentence.lower() for word in ['rekomendasi', 'sarankan', 'saran', 'action', 'tindakan']):
+                if len(sentence) > 20 and any(
+                    word in sentence.lower()
+                    for word in ["rekomendasi", "sarankan", "saran", "action", "tindakan"]
+                ):
                     insights.append(f"💡 AI Recommendation: {sentence.strip()}.")
                     break
             else:
@@ -2122,12 +2315,14 @@ Berikan analisis yang jernih, reflektif, dan actionable.
 
     def get_ai_status(self) -> Dict[str, Any]:
         return {
-            'ai_enabled': DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED,
-            'ai_available': DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED and deepseek_ai is not None,
-            'ai_model': deepseek_ai.model if DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED else None,
-            'ai_version': getattr(deepseek_ai, 'VERSION', 'unknown') if DEEPSEEK_AVAILABLE else None,
-            'reflection_version': self.version,
-            'timestamp': datetime.now().isoformat()
+            "ai_enabled": DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED,
+            "ai_available": DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED and deepseek_ai is not None,
+            "ai_model": deepseek_ai.model if DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED else None,
+            "ai_version": (
+                getattr(deepseek_ai, "VERSION", "unknown") if DEEPSEEK_AVAILABLE else None
+            ),
+            "reflection_version": self.version,
+            "timestamp": datetime.now().isoformat(),
         }
 
     # ============================================================
@@ -2220,7 +2415,7 @@ Berikan analisis yang jernih, reflektif, dan actionable.
             healed = True
 
         if len(self.short_term_memory) >= self.short_term_limit:
-            self.short_term_memory = self.short_term_memory[-self.short_term_limit//2:]
+            self.short_term_memory = self.short_term_memory[-self.short_term_limit // 2 :]
             healing_actions.append("Cleared short-term memory")
             healed = True
 
@@ -2230,7 +2425,7 @@ Berikan analisis yang jernih, reflektif, dan actionable.
             healed = True
 
         if len(self.long_term_memory) > self.long_term_limit * 1.2:
-            self.long_term_memory = self.long_term_memory[-self.long_term_limit:]
+            self.long_term_memory = self.long_term_memory[-self.long_term_limit :]
             healing_actions.append("Trimmed long-term memory")
             healed = True
 
@@ -2239,14 +2434,16 @@ Berikan analisis yang jernih, reflektif, dan actionable.
             healing_actions.append("Re-initialized modules")
             healed = True
 
-        self.healing_history.append({
-            "timestamp": datetime.now().isoformat(),
-            "actions": healing_actions,
-            "attempt": self.healing_attempts,
-            "success": healed,
-            "state_before": self.state.value,
-            "state_after": self.state.value if healed else self.state.value,
-        })
+        self.healing_history.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "actions": healing_actions,
+                "attempt": self.healing_attempts,
+                "success": healed,
+                "state_before": self.state.value,
+                "state_after": self.state.value if healed else self.state.value,
+            }
+        )
 
         if healed:
             logger.info("Auto-healing applied: %s", ", ".join(healing_actions))
@@ -2276,13 +2473,15 @@ Berikan analisis yang jernih, reflektif, dan actionable.
         self.metrics["success_rate"] = min(100.0, (self.successful_cycles / total) * 100)
 
         if self.metrics["total_processing_time"] > 0:
-            self.metrics["throughput"] = self.metrics["total_cycles"] / self.metrics["total_processing_time"]
+            self.metrics["throughput"] = (
+                self.metrics["total_cycles"] / self.metrics["total_processing_time"]
+            )
 
     def _store_history(self, state: CognitiveState) -> None:
         entry = self._cognitive_state_to_dict(state)
         self.history.append(entry)
         if len(self.history) > self.history_limit:
-            self.history = self.history[-self.history_limit:]
+            self.history = self.history[-self.history_limit :]
 
     def _update_goals(self, state: CognitiveState) -> None:
         for goal in self.goals:
@@ -2495,16 +2694,28 @@ Berikan analisis yang jernih, reflektif, dan actionable.
             components["error_rate"] = self.metrics["error_rate"] < 10.0
             components["processing_time"] = self.metrics["average_processing_time"] < 2.0
             components["state_healthy"] = self.state not in [BrainState.ERROR, BrainState.DEGRADED]
-            components["has_brain_instance"] = hasattr(self, 'brain_instance') and self.brain_instance is self
+            components["has_brain_instance"] = (
+                hasattr(self, "brain_instance") and self.brain_instance is self
+            )
 
             healthy = all(components.values())
 
             health_score = 100.0
 
-            unavailable = sum(1 for k, v in components.items() if not v and k not in [
-                "short_term_memory", "long_term_memory", "error_rate",
-                "processing_time", "state_healthy", "has_brain_instance"
-            ])
+            unavailable = sum(
+                1
+                for k, v in components.items()
+                if not v
+                and k
+                not in [
+                    "short_term_memory",
+                    "long_term_memory",
+                    "error_rate",
+                    "processing_time",
+                    "state_healthy",
+                    "has_brain_instance",
+                ]
+            )
             health_score -= unavailable * 5
 
             if self.metrics["error_rate"] > 20:
@@ -2564,7 +2775,11 @@ Berikan analisis yang jernih, reflektif, dan actionable.
             "available_list": available,
             "unavailable_list": unavailable,
             "display": display_items,
-            "health_percentage": round((len(available) / len(self.modules_available)) * 100, 1) if self.modules_available else 0,
+            "health_percentage": (
+                round((len(available) / len(self.modules_available)) * 100, 1)
+                if self.modules_available
+                else 0
+            ),
         }
 
     def print_module_status(self) -> None:
@@ -2580,14 +2795,14 @@ Berikan analisis yang jernih, reflektif, dan actionable.
         print(f"  Health        : {status['health_percentage']}%")
         print("-" * 70)
 
-        if status['available_list']:
+        if status["available_list"]:
             print("  [✓] Available:")
-            for name in sorted(status['available_list']):
+            for name in sorted(status["available_list"]):
                 print(f"      - {name}")
 
-        if status['unavailable_list']:
+        if status["unavailable_list"]:
             print("  [✗] Unavailable:")
-            for name in sorted(status['unavailable_list']):
+            for name in sorted(status["unavailable_list"]):
                 print(f"      - {name}")
 
         print("=" * 70)
@@ -2691,6 +2906,7 @@ brain = Brain()
 # SHORTCUT FUNCTIONS
 # ============================================================
 
+
 def observe(data: Dict[str, Any]) -> Dict[str, Any]:
     return brain.observe(data)
 
@@ -2763,6 +2979,7 @@ def get_ai_status() -> Dict[str, Any]:
 # SELF TEST
 # ============================================================
 
+
 def self_test() -> Dict[str, Any]:
     print()
     print("=" * 70)
@@ -2790,7 +3007,7 @@ def self_test() -> Dict[str, Any]:
     print("\n2. Testing brain_instance...")
     try:
         test_brain = Brain()
-        if hasattr(test_brain, 'brain_instance') and test_brain.brain_instance is test_brain:
+        if hasattr(test_brain, "brain_instance") and test_brain.brain_instance is test_brain:
             results["brain_instance"] = {"status": "PASS"}
             tests_passed += 1
             print("   ✅ brain_instance test passed")
@@ -2807,6 +3024,7 @@ def self_test() -> Dict[str, Any]:
     print("\n3. Testing AI integration...")
     try:
         from core.deepseek import deepseek_ai
+
         if DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED:
             results["ai_integration"] = {"status": "PASS", "message": "AI is enabled"}
             tests_passed += 1
@@ -2908,8 +3126,7 @@ def self_test() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+        level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
     )
 
     result = self_test()
@@ -2962,10 +3179,12 @@ __all__ = [
 # Ditambahkan untuk integrasi DeepSeek — override method lama
 # ============================================================
 
+
 def _generate_reason_with_ai_v2(self, decision):
     """Generate reason via DeepSeek. Fallback ke template kalau error. Cache 5 menit."""
     try:
         from core.deepseek import deepseek_ai as _ds
+
         if not (DEEPSEEK_AVAILABLE and DEEPSEEK_ENABLED and _ds):
             return decision.get("reason", "")
     except ImportError:
@@ -2977,6 +3196,7 @@ def _generate_reason_with_ai_v2(self, decision):
         self._ai_reason_stats = {"hits": 0, "misses": 0, "errors": 0}
 
     import hashlib, json as _json, time as _time
+
     cache_input = {
         "action": decision.get("action"),
         "confidence": decision.get("confidence"),
@@ -2986,7 +3206,9 @@ def _generate_reason_with_ai_v2(self, decision):
         "conflicts": decision.get("conflicts"),
     }
     try:
-        key = hashlib.md5(_json.dumps(cache_input, sort_keys=True, default=str).encode()).hexdigest()[:16]
+        key = hashlib.md5(
+            _json.dumps(cache_input, sort_keys=True, default=str).encode()
+        ).hexdigest()[:16]
     except Exception:
         key = str(id(cache_input))
 
@@ -3046,6 +3268,7 @@ Brain._get_ai_reason_stats = _get_ai_reason_stats_v2
 
 _orig_decide = Brain._decide
 
+
 def _decide_with_ai_v2(self, state):
     result = _orig_decide(self, state)
     if isinstance(result, dict):
@@ -3069,20 +3292,22 @@ def _decide_with_ai_v2(self, state):
 # MONKEY PATCH: _feed_learning_engines v2
 # ============================================================
 
+
 def _feed_learning_engines_v2(self, state):
     """Feed learning engines dari setiap cycle."""
     try:
         # === ADAPTIVE ===
         try:
             from core.learning import adaptive_engine
+
             if adaptive_engine is not None:
-                decision = getattr(state, 'decision', None) or {}
+                decision = getattr(state, "decision", None) or {}
                 action = decision.get("action", "HOLD") if isinstance(decision, dict) else "HOLD"
                 confidence = decision.get("confidence", 50) if isinstance(decision, dict) else 50
-                
+
                 success = bool(action and action not in ("ERROR", None))
                 reward = (confidence / 100.0) if confidence else 0.5
-                
+
                 adaptive_engine.update(
                     key=f"action_{action.lower()}",
                     success=success,
@@ -3092,12 +3317,13 @@ def _feed_learning_engines_v2(self, state):
                 )
         except Exception as e:
             logger.debug(f"adaptive feed error: {e}")
-        
+
         # === CURIOSITY ===
         try:
             from core.learning import curiosity_engine
+
             if curiosity_engine is not None:
-                perception = getattr(state, 'perception', None) or {}
+                perception = getattr(state, "perception", None) or {}
                 concepts = perception.get("concepts", []) if isinstance(perception, dict) else []
                 for concept in concepts[:2]:
                     try:
@@ -3110,14 +3336,15 @@ def _feed_learning_engines_v2(self, state):
                         logger.debug(f"curiosity ask error: {e}")
         except Exception as e:
             logger.debug(f"curiosity feed error: {e}")
-        
+
         # === KNOWLEDGE GRAPH ===
         try:
             from core.learning import knowledge_graph
+
             if knowledge_graph is not None:
-                perception = getattr(state, 'perception', None) or {}
+                perception = getattr(state, "perception", None) or {}
                 concepts = perception.get("concepts", []) if isinstance(perception, dict) else []
-                
+
                 for concept in concepts[:3]:
                     try:
                         knowledge_graph.add_node(
@@ -3126,7 +3353,7 @@ def _feed_learning_engines_v2(self, state):
                         )
                     except Exception as e:
                         logger.debug(f"graph add_node error: {e}")
-                
+
                 if len(concepts) >= 2:
                     try:
                         knowledge_graph.connect(
@@ -3138,12 +3365,13 @@ def _feed_learning_engines_v2(self, state):
                         logger.debug(f"graph connect error: {e}")
         except Exception as e:
             logger.debug(f"graph feed error: {e}")
-        
+
         # === GOAL MANAGER ===
         try:
             from core.learning import goal_manager
+
             if goal_manager is not None:
-                decision = getattr(state, 'decision', None) or {}
+                decision = getattr(state, "decision", None) or {}
                 conflicts = decision.get("conflicts", {}) if isinstance(decision, dict) else {}
                 if isinstance(conflicts, dict) and conflicts.get("detected"):
                     try:
@@ -3157,19 +3385,20 @@ def _feed_learning_engines_v2(self, state):
                         logger.debug(f"goal create error: {e}")
         except Exception as e:
             logger.debug(f"goal feed error: {e}")
-        
+
         # === EVALUATOR ===
         try:
             from core.learning import evaluator_engine
+
             if evaluator_engine is not None:
-                decision = getattr(state, 'decision', None) or {}
-                reasoning = getattr(state, 'reasoning', None) or {}
-                
+                decision = getattr(state, "decision", None) or {}
+                reasoning = getattr(state, "reasoning", None) or {}
+
                 prediction = decision.get("action") if isinstance(decision, dict) else None
                 reality = reasoning.get("trend") if isinstance(reasoning, dict) else None
                 if not reality:
                     reality = "unknown"
-                
+
                 if prediction:
                     try:
                         evaluator_engine.evaluate(
@@ -3181,10 +3410,111 @@ def _feed_learning_engines_v2(self, state):
                         logger.debug(f"evaluator evaluate error: {e}")
         except Exception as e:
             logger.debug(f"evaluator feed error: {e}")
-        
+
+        # === SEMANTIC PROCESSOR — COMPREHENSIVE ===
+        try:
+            from core.learning.semantic_processor import semantic_processor
+
+            if semantic_processor is not None:
+                perception = getattr(state, "perception", None) or {}
+                texts = []
+                if isinstance(perception, dict):
+                    input_data = getattr(state, "input_data", None) or {}
+                    if not isinstance(input_data, dict):
+                        input_data = {}
+                    # PRIORITAS: input_data (teks asli)
+                    direct = (
+                        input_data.get("text")
+                        or input_data.get("content")
+                        or input_data.get("message")
+                        or input_data.get("question")
+                        or input_data.get("prompt")
+                        or input_data.get("command")
+                        or input_data.get("note")
+                        or perception.get("text")
+                        or perception.get("content")
+                        or perception.get("message")
+                        or perception.get("raw")
+                        or perception.get("description")
+                    )
+                    if direct and isinstance(direct, str):
+                        texts.append(direct)
+                    # Skip nested kalau teks asli sudah ada
+                    if not texts:
+                        market_parts = []
+                        for key in [
+                            "symbol",
+                            "pair",
+                            "action",
+                            "signal",
+                            "trend",
+                            "sentiment",
+                            "regime",
+                            "event",
+                        ]:
+                            val = perception.get(key)
+                            if val:
+                                market_parts.append(f"{key}={val}")
+                        if market_parts:
+                            texts.append(" ".join(market_parts))
+                        analysis = perception.get("analysis")
+                        if isinstance(analysis, dict):
+                            ana_parts = []
+                            for k, v in list(analysis.items())[:8]:
+                                if isinstance(v, (str, int, float, bool)):
+                                    ana_parts.append(f"{k}={v}")
+                            if ana_parts:
+                                texts.append(" ".join(ana_parts))
+                for text in texts:
+                    if text and len(text) > 5:
+                        try:
+                            semantic_processor.process(text)
+                            logger.info(f"✅ Semantic processed: text={repr(text[:80])}")
+                        except Exception as e:
+                            logger.debug(f"semantic process error: {e}")
+        except Exception as e:
+            logger.debug(f"semantic feed error: {e}")
+
+        # === ASSOCIATION ===
+        try:
+            from core.learning.association import association
+
+            if association is not None:
+                perception = getattr(state, "perception", None) or {}
+                items = []
+                if isinstance(perception, dict):
+                    concepts = perception.get("concepts", []) or []
+                    if isinstance(concepts, list):
+                        items.extend([str(c) for c in concepts[:5]])
+                    for key in ["symbol", "pair", "ticker"]:
+                        val = perception.get(key)
+                        if val:
+                            items.append(str(val))
+                    topics = perception.get("topics", []) or []
+                    if isinstance(topics, list):
+                        items.extend([str(t) for t in topics[:5]])
+                items = list(dict.fromkeys(items))
+                if len(items) >= 2:
+                    try:
+                        association.learn(items)
+                        logger.info(f"✅ Association learned: {items[:5]}")
+                    except Exception as e:
+                        logger.debug(f"association learn error: {e}")
+        except Exception as e:
+            logger.debug(f"association feed error: {e}")
+
     except Exception as e:
         logger.debug(f"_feed_learning_engines error: {e}")
 
 
-# Attach ke class Brain
-Brain._feed_learning_engines = _feed_learning_engines_v2
+# ============================================================
+# MONKEY PATCH: Attach _feed_learning_engines_v2 to Brain
+# ============================================================
+try:
+    if not hasattr(Brain, "_feed_learning_engines"):
+        Brain._feed_learning_engines = _feed_learning_engines_v2
+        logger.info("Monkey patch: _feed_learning_engines_v2 attached to Brain")
+    else:
+        logger.info("Monkey patch: _feed_learning_engines already exists")
+except Exception as e:
+    logger.warning(f"Monkey patch failed: {e}")

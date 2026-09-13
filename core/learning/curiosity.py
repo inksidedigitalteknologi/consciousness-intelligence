@@ -80,6 +80,7 @@ DOMAIN_PERFORMANCE = "performance"
 # TIME HELPER
 # ============================================================
 
+
 def utc_now() -> str:
     """Return current UTC timestamp in ISO-8601 format."""
     return datetime.now().isoformat()
@@ -89,10 +90,11 @@ def utc_now() -> str:
 # CURIOSITY ENGINE v3.0
 # ============================================================
 
+
 class CuriosityEngine:
     """
     Super Comprehensive Curiosity Engine.
-    
+
     Features:
     - Discover Knowledge Gaps
     - Detect Weak Prediction Areas
@@ -105,32 +107,28 @@ class CuriosityEngine:
     - Priority Scoring System
     - Knowledge Gap Analysis
     """
-    
+
     VERSION = CURIOSITY_VERSION
-    
-    def __init__(
-        self,
-        max_questions: int = 500,
-        config: Optional[Dict[str, Any]] = None
-    ):
+
+    def __init__(self, max_questions: int = 500, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self.max_questions = max(1, int(max_questions))
-        
+
         self.questions: List[Dict[str, Any]] = []
         self.gaps: List[Dict[str, Any]] = []
         self.resolved: List[Dict[str, Any]] = []
         self.investigations: List[Dict[str, Any]] = []
         self.gap_history: List[Dict[str, Any]] = []
-        
+
         self.total_questions = 0
         self.total_gaps = 0
         self.total_resolved = 0
         self.total_analysis = 0
         self.total_investigations = 0
-        
+
         self.last_question: Optional[Dict[str, Any]] = None
         self.last_gap: Optional[Dict[str, Any]] = None
-        
+
         # Domain-specific thresholds
         self.domain_thresholds = {
             DOMAIN_MARKET: 65,
@@ -144,12 +142,12 @@ class CuriosityEngine:
             DOMAIN_PERFORMANCE: 60,
             DOMAIN_GENERAL: 50,
         }
-        
+
         # Question templates
         self.question_templates = self._load_templates()
-        
+
         logger.info("Curiosity Engine v%s initialized.", self.VERSION)
-    
+
     def _load_templates(self) -> Dict[str, List[str]]:
         """Load question templates."""
         return {
@@ -180,28 +178,28 @@ class CuriosityEngine:
                 "What are the key factors for {area}?",
             ],
         }
-    
+
     # ========================================================
     # INTERNAL HELPERS
     # ========================================================
-    
+
     def _timestamp(self) -> str:
         """Get current timestamp."""
         return utc_now()
-    
+
     def _normalize_score(self, value: Any) -> float:
         """Normalize score to 0-100."""
         try:
             score = float(value)
         except (TypeError, ValueError):
             return 0.0
-        
+
         # Support both: 0.0-1.0 and 0-100
         if 0 <= score <= 1:
             score *= 100
-        
+
         return max(0.0, min(score, 100.0))
-    
+
     def _question_exists(self, question: str) -> bool:
         """Check if question already exists."""
         question = str(question).strip().lower()
@@ -209,109 +207,119 @@ class CuriosityEngine:
             if str(item.get("question", "")).strip().lower() == question:
                 return True
         return False
-    
+
     def _trim_questions(self) -> None:
         """Trim questions if exceeded."""
         if len(self.questions) > self.max_questions:
             excess = len(self.questions) - self.max_questions
             self.questions = self.questions[excess:]
-    
+
     # ========================================================
     # PRIORITY CALCULATION
     # ========================================================
-    
+
     def calculate_priority(
         self,
         accuracy: float = 0,
         confidence: float = 0,
         frequency: int = 1,
         impact: float = 0.5,
-        urgency: float = 0.5
+        urgency: float = 0.5,
     ) -> float:
         """
         Calculate priority score (0-100).
-        
+
         Args:
             accuracy: Accuracy score (0-100)
             confidence: Confidence score (0-100)
             frequency: How often this occurs
             impact: Impact level (0-1)
             urgency: Urgency level (0-1)
-            
+
         Returns:
             Priority score (0-100)
         """
         accuracy = self._normalize_score(accuracy)
         confidence = self._normalize_score(confidence)
-        
+
         # Weakness = low accuracy
         weakness = (100 - accuracy) * 0.5
-        
+
         # Uncertainty = low confidence
         uncertainty = (100 - confidence) * 0.3
-        
+
         # Frequency factor
         try:
             freq = max(1, int(frequency))
         except (TypeError, ValueError):
             freq = 1
         recurrence = min(freq * 2, 10)
-        
+
         # Impact factor
         impact_score = impact * 10
-        
+
         # Urgency factor
         urgency_score = urgency * 5
-        
+
         priority = weakness + uncertainty + recurrence + impact_score + urgency_score
-        
+
         return round(max(0.0, min(priority, 100.0)), 2)
-    
+
     # ========================================================
     # GAP DETECTION
     # ========================================================
-    
+
     def analyze_gap(
-        self,
-        data: Dict[str, Any],
-        domain: str = DOMAIN_GENERAL
+        self, data: Dict[str, Any], domain: str = DOMAIN_GENERAL
     ) -> List[Dict[str, Any]]:
         """
         Analyze and detect knowledge gaps.
-        
+
         Args:
             data: Data containing accuracy/confidence info
             domain: Domain of analysis
-            
+
         Returns:
             List of detected gaps
         """
         gaps = []
-        
+
         try:
             self.total_analysis += 1
-            
+
             if not isinstance(data, dict):
+                # Save curiosity to memory
+                try:
+                    from core.memory import memory
+
+                    if isinstance(result, dict):
+                        memory.save_knowledge(
+                            content=result,
+                            category="curiosity",
+                        )
+                except Exception:
+                    pass
+
                 return gaps
-            
+
             accuracy_data = data.get("accuracy", {})
             confidence_data = data.get("confidence", {})
-            
+
             if not isinstance(accuracy_data, dict):
                 accuracy_data = {}
             if not isinstance(confidence_data, dict):
                 confidence_data = {}
-            
+
             # Get domain threshold
             threshold = self.domain_thresholds.get(domain, 60)
-            
+
             # Process each area
             all_areas = set(accuracy_data.keys()) | set(confidence_data.keys())
-            
+
             for area in all_areas:
                 accuracy = self._normalize_score(accuracy_data.get(area, 0))
                 confidence = self._normalize_score(confidence_data.get(area, 0))
-                
+
                 # Check if below threshold
                 if accuracy < threshold or confidence < threshold:
                     gap = {
@@ -328,12 +336,12 @@ class CuriosityEngine:
                         "investigations": 0,
                         "history": [{"action": "detected", "timestamp": self._timestamp()}],
                     }
-                    
+
                     gaps.append(gap)
                     self.gaps.append(gap)
                     self.total_gaps += 1
                     self.last_gap = gap
-                    
+
                     # Generate question
                     question = self._generate_question(area, domain, accuracy, confidence)
                     self.ask(
@@ -343,21 +351,16 @@ class CuriosityEngine:
                         reason=gap["reason"],
                         accuracy=accuracy,
                         confidence=confidence,
-                        priority=gap["priority"]
+                        priority=gap["priority"],
                     )
-            
+
             return gaps
-            
+
         except Exception as e:
             logger.exception("Gap analysis failed: %s", e)
             return []
-    
-    def _determine_gap_reason(
-        self,
-        accuracy: float,
-        confidence: float,
-        threshold: float
-    ) -> str:
+
+    def _determine_gap_reason(self, accuracy: float, confidence: float, threshold: float) -> str:
         """Determine reason for gap."""
         if accuracy < threshold and confidence < threshold:
             return "Low accuracy and low confidence"
@@ -367,22 +370,16 @@ class CuriosityEngine:
             return "Low confidence in predictions"
         else:
             return "Below optimal threshold"
-    
-    def _generate_question(
-        self,
-        area: str,
-        domain: str,
-        accuracy: float,
-        confidence: float
-    ) -> str:
+
+    def _generate_question(self, area: str, domain: str, accuracy: float, confidence: float) -> str:
         """Generate a question based on gap."""
         templates = self.question_templates
-        
+
         if domain in templates:
             domain_templates = templates[domain]
         else:
             domain_templates = templates.get("general", templates["gap"])
-        
+
         # Choose template based on scores
         if accuracy < 40:
             template_key = "accuracy"
@@ -390,39 +387,35 @@ class CuriosityEngine:
             template_key = "confidence"
         else:
             template_key = "gap"
-        
+
         template_list = templates.get(template_key, templates["gap"])
-        
+
         # Use random template
         template = random.choice(template_list)
-        
+
         return template.format(area=area)
-    
+
     # ========================================================
     # PREDICTION ANALYSIS
     # ========================================================
-    
+
     def analyze_prediction(
-        self,
-        prediction: Any,
-        reality: Any,
-        domain: str = DOMAIN_GENERAL,
-        confidence: float = 0.0
+        self, prediction: Any, reality: Any, domain: str = DOMAIN_GENERAL, confidence: float = 0.0
     ) -> Dict[str, Any]:
         """
         Analyze prediction vs reality.
-        
+
         Args:
             prediction: Predicted value
             reality: Actual value
             domain: Domain of prediction
             confidence: Confidence in prediction
-            
+
         Returns:
             Analysis result
         """
         correct = prediction == reality
-        
+
         if correct:
             return {
                 "correct": True,
@@ -430,7 +423,7 @@ class CuriosityEngine:
                 "confidence": confidence,
                 "message": "Prediction was correct",
             }
-        
+
         # Calculate accuracy
         if isinstance(prediction, (int, float)) and isinstance(reality, (int, float)):
             if reality != 0:
@@ -439,11 +432,11 @@ class CuriosityEngine:
                 accuracy = 50 if prediction == reality else 0
         else:
             accuracy = 100.0 if correct else 0.0
-        
+
         # Create gap
         area = f"{domain}.prediction"
         question = f"Why did the prediction for {domain} fail?"
-        
+
         item = self.ask(
             question,
             area=area,
@@ -451,9 +444,9 @@ class CuriosityEngine:
             reason="Prediction mismatch with reality",
             accuracy=accuracy,
             confidence=confidence,
-            priority=self.calculate_priority(accuracy, confidence)
+            priority=self.calculate_priority(accuracy, confidence),
         )
-        
+
         return {
             "correct": False,
             "gap": True,
@@ -461,50 +454,50 @@ class CuriosityEngine:
             "question": item,
             "message": f"Prediction failed with {accuracy:.1f}% accuracy",
         }
-    
+
     # ========================================================
     # CONFIDENCE ANALYSIS
     # ========================================================
-    
+
     def analyze_confidence(
-        self,
-        data: Dict[str, float],
-        threshold: float = 60.0
+        self, data: Dict[str, float], threshold: float = 60.0
     ) -> List[Dict[str, Any]]:
         """
         Analyze confidence levels.
-        
+
         Args:
             data: Dictionary of area -> confidence
             threshold: Minimum confidence threshold
-            
+
         Returns:
             List of low confidence areas
         """
         results = []
-        
+
         if not isinstance(data, dict):
             return results
-        
+
         for area, value in data.items():
             confidence = self._normalize_score(value)
-            
+
             if confidence < threshold:
-                results.append({
-                    "area": area,
-                    "confidence": confidence,
-                    "threshold": threshold,
-                    "gap": threshold - confidence,
-                    "reason": "Low confidence",
-                    "priority": self.calculate_priority(50, confidence),
-                })
-        
+                results.append(
+                    {
+                        "area": area,
+                        "confidence": confidence,
+                        "threshold": threshold,
+                        "gap": threshold - confidence,
+                        "reason": "Low confidence",
+                        "priority": self.calculate_priority(50, confidence),
+                    }
+                )
+
         return results
-    
+
     # ========================================================
     # QUESTION MANAGEMENT
     # ========================================================
-    
+
     def ask(
         self,
         question: str,
@@ -514,11 +507,11 @@ class CuriosityEngine:
         accuracy: Optional[float] = None,
         confidence: Optional[float] = None,
         priority: float = 50.0,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Optional[Dict[str, Any]]:
         """
         Ask a question.
-        
+
         Args:
             question: Question text
             area: Area of question
@@ -528,17 +521,17 @@ class CuriosityEngine:
             confidence: Current confidence
             priority: Priority score
             metadata: Additional metadata
-            
+
         Returns:
             Question object or None
         """
         question = str(question).strip()
         if not question:
             return None
-        
+
         if self._question_exists(question):
             return None
-        
+
         item = {
             "id": str(uuid.uuid4())[:8],
             "timestamp": self._timestamp(),
@@ -554,29 +547,26 @@ class CuriosityEngine:
             "history": [{"action": "asked", "timestamp": self._timestamp()}],
             "investigations": 0,
         }
-        
+
         self.questions.append(item)
         self.total_questions += 1
         self.last_question = item
         self._trim_questions()
-        
+
         logger.debug("Question asked: %s", question[:50])
         return item
-    
+
     def resolve(
-        self,
-        question_id: str,
-        answer: Optional[Any] = None,
-        note: str = ""
+        self, question_id: str, answer: Optional[Any] = None, note: str = ""
     ) -> Optional[Dict[str, Any]]:
         """
         Resolve a question.
-        
+
         Args:
             question_id: Question ID
             answer: Answer to the question
             note: Resolution note
-            
+
         Returns:
             Resolved question or None
         """
@@ -587,27 +577,23 @@ class CuriosityEngine:
                 item["answer"] = answer
                 item["resolution_note"] = note
                 item["history"].append({"action": "resolved", "timestamp": self._timestamp()})
-                
+
                 self.resolved.append(item)
                 self.total_resolved += 1
-                
+
                 logger.info("Question resolved: %s", item.get("question", "")[:50])
                 return item
-        
+
         return None
-    
-    def investigate(
-        self,
-        question_id: str,
-        note: str = ""
-    ) -> Optional[Dict[str, Any]]:
+
+    def investigate(self, question_id: str, note: str = "") -> Optional[Dict[str, Any]]:
         """
         Mark a question as under investigation.
-        
+
         Args:
             question_id: Question ID
             note: Investigation note
-            
+
         Returns:
             Updated question or None
         """
@@ -615,133 +601,136 @@ class CuriosityEngine:
             if item.get("id") == question_id and item.get("status") == STATUS_UNRESOLVED:
                 item["status"] = STATUS_INVESTIGATING
                 item["investigations"] += 1
-                item["history"].append({"action": "investigating", "note": note, "timestamp": self._timestamp()})
+                item["history"].append(
+                    {"action": "investigating", "note": note, "timestamp": self._timestamp()}
+                )
                 self.total_investigations += 1
                 self.investigations.append(item)
                 return item
-        
+
         return None
-    
+
     # ========================================================
     # GET QUESTIONS
     # ========================================================
-    
+
     def get_questions(
-        self,
-        limit: int = 20,
-        unresolved_only: bool = False,
-        domain: Optional[str] = None
+        self, limit: int = 20, unresolved_only: bool = False, domain: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
         Get questions.
-        
+
         Args:
             limit: Maximum number of questions
             unresolved_only: Only unresolved questions
             domain: Filter by domain
-            
+
         Returns:
             List of questions
         """
         items = self.questions
-        
+
         if unresolved_only:
             items = [item for item in items if item.get("status") == STATUS_UNRESOLVED]
-        
+
         if domain:
             items = [item for item in items if item.get("domain") == domain]
-        
-        return items[-max(1, int(limit)):]
-    
+
+        return items[-max(1, int(limit)) :]
+
     def open_questions(self, limit: int = 20) -> List[Dict[str, Any]]:
         """Get open (unresolved) questions."""
         return self.get_questions(limit=limit, unresolved_only=True)
-    
+
     def get_gaps(self, limit: int = 20) -> List[Dict[str, Any]]:
         """Get detected gaps."""
-        return self.gaps[-max(1, int(limit)):]
-    
+        return self.gaps[-max(1, int(limit)) :]
+
     def get_resolved(self, limit: int = 20) -> List[Dict[str, Any]]:
         """Get resolved questions."""
-        return self.resolved[-max(1, int(limit)):]
-    
+        return self.resolved[-max(1, int(limit)) :]
+
     # ========================================================
     # SEARCH
     # ========================================================
-    
+
     def search(self, keyword: str) -> List[Dict[str, Any]]:
         """
         Search questions by keyword.
-        
+
         Args:
             keyword: Search keyword
-            
+
         Returns:
             Matching questions
         """
         keyword = str(keyword).lower()
         results = []
-        
+
         for item in self.questions:
-            searchable = " ".join([
-                str(item.get("question", "")),
-                str(item.get("area", "")),
-                str(item.get("domain", "")),
-                str(item.get("reason", "")),
-                str(item.get("answer", "")),
-            ]).lower()
-            
+            searchable = " ".join(
+                [
+                    str(item.get("question", "")),
+                    str(item.get("area", "")),
+                    str(item.get("domain", "")),
+                    str(item.get("reason", "")),
+                    str(item.get("answer", "")),
+                ]
+            ).lower()
+
             if keyword in searchable:
                 results.append(item)
-        
+
         return results
-    
+
     # ========================================================
     # PRIORITY
     # ========================================================
-    
+
     def highest_priority(self, limit: int = 10) -> List[Dict[str, Any]]:
         """
         Get highest priority unresolved questions.
-        
+
         Args:
             limit: Maximum number of questions
-            
+
         Returns:
             Highest priority questions
         """
         items = [item for item in self.questions if item.get("status") == STATUS_UNRESOLVED]
         items.sort(key=lambda x: x.get("priority", 0), reverse=True)
-        return items[:max(1, int(limit))]
-    
+        return items[: max(1, int(limit))]
+
     def by_priority(self, min_priority: float = 50.0) -> List[Dict[str, Any]]:
         """
         Get questions by minimum priority.
-        
+
         Args:
             min_priority: Minimum priority threshold
-            
+
         Returns:
             Questions with priority >= min_priority
         """
         return [item for item in self.questions if item.get("priority", 0) >= min_priority]
-    
+
     # ========================================================
     # STATISTICS
     # ========================================================
-    
+
     def statistics(self) -> Dict[str, Any]:
         """Get statistics."""
         unresolved = sum(1 for item in self.questions if item.get("status") == STATUS_UNRESOLVED)
         resolved = sum(1 for item in self.questions if item.get("status") == STATUS_RESOLVED)
-        investigating = sum(1 for item in self.questions if item.get("status") == STATUS_INVESTIGATING)
-        
+        investigating = sum(
+            1 for item in self.questions if item.get("status") == STATUS_INVESTIGATING
+        )
+
         # Domain distribution
         domain_counts: Dict[str, int] = {}
         for item in self.questions:
             domain = item.get("domain", DOMAIN_GENERAL)
             domain_counts[domain] = domain_counts.get(domain, 0) + 1
-        
+
         return {
             "total_questions": self.total_questions,
             "total_gaps": self.total_gaps,
@@ -754,34 +743,31 @@ class CuriosityEngine:
             "analysis_runs": self.total_analysis,
             "domain_distribution": domain_counts,
             "average_priority": round(
-                sum(item.get("priority", 0) for item in self.questions) / max(1, len(self.questions)),
-                2
+                sum(item.get("priority", 0) for item in self.questions)
+                / max(1, len(self.questions)),
+                2,
             ),
         }
-    
+
     def gap_statistics(self) -> Dict[str, Any]:
         """Get gap statistics."""
         open_gaps = [g for g in self.gaps if g.get("status") == "open"]
         closed_gaps = [g for g in self.gaps if g.get("status") != "open"]
-        
+
         return {
             "total_gaps": len(self.gaps),
             "open_gaps": len(open_gaps),
             "closed_gaps": len(closed_gaps),
-            "resolution_rate": round(
-                (len(closed_gaps) / max(1, len(self.gaps))) * 100,
-                2
-            ),
+            "resolution_rate": round((len(closed_gaps) / max(1, len(self.gaps))) * 100, 2),
             "avg_priority": round(
-                sum(g.get("priority", 0) for g in self.gaps) / max(1, len(self.gaps)),
-                2
+                sum(g.get("priority", 0) for g in self.gaps) / max(1, len(self.gaps)), 2
             ),
         }
-    
+
     # ========================================================
     # SUMMARY
     # ========================================================
-    
+
     def summary(self) -> Dict[str, Any]:
         """Get quick summary."""
         stats = self.statistics()
@@ -793,17 +779,17 @@ class CuriosityEngine:
             "analysis_runs": self.total_analysis,
             "latest": self.latest(),
         }
-    
+
     def latest(self) -> Optional[Dict[str, Any]]:
         """Get latest question."""
         if not self.questions:
             return None
         return self.questions[-1]
-    
+
     # ========================================================
     # CLEAR & RESET
     # ========================================================
-    
+
     def clear(self) -> bool:
         """Clear all data."""
         self.questions.clear()
@@ -811,27 +797,27 @@ class CuriosityEngine:
         self.resolved.clear()
         self.investigations.clear()
         self.gap_history.clear()
-        
+
         self.total_questions = 0
         self.total_gaps = 0
         self.total_resolved = 0
         self.total_analysis = 0
         self.total_investigations = 0
-        
+
         self.last_question = None
         self.last_gap = None
-        
+
         logger.info("Curiosity Engine cleared.")
         return True
-    
+
     def reset(self) -> bool:
         """Reset all data."""
         return self.clear()
-    
+
     # ========================================================
     # EXPORT / IMPORT
     # ========================================================
-    
+
     def export(self) -> Dict[str, Any]:
         """Export all data."""
         return {
@@ -842,30 +828,30 @@ class CuriosityEngine:
             "resolved": deepcopy(self.resolved),
             "statistics": self.statistics(),
         }
-    
+
     def import_data(self, data: Dict[str, Any]) -> int:
         """Import data."""
         if not data:
             return 0
-        
+
         imported = 0
-        
+
         for item in data.get("questions", []):
             self.questions.append(item)
             imported += 1
-        
+
         for item in data.get("gaps", []):
             self.gaps.append(item)
             imported += 1
-        
+
         self._trim_questions()
         logger.info("Imported %s items", imported)
         return imported
-    
+
     # ========================================================
     # STATUS
     # ========================================================
-    
+
     def status(self) -> Dict[str, Any]:
         """Get system status."""
         stats = self.statistics()
@@ -896,6 +882,7 @@ curiosity_engine = CuriosityEngine()
 # COMPATIBILITY FUNCTIONS - MENGGUNAKAN curiosity_engine
 # ============================================================
 
+
 def ask(question: str, **kwargs) -> Optional[Dict[str, Any]]:
     """Legacy ask function."""
     return curiosity_engine.ask(question, **kwargs)
@@ -920,6 +907,7 @@ def status() -> Dict[str, Any]:
 # SELF TEST
 # ============================================================
 
+
 def self_test() -> Dict[str, Any]:
     """Run comprehensive self-test."""
     print()
@@ -927,11 +915,11 @@ def self_test() -> Dict[str, Any]:
     print("  CURIOSITY ENGINE v3.0 - SELF TEST")
     print("=" * 70)
     print()
-    
+
     tests_passed = 0
     tests_failed = 0
     results = {}
-    
+
     # Test 1: Initialization
     print("1. Testing initialization...")
     try:
@@ -943,7 +931,7 @@ def self_test() -> Dict[str, Any]:
         results["initialization"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Initialization failed: {e}")
-    
+
     # Test 2: Ask Question
     print("\n2. Testing ask...")
     try:
@@ -952,7 +940,7 @@ def self_test() -> Dict[str, Any]:
             area="market_prediction",
             domain="market",
             reason="Low accuracy",
-            priority=75
+            priority=75,
         )
         if question and question.get("id"):
             results["ask"] = {"status": "PASS", "id": question["id"]}
@@ -966,14 +954,17 @@ def self_test() -> Dict[str, Any]:
         results["ask"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Ask failed: {e}")
-    
+
     # Test 3: Gap Analysis
     print("\n3. Testing analyze_gap...")
     try:
-        gaps = curiosity_engine.analyze_gap({
-            "accuracy": {"market": 45, "sentiment": 55},
-            "confidence": {"market": 50, "sentiment": 60},
-        }, domain="market")
+        gaps = curiosity_engine.analyze_gap(
+            {
+                "accuracy": {"market": 45, "sentiment": 55},
+                "confidence": {"market": 50, "sentiment": 60},
+            },
+            domain="market",
+        )
         if gaps is not None:
             results["analyze_gap"] = {"status": "PASS", "count": len(gaps)}
             tests_passed += 1
@@ -986,7 +977,7 @@ def self_test() -> Dict[str, Any]:
         results["analyze_gap"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Gap analysis failed: {e}")
-    
+
     # Test 4: Statistics
     print("\n4. Testing statistics...")
     try:
@@ -1003,7 +994,7 @@ def self_test() -> Dict[str, Any]:
         results["statistics"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Statistics failed: {e}")
-    
+
     # Test 5: Status
     print("\n5. Testing status...")
     try:
@@ -1020,7 +1011,7 @@ def self_test() -> Dict[str, Any]:
         results["status"] = {"status": "FAIL", "error": str(e)}
         tests_failed += 1
         print(f"   ❌ Status failed: {e}")
-    
+
     # Summary
     print()
     print("=" * 70)
@@ -1030,7 +1021,7 @@ def self_test() -> Dict[str, Any]:
     print(f"  ❌ Failed: {tests_failed}")
     print(f"  📊 Total:  {tests_passed + tests_failed}")
     print("=" * 70)
-    
+
     return {
         "module": "curiosity",
         "version": CURIOSITY_VERSION,

@@ -25,7 +25,6 @@ import re
 from collections import Counter, deque
 from datetime import datetime
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -45,18 +44,12 @@ class SemanticProcessor:
 
         self.name = "semantic_processor"
 
-        self.max_history = (
-            max_history
-            if max_history is not None
-            else self.MAX_HISTORY
-        )
+        self.max_history = max_history if max_history is not None else self.MAX_HISTORY
 
         self.processed_count = 0
         self.error_count = 0
 
-        self.history = deque(
-            maxlen=self.max_history
-        )
+        self.history = deque(maxlen=self.max_history)
 
         self.concept_frequency = Counter()
         self.topic_frequency = Counter()
@@ -64,77 +57,41 @@ class SemanticProcessor:
         self.sentiment_frequency = Counter()
         self.intent_frequency = Counter()
 
-        logger.info(
-            "Semantic Processor v2.0 initialized."
-        )
+        logger.info("Semantic Processor v2.0 initialized.")
 
     # ========================================================
     # MAIN PROCESS
     # ========================================================
 
-    def process(
-        self,
-        text,
-        entities=None,
-        context=None
-    ):
+    def process(self, text, entities=None, context=None):
 
         try:
 
             timestamp = datetime.now().isoformat()
 
-            original_text = (
-                ""
-                if text is None
-                else str(text)
-            )
+            original_text = "" if text is None else str(text)
 
-            normalized_text = (
-                self.normalize_text(
-                    original_text
-                )
-            )
+            normalized_text = self.normalize_text(original_text)
 
-            tokens = self.tokenize(
-                normalized_text
-            )
+            tokens = self.tokenize(normalized_text)
 
-            concepts = self.extract_concepts(
-                normalized_text
-            )
+            concepts = self.extract_concepts(normalized_text)
 
-            sentiment = self.detect_sentiment(
-                normalized_text
-            )
+            sentiment = self.detect_sentiment(normalized_text)
 
-            intent = self.detect_intent(
-                normalized_text
-            )
+            intent = self.detect_intent(normalized_text)
 
-            topics = self.detect_topics(
-                normalized_text
-            )
+            topics = self.detect_topics(normalized_text)
 
-            keywords = self.extract_keywords(
-                normalized_text
-            )
+            keywords = self.extract_keywords(normalized_text)
 
-            risk = self.detect_risk(
-                normalized_text
-            )
+            risk = self.detect_risk(normalized_text)
 
-            temporal = self.detect_temporal_context(
-                normalized_text
-            )
+            temporal = self.detect_temporal_context(normalized_text)
 
-            market = self.detect_market_semantics(
-                normalized_text
-            )
+            market = self.detect_market_semantics(normalized_text)
 
-            text_stats = self.text_statistics(
-                original_text,
-                tokens
-            )
+            text_stats = self.text_statistics(original_text, tokens)
 
             meaning = self.create_meaning(
                 normalized_text,
@@ -152,108 +109,77 @@ class SemanticProcessor:
                 keywords=keywords,
             )
 
-            semantic_tags = (
-                self.build_semantic_tags(
-                    concepts=concepts,
-                    topics=topics,
-                    sentiment=sentiment,
-                    intent=intent,
-                    risk=risk,
-                    market=market,
-                )
+            semantic_tags = self.build_semantic_tags(
+                concepts=concepts,
+                topics=topics,
+                sentiment=sentiment,
+                intent=intent,
+                risk=risk,
+                market=market,
             )
 
             result = {
-
-                "timestamp":
-                    timestamp,
-
-                "original":
-                    original_text,
-
-                "normalized":
-                    normalized_text,
-
-                "entities":
-                    entities or [],
-
-                "tokens":
-                    tokens,
-
-                "concepts":
-                    concepts,
-
-                "keywords":
-                    keywords,
-
-                "topics":
-                    topics,
-
-                "sentiment":
-                    sentiment,
-
-                "intent":
-                    intent,
-
-                "risk":
-                    risk,
-
-                "temporal":
-                    temporal,
-
-                "market":
-                    market,
-
-                "meaning":
-                    meaning,
-
-                "semantic_tags":
-                    semantic_tags,
-
-                "confidence":
-                    confidence,
-
-                "statistics":
-                    text_stats,
-
-                "context":
-                    context or {},
-
+                "timestamp": timestamp,
+                "original": original_text,
+                "normalized": normalized_text,
+                "entities": entities or [],
+                "tokens": tokens,
+                "concepts": concepts,
+                "keywords": keywords,
+                "topics": topics,
+                "sentiment": sentiment,
+                "intent": intent,
+                "risk": risk,
+                "temporal": temporal,
+                "market": market,
+                "meaning": meaning,
+                "semantic_tags": semantic_tags,
+                "confidence": confidence,
+                "statistics": text_stats,
+                "context": context or {},
             }
 
             # ------------------------------------------------
             # MEMORY
             # ------------------------------------------------
 
-            self.history.append(
-                result
-            )
+            self.history.append(result)
 
             # ------------------------------------------------
             # FREQUENCY TRACKING
             # ------------------------------------------------
 
-            self.concept_frequency.update(
-                concepts
-            )
+            self.concept_frequency.update(concepts)
 
-            self.topic_frequency.update(
-                topics
-            )
+            self.topic_frequency.update(topics)
 
-            self.keyword_frequency.update(
-                keywords
-            )
+            self.keyword_frequency.update(keywords)
 
-            self.sentiment_frequency.update(
-                [sentiment["label"]]
-            )
+            self.sentiment_frequency.update([sentiment["label"]])
 
-            self.intent_frequency.update(
-                [intent["label"]]
-            )
+            self.intent_frequency.update([intent["label"]])
 
             self.processed_count += 1
+
+            # Save semantic to memory
+            try:
+                from core.memory import memory
+
+                # Pakai `concepts` dari scope atas (sudah di-extract)
+                saved = 0
+                if concepts:
+                    for c in concepts[:5]:
+                        concept_name = c.get("name") if isinstance(c, dict) else c
+                        if concept_name:
+                            memory.save_semantic(
+                                concept=str(concept_name),
+                                relation="related_to",
+                                data=result,
+                            )
+                            saved += 1
+                logger.info(f"✅ Saved {saved} semantic concepts")
+            except Exception as e:
+                logger.warning(f"Save semantic error: {e}")
 
             return result
 
@@ -261,36 +187,17 @@ class SemanticProcessor:
 
             self.error_count += 1
 
-            logger.exception(
-                "Semantic processing failed: %s",
-                e
-            )
+            logger.exception("Semantic processing failed: %s", e)
 
             return {
-                "timestamp":
-                    datetime.now().isoformat(),
-
-                "original":
-                    text,
-
-                "error":
-                    str(e),
-
-                "error_type":
-                    type(e).__name__,
-
-                "semantic_tags":
-                    [],
-
-                "concepts":
-                    [],
-
-                "keywords":
-                    [],
-
-                "topics":
-                    [],
-
+                "timestamp": datetime.now().isoformat(),
+                "original": text,
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "semantic_tags": [],
+                "concepts": [],
+                "keywords": [],
+                "topics": [],
             }
 
     # ========================================================
@@ -303,11 +210,7 @@ class SemanticProcessor:
 
         text = text.strip()
 
-        text = re.sub(
-            r"\s+",
-            " ",
-            text
-        )
+        text = re.sub(r"\s+", " ", text)
 
         return text.lower()
 
@@ -321,10 +224,7 @@ class SemanticProcessor:
 
             return []
 
-        return re.findall(
-            r"[a-zA-Z0-9_%$./-]+",
-            text
-        )
+        return re.findall(r"[a-zA-Z0-9_%$./-]+", text)
 
     # ========================================================
     # CONCEPT EXTRACTION
@@ -332,179 +232,79 @@ class SemanticProcessor:
 
     def extract_concepts(self, text):
 
-        text = self.normalize_text(
-            text
-        )
+        text = self.normalize_text(text)
 
         concepts = set()
 
         mapping = {
-
             # ----------------------------------------------
             # MARKET
             # ----------------------------------------------
-
-            "naik":
-                "bullish",
-
-            "meningkat":
-                "bullish",
-
-            "menguat":
-                "bullish",
-
-            "bullish":
-                "bullish",
-
-            "turun":
-                "bearish",
-
-            "menurun":
-                "bearish",
-
-            "melemah":
-                "bearish",
-
-            "bearish":
-                "bearish",
-
-            "breakout":
-                "breakout",
-
-            "breakdown":
-                "breakdown",
-
-            "volume":
-                "market_activity",
-
-            "momentum":
-                "momentum",
-
-            "trend":
-                "trend",
-
-            "tren":
-                "trend",
-
-            "support":
-                "support",
-
-            "resistance":
-                "resistance",
-
-            "konsolidasi":
-                "consolidation",
-
-            "consolidation":
-                "consolidation",
-
-            "sideways":
-                "consolidation",
-
+            "naik": "bullish",
+            "meningkat": "bullish",
+            "menguat": "bullish",
+            "bullish": "bullish",
+            "turun": "bearish",
+            "menurun": "bearish",
+            "melemah": "bearish",
+            "bearish": "bearish",
+            "breakout": "breakout",
+            "breakdown": "breakdown",
+            "volume": "market_activity",
+            "momentum": "momentum",
+            "trend": "trend",
+            "tren": "trend",
+            "support": "support",
+            "resistance": "resistance",
+            "konsolidasi": "consolidation",
+            "consolidation": "consolidation",
+            "sideways": "consolidation",
             # ----------------------------------------------
             # RISK
             # ----------------------------------------------
-
-            "risiko":
-                "risk",
-
-            "risk":
-                "risk",
-
-            "volatilitas":
-                "volatility",
-
-            "volatile":
-                "volatility",
-
-            "drawdown":
-                "drawdown",
-
-            "kerugian":
-                "loss",
-
-            "rugi":
-                "loss",
-
+            "risiko": "risk",
+            "risk": "risk",
+            "volatilitas": "volatility",
+            "volatile": "volatility",
+            "drawdown": "drawdown",
+            "kerugian": "loss",
+            "rugi": "loss",
             # ----------------------------------------------
             # ECONOMY
             # ----------------------------------------------
-
-            "inflasi":
-                "inflation",
-
-            "inflation":
-                "inflation",
-
-            "suku bunga":
-                "interest_rate",
-
-            "interest rate":
-                "interest_rate",
-
-            "fed":
-                "central_bank",
-
-            "federal reserve":
-                "central_bank",
-
-            "ekonomi":
-                "economy",
-
-            "economy":
-                "economy",
-
+            "inflasi": "inflation",
+            "inflation": "inflation",
+            "suku bunga": "interest_rate",
+            "interest rate": "interest_rate",
+            "fed": "central_bank",
+            "federal reserve": "central_bank",
+            "ekonomi": "economy",
+            "economy": "economy",
             # ----------------------------------------------
             # FINANCE
             # ----------------------------------------------
-
-            "profit":
-                "profit",
-
-            "keuntungan":
-                "profit",
-
-            "loss":
-                "loss",
-
-            "trading":
-                "trading",
-
-            "investasi":
-                "investment",
-
-            "investment":
-                "investment",
-
+            "profit": "profit",
+            "keuntungan": "profit",
+            "loss": "loss",
+            "trading": "trading",
+            "investasi": "investment",
+            "investment": "investment",
             # ----------------------------------------------
             # TECHNOLOGY
             # ----------------------------------------------
-
-            "ai":
-                "artificial_intelligence",
-
-            "artificial intelligence":
-                "artificial_intelligence",
-
-            "machine learning":
-                "machine_learning",
-
-            "neural network":
-                "neural_network",
-
+            "ai": "artificial_intelligence",
+            "artificial intelligence": "artificial_intelligence",
+            "machine learning": "machine_learning",
+            "neural network": "neural_network",
         }
 
         for phrase, concept in mapping.items():
 
             if phrase in text:
 
-                concepts.add(
-                    concept
-                )
+                concepts.add(concept)
 
-        return sorted(
-            concepts
-        )
+        return sorted(concepts)
 
     # ========================================================
     # SENTIMENT ANALYSIS
@@ -512,12 +312,9 @@ class SemanticProcessor:
 
     def detect_sentiment(self, text):
 
-        text = self.normalize_text(
-            text
-        )
+        text = self.normalize_text(text)
 
         positive_words = [
-
             "naik",
             "meningkat",
             "menguat",
@@ -533,11 +330,9 @@ class SemanticProcessor:
             "sukses",
             "success",
             "strong",
-
         ]
 
         negative_words = [
-
             "turun",
             "menurun",
             "melemah",
@@ -552,7 +347,6 @@ class SemanticProcessor:
             "loss",
             "failure",
             "weak",
-
         ]
 
         positive_hits = 0
@@ -560,27 +354,15 @@ class SemanticProcessor:
 
         for word in positive_words:
 
-            positive_hits += (
-                text.count(word)
-            )
+            positive_hits += text.count(word)
 
         for word in negative_words:
 
-            negative_hits += (
-                text.count(word)
-            )
+            negative_hits += text.count(word)
 
-        raw_score = (
-            positive_hits
-            -
-            negative_hits
-        )
+        raw_score = positive_hits - negative_hits
 
-        total_hits = (
-            positive_hits
-            +
-            negative_hits
-        )
+        total_hits = positive_hits + negative_hits
 
         if raw_score > 0:
 
@@ -596,40 +378,20 @@ class SemanticProcessor:
 
         if total_hits:
 
-            score = round(
-                raw_score / total_hits,
-                2
-            )
+            score = round(raw_score / total_hits, 2)
 
         else:
 
             score = 0.0
 
-        confidence = round(
-            min(
-                1.0,
-                total_hits / 5
-            ),
-            2
-        )
+        confidence = round(min(1.0, total_hits / 5), 2)
 
         return {
-
-            "label":
-                label,
-
-            "score":
-                score,
-
-            "confidence":
-                confidence,
-
-            "positive_hits":
-                positive_hits,
-
-            "negative_hits":
-                negative_hits,
-
+            "label": label,
+            "score": score,
+            "confidence": confidence,
+            "positive_hits": positive_hits,
+            "negative_hits": negative_hits,
         }
 
     # ========================================================
@@ -638,12 +400,9 @@ class SemanticProcessor:
 
     def detect_intent(self, text):
 
-        text = self.normalize_text(
-            text
-        )
+        text = self.normalize_text(text)
 
         intent_rules = {
-
             "question": [
                 "apa",
                 "apakah",
@@ -655,7 +414,6 @@ class SemanticProcessor:
                 "how",
                 "?",
             ],
-
             "prediction": [
                 "prediksi",
                 "prediction",
@@ -665,7 +423,6 @@ class SemanticProcessor:
                 "forecasting",
                 "kemungkinan",
             ],
-
             "analysis": [
                 "analisis",
                 "analysis",
@@ -675,7 +432,6 @@ class SemanticProcessor:
                 "check",
                 "review",
             ],
-
             "decision": [
                 "beli",
                 "buy",
@@ -685,7 +441,6 @@ class SemanticProcessor:
                 "keputusan",
                 "decision",
             ],
-
             "learning": [
                 "belajar",
                 "learning",
@@ -693,7 +448,6 @@ class SemanticProcessor:
                 "learn",
                 "lesson",
             ],
-
             "information": [
                 "informasi",
                 "information",
@@ -701,7 +455,6 @@ class SemanticProcessor:
                 "explain",
                 "detail",
             ],
-
             "command": [
                 "jalankan",
                 "run",
@@ -711,7 +464,6 @@ class SemanticProcessor:
                 "hapus",
                 "delete",
             ],
-
         }
 
         scores = {}
@@ -728,38 +480,20 @@ class SemanticProcessor:
 
             scores[intent] = score
 
-        best_intent = max(
-            scores,
-            key=scores.get
-        )
+        best_intent = max(scores, key=scores.get)
 
-        best_score = scores[
-            best_intent
-        ]
+        best_score = scores[best_intent]
 
         if best_score == 0:
 
             best_intent = "statement"
 
-        confidence = round(
-            min(
-                1.0,
-                best_score / 3
-            ),
-            2
-        )
+        confidence = round(min(1.0, best_score / 3), 2)
 
         return {
-
-            "label":
-                best_intent,
-
-            "confidence":
-                confidence,
-
-            "scores":
-                scores,
-
+            "label": best_intent,
+            "confidence": confidence,
+            "scores": scores,
         }
 
     # ========================================================
@@ -768,12 +502,9 @@ class SemanticProcessor:
 
     def detect_topics(self, text):
 
-        text = self.normalize_text(
-            text
-        )
+        text = self.normalize_text(text)
 
         topic_rules = {
-
             "trading": [
                 "trading",
                 "buy",
@@ -783,7 +514,6 @@ class SemanticProcessor:
                 "stop loss",
                 "take profit",
             ],
-
             "crypto": [
                 "btc",
                 "bitcoin",
@@ -792,7 +522,6 @@ class SemanticProcessor:
                 "crypto",
                 "kripto",
             ],
-
             "finance": [
                 "profit",
                 "loss",
@@ -801,7 +530,6 @@ class SemanticProcessor:
                 "portfolio",
                 "asset",
             ],
-
             "economics": [
                 "inflasi",
                 "inflation",
@@ -811,7 +539,6 @@ class SemanticProcessor:
                 "economy",
                 "ekonomi",
             ],
-
             "technology": [
                 "ai",
                 "artificial intelligence",
@@ -820,7 +547,6 @@ class SemanticProcessor:
                 "technology",
                 "teknologi",
             ],
-
             "science": [
                 "science",
                 "earth",
@@ -829,7 +555,6 @@ class SemanticProcessor:
                 "biology",
                 "chemistry",
             ],
-
             "general_knowledge": [
                 "capital",
                 "negara",
@@ -839,7 +564,6 @@ class SemanticProcessor:
                 "history",
                 "knowledge",
             ],
-
         }
 
         topics = []
@@ -850,32 +574,21 @@ class SemanticProcessor:
 
                 if word in text:
 
-                    topics.append(
-                        topic
-                    )
+                    topics.append(topic)
 
                     break
 
-        return sorted(
-            set(topics)
-        )
+        return sorted(set(topics))
 
     # ========================================================
     # KEYWORD EXTRACTION
     # ========================================================
 
-    def extract_keywords(
-        self,
-        text,
-        limit=15
-    ):
+    def extract_keywords(self, text, limit=15):
 
-        tokens = self.tokenize(
-            text
-        )
+        tokens = self.tokenize(text)
 
         stopwords = {
-
             "yang",
             "dan",
             "atau",
@@ -896,7 +609,6 @@ class SemanticProcessor:
             "that",
             "is",
             "are",
-
         }
 
         filtered = []
@@ -913,21 +625,11 @@ class SemanticProcessor:
 
                 continue
 
-            filtered.append(
-                clean
-            )
+            filtered.append(clean)
 
-        frequency = Counter(
-            filtered
-        )
+        frequency = Counter(filtered)
 
-        return [
-            word
-            for word, count
-            in frequency.most_common(
-                limit
-            )
-        ]
+        return [word for word, count in frequency.most_common(limit)]
 
     # ========================================================
     # RISK DETECTION
@@ -935,12 +637,9 @@ class SemanticProcessor:
 
     def detect_risk(self, text):
 
-        text = self.normalize_text(
-            text
-        )
+        text = self.normalize_text(text)
 
         high_risk = [
-
             "crash",
             "collapse",
             "market crash",
@@ -950,11 +649,9 @@ class SemanticProcessor:
             "panic",
             "krisis",
             "crisis",
-
         ]
 
         medium_risk = [
-
             "risk",
             "risiko",
             "volatile",
@@ -962,18 +659,11 @@ class SemanticProcessor:
             "drawdown",
             "uncertainty",
             "ketidakpastian",
-
         ]
 
-        high_hits = sum(
-            text.count(word)
-            for word in high_risk
-        )
+        high_hits = sum(text.count(word) for word in high_risk)
 
-        medium_hits = sum(
-            text.count(word)
-            for word in medium_risk
-        )
+        medium_hits = sum(text.count(word) for word in medium_risk)
 
         if high_hits:
 
@@ -988,23 +678,10 @@ class SemanticProcessor:
             level = "low"
 
         return {
-
-            "level":
-                level,
-
-            "high_hits":
-                high_hits,
-
-            "medium_hits":
-                medium_hits,
-
-            "risk_detected":
-                bool(
-                    high_hits
-                    or
-                    medium_hits
-                ),
-
+            "level": level,
+            "high_hits": high_hits,
+            "medium_hits": medium_hits,
+            "risk_detected": bool(high_hits or medium_hits),
         }
 
     # ========================================================
@@ -1013,12 +690,9 @@ class SemanticProcessor:
 
     def detect_temporal_context(self, text):
 
-        text = self.normalize_text(
-            text
-        )
+        text = self.normalize_text(text)
 
         temporal_map = {
-
             "past": [
                 "kemarin",
                 "dulu",
@@ -1027,7 +701,6 @@ class SemanticProcessor:
                 "previous",
                 "historical",
             ],
-
             "present": [
                 "sekarang",
                 "saat ini",
@@ -1035,7 +708,6 @@ class SemanticProcessor:
                 "now",
                 "current",
             ],
-
             "future": [
                 "besok",
                 "nanti",
@@ -1044,7 +716,6 @@ class SemanticProcessor:
                 "future",
                 "forecast",
             ],
-
         }
 
         detected = []
@@ -1055,21 +726,15 @@ class SemanticProcessor:
 
                 if word in text:
 
-                    detected.append(
-                        period
-                    )
+                    detected.append(period)
 
                     break
 
         if not detected:
 
-            detected.append(
-                "unspecified"
-            )
+            detected.append("unspecified")
 
-        return sorted(
-            set(detected)
-        )
+        return sorted(set(detected))
 
     # ========================================================
     # MARKET SEMANTICS
@@ -1077,9 +742,7 @@ class SemanticProcessor:
 
     def detect_market_semantics(self, text):
 
-        text = self.normalize_text(
-            text
-        )
+        text = self.normalize_text(text)
 
         direction = "neutral"
 
@@ -1135,100 +798,53 @@ class SemanticProcessor:
 
         if "breakout" in text:
 
-            structure.append(
-                "breakout"
-            )
+            structure.append("breakout")
 
         if "breakdown" in text:
 
-            structure.append(
-                "breakdown"
-            )
+            structure.append("breakdown")
 
-        if (
-            "support" in text
-        ):
+        if "support" in text:
 
-            structure.append(
-                "support"
-            )
+            structure.append("support")
 
-        if (
-            "resistance" in text
-        ):
+        if "resistance" in text:
 
-            structure.append(
-                "resistance"
-            )
+            structure.append("resistance")
 
         if not structure:
 
-            structure.append(
-                "undefined"
-            )
+            structure.append("undefined")
 
         return {
-
-            "direction":
-                direction,
-
-            "volatility":
-                volatility,
-
-            "structure":
-                structure,
-
+            "direction": direction,
+            "volatility": volatility,
+            "structure": structure,
         }
 
     # ========================================================
     # TEXT STATISTICS
     # ========================================================
 
-    def text_statistics(
-        self,
-        original,
-        tokens
-    ):
+    def text_statistics(self, original, tokens):
 
-        text = str(
-            original
-        )
+        text = str(original)
 
-        words = len(
-            tokens
-        )
+        words = len(tokens)
 
-        characters = len(
-            text
-        )
+        characters = len(text)
 
-        sentences = len(
-            re.findall(
-                r"[.!?]+",
-                text
-            )
-        )
+        sentences = len(re.findall(r"[.!?]+", text))
 
         if sentences == 0 and words:
 
             sentences = 1
 
         return {
-
-            "characters":
-                characters,
-
-            "words":
-                words,
-
-            "sentences":
-                sentences,
-
-            "unique_words":
-                len(
-                    set(tokens)
-                ),
-
+            "characters": characters,
+            "words": words,
+            "sentences": sentences,
+            "unique_words": len(set(tokens)),
         }
 
     # ========================================================
@@ -1248,58 +864,25 @@ class SemanticProcessor:
 
         topics = topics or []
 
-        sentiment = (
-            sentiment
-            or
-            self.detect_sentiment(text)
-        )
+        sentiment = sentiment or self.detect_sentiment(text)
 
-        intent = (
-            intent
-            or
-            self.detect_intent(text)
-        )
+        intent = intent or self.detect_intent(text)
 
         if concepts:
 
-            concept_text = (
-                ", ".join(
-                    concepts
-                )
-            )
+            concept_text = ", ".join(concepts)
 
         else:
 
-            concept_text = (
-                "no specific concepts"
-            )
+            concept_text = "no specific concepts"
 
         return {
-
-            "summary":
-                (
-                    "Detected "
-                    +
-                    sentiment["label"]
-                    +
-                    " semantic condition"
-                ),
-
-            "concepts":
-                concepts,
-
-            "topics":
-                topics,
-
-            "sentiment":
-                sentiment["label"],
-
-            "intent":
-                intent["label"],
-
-            "concept_summary":
-                concept_text,
-
+            "summary": ("Detected " + sentiment["label"] + " semantic condition"),
+            "concepts": concepts,
+            "topics": topics,
+            "sentiment": sentiment["label"],
+            "intent": intent["label"],
+            "concept_summary": concept_text,
         }
 
     # ========================================================
@@ -1329,29 +912,11 @@ class SemanticProcessor:
 
             score += 0.20
 
-        score += (
-            sentiment.get(
-                "confidence",
-                0
-            )
-            * 0.20
-        )
+        score += sentiment.get("confidence", 0) * 0.20
 
-        score += (
-            intent.get(
-                "confidence",
-                0
-            )
-            * 0.20
-        )
+        score += intent.get("confidence", 0) * 0.20
 
-        return round(
-            min(
-                1.0,
-                score
-            ),
-            2
-        )
+        return round(min(1.0, score), 2)
 
     # ========================================================
     # SEMANTIC TAGS
@@ -1375,117 +940,53 @@ class SemanticProcessor:
 
         for item in topics or []:
 
-            tags.add(
-                "topic:" + item
-            )
+            tags.add("topic:" + item)
 
         if sentiment:
 
-            tags.add(
-                "sentiment:"
-                +
-                sentiment["label"]
-            )
+            tags.add("sentiment:" + sentiment["label"])
 
         if intent:
 
-            tags.add(
-                "intent:"
-                +
-                intent["label"]
-            )
+            tags.add("intent:" + intent["label"])
 
         if risk:
 
-            tags.add(
-                "risk:"
-                +
-                risk["level"]
-            )
+            tags.add("risk:" + risk["level"])
 
         if market:
 
-            tags.add(
-                "market:"
-                +
-                market["direction"]
-            )
+            tags.add("market:" + market["direction"])
 
-            tags.add(
-                "volatility:"
-                +
-                market["volatility"]
-            )
+            tags.add("volatility:" + market["volatility"])
 
-        return sorted(
-            tags
-        )
+        return sorted(tags)
 
     # ========================================================
     # SEMANTIC COMPARISON
     # ========================================================
 
-    def compare(
-        self,
-        first,
-        second
-    ):
+    def compare(self, first, second):
 
-        if not isinstance(
-            first,
-            dict
-        ):
+        if not isinstance(first, dict):
 
             return 0.0
 
-        if not isinstance(
-            second,
-            dict
-        ):
+        if not isinstance(second, dict):
 
             return 0.0
 
-        first_items = set(
-            first.get(
-                "concepts",
-                []
-            )
-        )
+        first_items = set(first.get("concepts", []))
 
-        second_items = set(
-            second.get(
-                "concepts",
-                []
-            )
-        )
+        second_items = set(second.get("concepts", []))
 
-        first_topics = set(
-            first.get(
-                "topics",
-                []
-            )
-        )
+        first_topics = set(first.get("topics", []))
 
-        second_topics = set(
-            second.get(
-                "topics",
-                []
-            )
-        )
+        second_topics = set(second.get("topics", []))
 
-        first_keywords = set(
-            first.get(
-                "keywords",
-                []
-            )
-        )
+        first_keywords = set(first.get("keywords", []))
 
-        second_keywords = set(
-            second.get(
-                "keywords",
-                []
-            )
-        )
+        second_keywords = set(second.get("keywords", []))
 
         scores = []
 
@@ -1493,191 +994,83 @@ class SemanticProcessor:
         # CONCEPT SIMILARITY
         # ------------------------------------------------
 
-        if (
-            first_items
-            or
-            second_items
-        ):
+        if first_items or second_items:
 
-            union = (
-                first_items
-                |
-                second_items
-            )
+            union = first_items | second_items
 
-            common = (
-                first_items
-                &
-                second_items
-            )
+            common = first_items & second_items
 
             if union:
 
-                scores.append(
-                    len(common)
-                    /
-                    len(union)
-                )
+                scores.append(len(common) / len(union))
 
         # ------------------------------------------------
         # TOPIC SIMILARITY
         # ------------------------------------------------
 
-        if (
-            first_topics
-            or
-            second_topics
-        ):
+        if first_topics or second_topics:
 
-            union = (
-                first_topics
-                |
-                second_topics
-            )
+            union = first_topics | second_topics
 
-            common = (
-                first_topics
-                &
-                second_topics
-            )
+            common = first_topics & second_topics
 
             if union:
 
-                scores.append(
-                    len(common)
-                    /
-                    len(union)
-                )
+                scores.append(len(common) / len(union))
 
         # ------------------------------------------------
         # KEYWORD SIMILARITY
         # ------------------------------------------------
 
-        if (
-            first_keywords
-            or
-            second_keywords
-        ):
+        if first_keywords or second_keywords:
 
-            union = (
-                first_keywords
-                |
-                second_keywords
-            )
+            union = first_keywords | second_keywords
 
-            common = (
-                first_keywords
-                &
-                second_keywords
-            )
+            common = first_keywords & second_keywords
 
             if union:
 
-                scores.append(
-                    len(common)
-                    /
-                    len(union)
-                )
+                scores.append(len(common) / len(union))
 
         # ------------------------------------------------
         # SENTIMENT
         # ------------------------------------------------
 
-        first_sentiment = (
-            first.get(
-                "sentiment",
-                {}
-            )
-            .get(
-                "label"
-            )
-        )
+        first_sentiment = first.get("sentiment", {}).get("label")
 
-        second_sentiment = (
-            second.get(
-                "sentiment",
-                {}
-            )
-            .get(
-                "label"
-            )
-        )
+        second_sentiment = second.get("sentiment", {}).get("label")
 
-        if (
-            first_sentiment
-            and
-            second_sentiment
-        ):
+        if first_sentiment and second_sentiment:
 
-            scores.append(
-                1.0
-                if
-                first_sentiment
-                ==
-                second_sentiment
-                else
-                0.0
-            )
+            scores.append(1.0 if first_sentiment == second_sentiment else 0.0)
 
         if not scores:
 
             return 0.0
 
-        return round(
-            sum(scores)
-            /
-            len(scores),
-            2
-        )
+        return round(sum(scores) / len(scores), 2)
 
     # ========================================================
     # SEARCH SEMANTIC MEMORY
     # ========================================================
 
-    def search(
-        self,
-        query,
-        limit=10
-    ):
+    def search(self, query, limit=10):
 
-        query = self.normalize_text(
-            query
-        )
+        query = self.normalize_text(query)
 
-        query_tokens = set(
-            self.tokenize(
-                query
-            )
-        )
+        query_tokens = set(self.tokenize(query))
 
         results = []
 
-        for item in reversed(
-            self.history
-        ):
+        for item in reversed(self.history):
 
-            item_text = (
-                item.get(
-                    "normalized",
-                    ""
-                )
-            )
+            item_text = item.get("normalized", "")
 
-            item_tokens = set(
-                self.tokenize(
-                    item_text
-                )
-            )
+            item_tokens = set(self.tokenize(item_text))
 
-            if (
-                query_tokens
-                &
-                item_tokens
-            ):
+            if query_tokens & item_tokens:
 
-                results.append(
-                    item
-                )
+                results.append(item)
 
             if len(results) >= limit:
 
@@ -1689,60 +1082,37 @@ class SemanticProcessor:
     # GET RECENT
     # ========================================================
 
-    def get_recent(
-        self,
-        limit=10
-    ):
+    def get_recent(self, limit=10):
 
         if limit <= 0:
 
             return []
 
-        return list(
-            self.history
-        )[-limit:]
+        return list(self.history)[-limit:]
 
     # ========================================================
     # TOP CONCEPTS
     # ========================================================
 
-    def top_concepts(
-        self,
-        limit=10
-    ):
+    def top_concepts(self, limit=10):
 
-        return (
-            self.concept_frequency
-            .most_common(limit)
-        )
+        return self.concept_frequency.most_common(limit)
 
     # ========================================================
     # TOP TOPICS
     # ========================================================
 
-    def top_topics(
-        self,
-        limit=10
-    ):
+    def top_topics(self, limit=10):
 
-        return (
-            self.topic_frequency
-            .most_common(limit)
-        )
+        return self.topic_frequency.most_common(limit)
 
     # ========================================================
     # TOP KEYWORDS
     # ========================================================
 
-    def top_keywords(
-        self,
-        limit=10
-    ):
+    def top_keywords(self, limit=10):
 
-        return (
-            self.keyword_frequency
-            .most_common(limit)
-        )
+        return self.keyword_frequency.most_common(limit)
 
     # ========================================================
     # CLEAR MEMORY
@@ -1762,9 +1132,7 @@ class SemanticProcessor:
 
         self.intent_frequency.clear()
 
-        logger.info(
-            "Semantic memory cleared."
-        )
+        logger.info("Semantic memory cleared.")
 
     # ========================================================
     # STATUS
@@ -1773,55 +1141,18 @@ class SemanticProcessor:
     def status(self):
 
         return {
-
-            "name":
-                self.name,
-
-            "version":
-                "2.0",
-
-            "online":
-                True,
-
-            "processed":
-                self.processed_count,
-
-            "errors":
-                self.error_count,
-
-            "memory":
-                len(
-                    self.history
-                ),
-
-            "memory_limit":
-                self.max_history,
-
-            "concepts_tracked":
-                len(
-                    self.concept_frequency
-                ),
-
-            "topics_tracked":
-                len(
-                    self.topic_frequency
-                ),
-
-            "keywords_tracked":
-                len(
-                    self.keyword_frequency
-                ),
-
-            "sentiments_tracked":
-                len(
-                    self.sentiment_frequency
-                ),
-
-            "intents_tracked":
-                len(
-                    self.intent_frequency
-                ),
-
+            "name": self.name,
+            "version": "2.0",
+            "online": True,
+            "processed": self.processed_count,
+            "errors": self.error_count,
+            "memory": len(self.history),
+            "memory_limit": self.max_history,
+            "concepts_tracked": len(self.concept_frequency),
+            "topics_tracked": len(self.topic_frequency),
+            "keywords_tracked": len(self.keyword_frequency),
+            "sentiments_tracked": len(self.sentiment_frequency),
+            "intents_tracked": len(self.intent_frequency),
         }
 
 

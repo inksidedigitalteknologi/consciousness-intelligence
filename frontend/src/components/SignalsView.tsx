@@ -142,10 +142,35 @@ export const SignalsView: React.FC<SignalsViewProps> = ({ signals = [], apiKey: 
     if (showRefresh) setIsRefreshing(true);
     setSelfLoading(true);
     setSelfError(null);
+
+    // Retry logic: coba 3 kali dengan delay
+    let res: Response | null = null;
+    let lastError: any = null;
+
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        res = await fetch('/api/dividend/top?limit=50', {
+          headers: { 'X-API-Key': apiKey },
+        });
+        if (res.ok) break;
+        lastError = new Error(`HTTP ${res.status}`);
+      } catch (err) {
+        lastError = err;
+      }
+      // Delay sebelum retry: 1s, 2s, 3s
+      if (attempt < 3) {
+        await new Promise(r => setTimeout(r, attempt * 1000));
+      }
+    }
+
+    if (!res) {
+      setSelfError(lastError?.message || 'Fetch failed after 3 attempts');
+      setSelfLoading(false);
+      if (showRefresh) setTimeout(() => setIsRefreshing(false), 300);
+      return;
+    }
+
     try {
-      const res = await fetch('/api/dividend/top?limit=50', {
-        headers: { 'X-API-Key': apiKey },
-      });
       if (res.ok) {
         const data = await res.json();
         const stocks = data.data || [];
