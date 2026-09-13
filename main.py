@@ -437,6 +437,16 @@ def start_api_server():
 
             return decorated_function
 
+        # ============================================================
+        # CACHE GLOBAL
+        # ============================================================
+        _dividend_top_cache = {}  # key: n
+        _dividend_upcoming_cache = {}  # key: days
+        _dividend_stats_cache = {"data": None, "timestamp": 0}
+        _dividend_sectors_cache = {"data": None, "timestamp": 0}
+        _knowledge_all_cache = {"data": None, "timestamp": 0}  # 5 menit
+        _knowledge_stats_cache = {"data": None, "timestamp": 0}
+
         def broadcast_update(channel: str, payload: dict):
             try:
                 socketio.emit(
@@ -1405,7 +1415,18 @@ def start_api_server():
         @require_api_key
         def dividend_top():
             try:
+                import time as _time
+
+                now = _time.time()
                 n = int(request.args.get("n", 10))
+                cache_key = str(n)
+
+                if cache_key in _dividend_top_cache:
+                    entry = _dividend_top_cache[cache_key]
+                    if (now - entry["timestamp"]) < 3600:
+                        cached = dict(entry["data"])
+                        cached["cached"] = True
+                        return jsonify(cached)
 
                 if not DIVIDEND_AVAILABLE or not dividend:
                     return jsonify({"error": "Dividend module not available"}), 503
@@ -1415,14 +1436,17 @@ def start_api_server():
 
                 top = dividend.get_top(n)
 
-                return jsonify(
-                    {
-                        "status": "success",
-                        "count": len(top),
-                        "data": top.to_dict("records") if not top.empty else [],
-                        "timestamp": datetime.now().isoformat(),
-                    }
-                )
+                result = {
+                    "status": "success",
+                    "count": len(top),
+                    "data": top.to_dict("records") if not top.empty else [],
+                    "timestamp": datetime.now().isoformat(),
+                }
+
+                # Simpan cache (1 jam)
+                _dividend_top_cache[str(n)] = {"data": result, "timestamp": _time.time()}
+
+                return jsonify(result)
             except Exception as e:
                 logger.error(f"Dividend top error: {e}")
                 return jsonify({"error": str(e)}), 500
@@ -1431,25 +1455,87 @@ def start_api_server():
         @require_api_key
         def dividend_upcoming():
             try:
+                import time as _time
+                from datetime import datetime, timedelta
+
+                now = _time.time()
                 days = int(request.args.get("days", 7))
+                cache_key = str(days)
+
+                if cache_key in _dividend_upcoming_cache:
+                    entry = _dividend_upcoming_cache[cache_key]
+                    if (now - entry["timestamp"]) < 3600:
+                        cached = dict(entry["data"])
+                        cached["cached"] = True
+                        return jsonify(cached)
 
                 if not DIVIDEND_AVAILABLE or not dividend:
                     return jsonify({"error": "Dividend module not available"}), 503
 
-                if dividend.df.empty:
-                    dividend.fetch()
+                # Fetch fresh untuk tanggal mendatang (7 hari ke depan)
+                import requests as _requests
+                import pandas as _pd
+
+                all_rows = []
+                headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                    "Accept": "application/json",
+                }
+                today = datetime.now()
+                for offset in range(0, days + 1):
+                    target_date = today + timedelta(days=offset)
+                    if target_date.weekday() >= 5:
+                        continue
+                    try:
+                        url = f"https://api.nasdaq.com/api/calendar/dividends?date={target_date.strftime('%Y-%m-%d')}"
+                        r = _requests.get(url, headers=headers, timeout=10)
+                        if r.status_code == 200:
+                            data = r.json()
+                            rows = data.get("data", {}).get("calendar", {}).get("rows", [])
+                            all_rows.extend(rows)
+                    except Exception as e:
+                        logger.warning(f"Upcoming fetch error for {target_date}: {e}")
+                        continue
+
+                if all_rows:
+                    dividend.df = _pd.DataFrame(
+                        [
+                            {
+                                "symbol": r.get("symbol", ""),
+                                "name": r.get("companyName", ""),
+                                "dividend": float(r.get("dividend_Rate", 0) or 0),
+                                "annual_dividend": float(
+                                    r.get("indicated_Annual_Dividend", 0) or 0
+                                ),
+                                "ex_date": r.get("dividend_Ex_Date", ""),
+                                "pay_date": r.get("payment_Date", ""),
+                                "record_date": r.get("record_Date", ""),
+                                "announcement_date": r.get("announcement_Date", ""),
+                                "sector": "Unknown",
+                                "frequency": "Quarterly",
+                                "type": "Cash",
+                                "source": "nasdaq",
+                            }
+                            for r in all_rows
+                        ]
+                    )
 
                 upcoming = dividend.get_upcoming(days)
 
-                return jsonify(
-                    {
-                        "status": "success",
-                        "count": len(upcoming),
-                        "data": upcoming.to_dict("records") if not upcoming.empty else [],
-                        "days": days,
-                        "timestamp": datetime.now().isoformat(),
-                    }
-                )
+                result = {
+                    "status": "success",
+                    "count": len(upcoming),
+                    "data": upcoming.to_dict("records") if not upcoming.empty else [],
+                    "days": days,
+                    "timestamp": datetime.now().isoformat(),
+                }
+
+                _dividend_upcoming_cache[str(days)] = {
+                    "data": result,
+                    "timestamp": _time.time(),
+                }
+
+                return jsonify(result)
             except Exception as e:
                 logger.error(f"Dividend upcoming error: {e}")
                 return jsonify({"error": str(e)}), 500
@@ -1522,6 +1608,17 @@ def start_api_server():
         @require_api_key
         def dividend_stats():
             try:
+                import time as _time
+
+                now = _time.time()
+                if (
+                    _dividend_stats_cache["data"]
+                    and (now - _dividend_stats_cache["timestamp"]) < 3600
+                ):
+                    cached = dict(_dividend_stats_cache["data"])
+                    cached["cached"] = True
+                    return jsonify(cached)
+
                 if not DIVIDEND_AVAILABLE or not dividend:
                     return jsonify({"error": "Dividend module not available"}), 503
 
@@ -1529,14 +1626,16 @@ def start_api_server():
                     dividend.fetch()
 
                 stats = dividend.get_statistics()
+                result = {
+                    "status": "success",
+                    "statistics": stats,
+                    "timestamp": datetime.now().isoformat(),
+                }
 
-                return jsonify(
-                    {
-                        "status": "success",
-                        "statistics": stats,
-                        "timestamp": datetime.now().isoformat(),
-                    }
-                )
+                _dividend_stats_cache["data"] = result
+                _dividend_stats_cache["timestamp"] = _time.time()
+
+                return jsonify(result)
             except Exception as e:
                 logger.error(f"Dividend stats error: {e}")
                 return jsonify({"error": str(e)}), 500
@@ -1545,6 +1644,17 @@ def start_api_server():
         @require_api_key
         def dividend_sectors():
             try:
+                import time as _time
+
+                now = _time.time()
+                if (
+                    _dividend_sectors_cache["data"]
+                    and (now - _dividend_sectors_cache["timestamp"]) < 21600
+                ):
+                    cached = dict(_dividend_sectors_cache["data"])
+                    cached["cached"] = True
+                    return jsonify(cached)
+
                 if not DIVIDEND_AVAILABLE or not dividend:
                     return jsonify({"error": "Dividend module not available"}), 503
 
@@ -1552,14 +1662,16 @@ def start_api_server():
                     dividend.fetch()
 
                 summary = dividend.get_sector_summary()
+                result = {
+                    "status": "success",
+                    "data": summary.to_dict("records") if not summary.empty else [],
+                    "timestamp": datetime.now().isoformat(),
+                }
 
-                return jsonify(
-                    {
-                        "status": "success",
-                        "data": summary.to_dict("records") if not summary.empty else [],
-                        "timestamp": datetime.now().isoformat(),
-                    }
-                )
+                _dividend_sectors_cache["data"] = result
+                _dividend_sectors_cache["timestamp"] = _time.time()
+
+                return jsonify(result)
             except Exception as e:
                 logger.error(f"Dividend sectors error: {e}")
                 return jsonify({"error": str(e)}), 500
@@ -1666,19 +1778,38 @@ def start_api_server():
                 logger.error(f"Trap screener error: {e}")
                 return jsonify({"error": str(e)}), 500
 
+        # Cache untuk trap screener (6 jam)
+        _trap_screener_cache = {"data": None, "timestamp": 0}
+
         @app.route("/api/dividend/trap-screener/top", methods=["GET"])
         @require_api_key
         def dividend_trap_screener_top():
-            """Screen top dividend stocks for trap analysis."""
+            """Screen top dividend stocks for trap analysis (cached 6h)."""
             try:
+                import time as _time
+
+                now = _time.time()
+                if (
+                    _trap_screener_cache["data"]
+                    and (now - _trap_screener_cache["timestamp"]) < 21600
+                ):
+                    return jsonify(
+                        {
+                            "status": "success",
+                            "count": len(_trap_screener_cache["data"]),
+                            "data": _trap_screener_cache["data"],
+                            "cached": True,
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                    )
+
                 if not DIVIDEND_AVAILABLE or not dividend:
                     return jsonify({"error": "Dividend module not available"}), 503
 
                 if dividend.df.empty:
                     dividend.fetch()
 
-                # Ambil top 20 dividend stocks
-                top_df = dividend.get_top(20)
+                top_df = dividend.get_top(10)  # 10 untuk performa
                 if top_df.empty:
                     return jsonify({"status": "success", "count": 0, "data": []})
 
@@ -1719,11 +1850,18 @@ def start_api_server():
                         continue
 
                 results.sort(key=lambda x: x["trap_score"])
+
+                # Simpan cache (6 jam)
+                _trap_screener_cache["data"] = results
+                _trap_screener_cache["timestamp"] = _time.time()
+                logger.info(f"💾 Trap screener cache updated: {len(results)} stocks")
+
                 return jsonify(
                     {
                         "status": "success",
                         "count": len(results),
                         "data": results,
+                        "cached": False,
                         "timestamp": datetime.now().isoformat(),
                     }
                 )
@@ -2071,25 +2209,38 @@ def start_api_server():
         @require_api_key
         def knowledge_stats():
             try:
+                import time as _time
+
+                now = _time.time()
+                if (
+                    _knowledge_stats_cache["data"]
+                    and (now - _knowledge_stats_cache["timestamp"]) < 300
+                ):
+                    cached = dict(_knowledge_stats_cache["data"])
+                    cached["cached"] = True
+                    return jsonify(cached)
+
                 if not KNOWLEDGE_AVAILABLE:
                     return jsonify({"error": "Knowledge engine not available"}), 503
 
                 stats = knowledge.stats()
+                result = {
+                    "total_items": stats.total,
+                    "database_size_mb": stats.database_size_mb,
+                    "by_category": stats.by_category,
+                    "by_type": stats.by_type,
+                    "by_status": stats.by_status,
+                    "avg_confidence": stats.avg_confidence,
+                    "active": stats.active,
+                    "archived": stats.archived,
+                    "ai_enhanced_count": stats.ai_enhanced_count,
+                    "timestamp": datetime.now().isoformat(),
+                }
 
-                return jsonify(
-                    {
-                        "total_items": stats.total,
-                        "database_size_mb": stats.database_size_mb,
-                        "by_category": stats.by_category,
-                        "by_type": stats.by_type,
-                        "by_status": stats.by_status,
-                        "avg_confidence": stats.avg_confidence,
-                        "active": stats.active,
-                        "archived": stats.archived,
-                        "ai_enhanced_count": stats.ai_enhanced_count,
-                        "timestamp": datetime.now().isoformat(),
-                    }
-                )
+                _knowledge_stats_cache["data"] = result
+                _knowledge_stats_cache["timestamp"] = _time.time()
+
+                return jsonify(result)
             except Exception as e:
                 return jsonify({"error": str(e)}), 500
 
@@ -2100,19 +2251,30 @@ def start_api_server():
         @app.route("/api/knowledge/all", methods=["GET"])
         @require_api_key
         def knowledge_all():
-            """Get all knowledge items"""
+            """Get all knowledge items (cached 5 min)"""
             try:
+                import time as _time
+
+                now = _time.time()
+                if _knowledge_all_cache["data"] and (now - _knowledge_all_cache["timestamp"]) < 300:
+                    cached = dict(_knowledge_all_cache["data"])
+                    cached["cached"] = True
+                    return jsonify(cached)
+
                 if not KNOWLEDGE_AVAILABLE:
                     return jsonify({"error": "Knowledge engine not available"}), 503
 
                 items = knowledge.all()
-                return jsonify(
-                    {
-                        "items": [item.to_dict() for item in items],
-                        "total": len(items),
-                        "timestamp": datetime.now().isoformat(),
-                    }
-                )
+                result = {
+                    "items": [item.to_dict() for item in items],
+                    "total": len(items),
+                    "timestamp": datetime.now().isoformat(),
+                }
+
+                _knowledge_all_cache["data"] = result
+                _knowledge_all_cache["timestamp"] = _time.time()
+
+                return jsonify(result)
             except Exception as e:
                 logger.error(f"Knowledge all error: {e}")
                 return jsonify({"error": str(e)}), 500
@@ -3742,6 +3904,44 @@ def main_headless():
 # ============================================================
 # ENTRY POINT
 # ============================================================
+
+# ============================================================
+# WARM CACHE TRAP SCREENER
+# ============================================================
+
+
+def warm_trap_screener_cache():
+    """Fetch trap screener di background saat startup."""
+    import time as _time
+
+    _time.sleep(30)  # tunggu backend stabil
+    try:
+        logger.info("🔥 Warming trap screener cache...")
+        import requests
+
+        api_key = os.getenv("API_KEY", "iks_612d40ce554b1670525355c85567f823")
+        resp = requests.get(
+            "http://127.0.0.1:5000/api/dividend/trap-screener/top",
+            headers={"X-API-Key": api_key},
+            timeout=60,
+        )
+        if resp.ok:
+            logger.info("✅ Trap screener cache warmed")
+        else:
+            logger.warning(f"⚠️ Warm cache failed: {resp.status_code}")
+    except Exception as e:
+        logger.warning(f"⚠️ Warm cache error: {e}")
+
+
+try:
+    import threading as _threading
+
+    _warm_thread = _threading.Thread(target=warm_trap_screener_cache, daemon=True)
+    _warm_thread.start()
+    logger.info("🔥 Warm trap screener thread started")
+except Exception as e:
+    logger.warning(f"Warm cache thread failed: {e}")
+
 
 if __name__ == "__main__":
     try:
