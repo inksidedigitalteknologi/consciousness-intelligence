@@ -83,21 +83,11 @@ MAX_MARKETS = 15
 # 5. MARKET & PAIRS
 # ============================================================
 
-DEFAULT_PAIRS = [
-    "BTC/USD",
-    "ETH/USD",
-    "SOL/USD",
-    "XRP/USD",
-    "BNB/USD",
-]
+DEFAULT_PAIRS = ['BTC/USD', 'ETH/USD', 'SOL/USD', 'XRP/USD', 'BNB/USD']
 
-DEFAULT_TIMEFRAMES = [
-    "1h",
-    "4h",
-    "1d",
-]
+DEFAULT_TIMEFRAMES = ['1h', '4h', '1d']
 
-MAIN_TIMEFRAME = "1h"
+MAIN_TIMEFRAME = '1h'
 SCALP_TIMEFRAME = "15m"
 SWING_TIMEFRAME = "4h"
 LONG_TIMEFRAME = "1d"

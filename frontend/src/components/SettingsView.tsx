@@ -40,6 +40,7 @@ import {
   Brain,
   Info,
   Loader2,
+  Heart,
 } from 'lucide-react';
 
 // ============================================================
