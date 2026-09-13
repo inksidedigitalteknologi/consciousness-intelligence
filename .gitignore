@@ -276,3 +276,5 @@ frontend/deploy.sh
 *.bak_*
 *.backup
 *.old
+database/*.db-shm
+database/*.db-wal
