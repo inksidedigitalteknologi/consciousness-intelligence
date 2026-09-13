@@ -118,7 +118,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterDashboard }) =>
   };
 
   return (
-    <div className="relative min-h-screen bg-[#07070B] text-white overflow-hidden">
+    <div className="relative min-h-screen bg-[#0B0F14] text-white overflow-hidden">
       
       {/* ============================================================
           HERO CANVAS BACKGROUND
@@ -128,7 +128,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterDashboard }) =>
       {/* ============================================================
           NAVBAR
           ============================================================ */}
-      <nav className="relative z-20 border-b border-white/10 bg-[#07070B]/80 backdrop-blur-xl">
+      <nav className="relative z-20 border-b border-white/10 bg-[#0B0F14]/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-amber-500 p-[1px]">

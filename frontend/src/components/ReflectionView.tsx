@@ -497,7 +497,7 @@ export const ReflectionView: React.FC = () => {
             reflections.map((ref, idx) => (
               <div
                 key={idx}
-                className={`p-3.5 rounded-xl bg-[#1A2530] border transition-all duration-300 hover:border-purple-500/50 hover:bg-[#1F2A38] group ${
+                className={`p-3.5 rounded-xl bg-[#1A2530] border transition-all duration-300 hover:border-purple-500/50 hover:bg-[#18212B] group ${
                   ref.importance === 'high'
                     ? 'border-purple-500/30'
                     : ref.importance === 'medium'

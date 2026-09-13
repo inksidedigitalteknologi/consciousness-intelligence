@@ -309,7 +309,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
   return (
     <div id="watchlist-view" className="space-y-6 pb-12">
       {/* Top Banner */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#131A22] via-[#16202B] to-[#131A22] border border-[#26313D] shadow-xl">
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#131A22] via-[#131A22] to-[#131A22] border border-[#26313D] shadow-xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
@@ -515,7 +515,7 @@ export const WatchlistView: React.FC<WatchlistViewProps> = ({
               <div
                 key={ticker.pair}
                 className={`p-4 sm:p-5 rounded-2xl bg-[#131A22] border transition-all duration-200 shadow-lg space-y-4 flex flex-col justify-between ${
-                  entry.pinned ? 'border-amber-500/40 bg-gradient-to-b from-[#16202B] to-[#131A22]' : 'border-[#26313D] hover:border-[#384759]'
+                  entry.pinned ? 'border-amber-500/40 bg-gradient-to-b from-[#131A22] to-[#131A22]' : 'border-[#26313D] hover:border-[#3A4A5A]'
                 }`}
               >
                 <div>

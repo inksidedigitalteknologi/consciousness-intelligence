@@ -177,7 +177,7 @@ const AnimatedCounter: React.FC<{ value: number; duration?: number; suffix?: str
 
 const MiniChart: React.FC<{ data: number[]; color?: string; height?: number }> = ({
   data,
-  color = '#10b981',
+  color = '#10B981',
   height = 40
 }) => {
   if (!data || data.length < 2) return null;
@@ -512,7 +512,7 @@ export const HealthView: React.FC<HealthViewProps> = ({ wsConnected = false }) =
               <div className="mt-2 w-full h-1.5 rounded-full bg-[#1A2530] overflow-hidden">
                 <div className={`h-full rounded-full transition-all duration-1000 ${metrics.cpu > 80 ? 'bg-rose-500' : metrics.cpu > 60 ? 'bg-amber-500' : 'bg-blue-500'}`} style={{ width: `${Math.min(metrics.cpu || 0, 100)}%` }} />
               </div>
-              {cpuHistory.length > 1 && <MiniChart data={cpuHistory} color={metrics.cpu > 80 ? '#ef4444' : metrics.cpu > 60 ? '#f59e0b' : '#3b82f6'} height={30} />}
+              {cpuHistory.length > 1 && <MiniChart data={cpuHistory} color={metrics.cpu > 80 ? '#EF4444' : metrics.cpu > 60 ? '#F59E0B' : '#3B82F6'} height={30} />}
             </div>
 
             {/* Memory */}
@@ -619,7 +619,7 @@ export const HealthView: React.FC<HealthViewProps> = ({ wsConnected = false }) =
               <span className="text-[10px] text-[#5F6B78]">Last {healthHistory.length} updates</span>
             </div>
             <div className="h-16">
-              <MiniChart data={healthHistory} color="#10b981" height={60} />
+              <MiniChart data={healthHistory} color="#10B981" height={60} />
             </div>
             <div className="flex items-center justify-between mt-1 text-[9px] text-[#5F6B78]">
               <span>{history[0]?.timestamp || '--'}</span>

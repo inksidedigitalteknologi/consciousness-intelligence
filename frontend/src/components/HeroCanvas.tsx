@@ -212,7 +212,7 @@ export const HeroCanvas: React.FC<HeroCanvasProps> = memo(({
     // PARTICLE CONFIG
     // ============================================================
     
-    const defaultColors = ['#00D4FF', '#00F0FF', '#F5A623', '#FFC837', '#6366F1', '#EC4899', '#8B5CF6'];
+    const defaultColors = ['#00D4FF', '#00F0FF', '#F59E0B', '#F59E0B', '#6366F1', '#EC4899', '#8B5CF6'];
     const colors = propColors || defaultColors;
     
     const baseParticleCount = propParticleCount || Math.min(

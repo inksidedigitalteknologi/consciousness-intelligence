@@ -99,7 +99,7 @@ class BottomNavErrorBoundary extends React.Component<
     if (this.state.hasError) {
       return (
         <div 
-          className="fixed bottom-0 left-0 right-0 z-40 bg-[#0F141B]/95 backdrop-blur-md border-t border-rose-500/30 px-4 py-3 flex items-center gap-3"
+          className="fixed bottom-0 left-0 right-0 z-40 bg-[#131A22]/95 backdrop-blur-md border-t border-rose-500/30 px-4 py-3 flex items-center gap-3"
           role="alert"
         >
           <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0" />
@@ -156,7 +156,7 @@ const NavItemComponent = memo(({ item, isActive, onClick, engineRunning }: NavIt
           ? 'text-blue-400 font-bold scale-105' 
           : 'text-[#8D9AAA] hover:text-white hover:bg-[#1A2530]'
         }
-        focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:ring-offset-2 focus:ring-offset-[#0F141B]
+        focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:ring-offset-2 focus:ring-offset-[#131A22]
         active:scale-95
       `}
       aria-label={`${item.label}${isActive ? ' (active)' : ''}`}
@@ -266,7 +266,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   return (
     <BottomNavErrorBoundary>
       <nav 
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0F141B]/95 backdrop-blur-md border-t border-[#26313D] px-2 py-1.5 flex items-center justify-around select-none shadow-2xl safe-area-bottom"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#131A22]/95 backdrop-blur-md border-t border-[#26313D] px-2 py-1.5 flex items-center justify-around select-none shadow-2xl safe-area-bottom"
         role="navigation"
         aria-label="Bottom Navigation"
       >
@@ -305,7 +305,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             flex flex-col items-center justify-center py-1 px-2 rounded-xl 
             transition-all duration-200 cursor-pointer min-w-[56px] min-h-[44px]
             text-[#8D9AAA] hover:text-white hover:bg-[#1A2530]
-            focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:ring-offset-2 focus:ring-offset-[#0F141B]
+            focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:ring-offset-2 focus:ring-offset-[#131A22]
             active:scale-95
           `}
           aria-label="Open menu"

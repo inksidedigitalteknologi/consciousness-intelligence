@@ -487,7 +487,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Desktop Sidebar */}
       <aside
         id="app-sidebar-desktop"
-        className={`hidden lg:flex bg-[#0F141B] border-r border-[#26313D] flex-col justify-between h-screen shrink-0 overflow-y-auto transition-all duration-300 ease-in-out ${
+        className={`hidden lg:flex bg-[#131A22] border-r border-[#26313D] flex-col justify-between h-screen shrink-0 overflow-y-auto transition-all duration-300 ease-in-out ${
           collapsed ? 'w-16' : 'w-64'
         }`}
       >
@@ -502,7 +502,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         >
           <aside
             id="app-sidebar-mobile"
-            className="w-72 sm:w-80 bg-[#0F141B] border-r border-[#26313D] h-full shadow-2xl overflow-y-auto animate-in slide-in-from-left duration-300"
+            className="w-72 sm:w-80 bg-[#131A22] border-r border-[#26313D] h-full shadow-2xl overflow-y-auto animate-in slide-in-from-left duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             {sidebarContent}
