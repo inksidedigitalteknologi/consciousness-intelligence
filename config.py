@@ -602,3 +602,105 @@ if __name__ == "__main__":
         print("\n✅ Configuration validated successfully")
     
     print("=" * 70)
+
+# ============================================================
+# AUTONOMOUS LEARNING — INDONESIA KEYWORDS
+# ============================================================
+
+INDONESIA_KEYWORDS = [
+    # Financial
+    'saham', 'pasar', 'modal', 'investasi', 'trading', 'traders',
+    'keuangan', 'bank', 'inflasi', 'suku bunga', 'ekonomi',
+    'dividen', 'obligasi', 'reksa dana', 'portofolio', 'bursa',
+    'indeks', 'ihsg', 'idx', 'bei', 'emiten', 'perusahaan',
+    
+    # Market terms
+    'bullish', 'bearish', 'support', 'resistance', 'breakout',
+    'volume', 'momentum', 'tren', 'trend', 'analisis',
+    'teknikal', 'fundamental', 'sentimen', 'volatilitas',
+    
+    # Indonesian cities/regions
+    'jakarta', 'surabaya', 'bandung', 'medan', 'semarang',
+    'indonesia', 'nusantara', 'jawa', 'sumatera', 'kalimantan',
+    
+    # Common words
+    'dan', 'atau', 'yang', 'untuk', 'dari', 'pada', 'dengan',
+    'adalah', 'ini', 'itu', 'akan', 'tidak', 'bisa', 'dapat',
+    
+    # Financial actions
+    'beli', 'jual', 'tahan', 'tunggu', 'naik', 'turun',
+    'untung', 'rugi', 'profit', 'loss',
+]
+
+# ============================================================
+# AUTONOMOUS LEARNING — RSS FEEDS
+# ============================================================
+
+AUTONOMOUS_RSS_FEEDS = [
+    # Financial news
+    'https://feeds.finance.yahoo.com/rss/2.0/headline?s=^GSPC&region=US&lang=en-US',
+    'https://feeds.finance.yahoo.com/rss/2.0/headline?s=^DJI&region=US&lang=en-US',
+    'https://feeds.finance.yahoo.com/rss/2.0/headline?s=^IXIC&region=US&lang=en-US',
+    
+    # Crypto
+    'https://cointelegraph.com/rss',
+    'https://coindesk.com/arc/outboundfeeds/rss/',
+    
+    # General finance
+    'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',
+    'https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml',
+    
+    # Indonesia
+    'https://www.cnbcindonesia.com/rss',
+    'https://www.kontan.co.id/rss',
+]
+
+# ============================================================
+# AUTONOMOUS LEARNING — RSS INTERVAL
+# ============================================================
+
+AUTONOMOUS_RSS_INTERVAL = 3600  # 1 jam (dalam detik)
+AUTONOMOUS_RSS_BATCH_SIZE = 10  # RSS per batch
+AUTONOMOUS_LEARNING_ENABLED = True
+
+# ============================================================
+# AUTONOMOUS LEARNING — REANALYSIS
+# ============================================================
+
+AUTONOMOUS_REANALYSIS_INTERVAL = 7200  # 2 jam (dalam detik)
+AUTONOMOUS_REANALYSIS_ENABLED = True
+AUTONOMOUS_REANALYSIS_BATCH_SIZE = 20
+
+# ============================================================
+# AUTONOMOUS LEARNING — HEALTH CHECK
+# ============================================================
+
+AUTONOMOUS_HEALTH_CHECK_INTERVAL = 300  # 5 menit (detik)
+AUTONOMOUS_HEALTH_CHECK_ENABLED = True
+
+# ============================================================
+# AUTONOMOUS LEARNING — CACHE
+# ============================================================
+
+AUTONOMOUS_CACHE_DIR = 'data/autonomous_cache'
+AUTONOMOUS_CACHE_ENABLED = True
+AUTONOMOUS_CACHE_TTL = 86400  # 24 jam
+
+# ============================================================
+# AUTONOMOUS LEARNING — SEEN IDS
+# ============================================================
+
+AUTONOMOUS_SEEN_IDS_FILE = 'data/autonomous_seen_ids.json'
+AUTONOMOUS_SEEN_IDS_MAX = 10000
+AUTONOMOUS_DEDUP_ENABLED = True
+
+# ============================================================
+# AUTONOMOUS LEARNING — ADDITIONAL CONFIG
+# ============================================================
+
+AUTONOMOUS_STATS_FILE = 'data/autonomous_stats.json'
+AUTONOMOUS_MAX_RSS_ITEMS = 50
+AUTONOMOUS_MAX_KNOWLEDGE_LENGTH = 2000
+AUTONOMOUS_CONFIDENCE_BASE = 70
+AUTONOMOUS_REQUEST_TIMEOUT = 15
+AUTONOMOUS_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'

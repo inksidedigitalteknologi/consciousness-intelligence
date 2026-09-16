@@ -1090,7 +1090,7 @@ class Brain:
                     if value is None or not isinstance(value, (int, float)):
                         continue
                     
-                    # Skip netral
+                    # Skip neutral
                     if abs(value) < 20:
                         continue
                     
@@ -1265,9 +1265,9 @@ class Brain:
     def get_direction(self, symbol: str, unified_data: dict, levels: dict = None) -> dict:
         """
         Kasih arahan berdasarkan:
-        - Skor unified
+        - Unified score
         - Learned weights
-        - Pengalaman (similar decisions)
+        - Experience (similar decisions)
         - Levels (entry, stop, target)
         
         Args:
@@ -1277,7 +1277,7 @@ class Brain:
             
         Returns:
             {
-                'direction': 'BELI SEKARANG' / 'BELI BERTAHAP' / 'TUNGGU' / 'JUAL BERTAHAP' / 'JUAL SEKARANG',
+                'direction': 'BUY NOW' / 'BUY GRADUALLY' / 'WAIT' / 'SELL GRADUALLY' / 'SELL NOW',
                 'confidence': 0-100,
                 'actionable': bool,
                 'reasoning': str,
@@ -1297,15 +1297,15 @@ class Brain:
             
             # 1. Arahan berdasarkan skor
             if score >= 50:
-                direction = 'BELI SEKARANG'
+                direction = 'BUY NOW'
             elif score >= 30:
-                direction = 'BELI BERTAHAP'
+                direction = 'BUY GRADUALLY'
             elif score <= -50:
-                direction = 'JUAL SEKARANG'
+                direction = 'SELL NOW'
             elif score <= -30:
-                direction = 'JUAL BERTAHAP'
+                direction = 'SELL GRADUALLY'
             else:
-                direction = 'TUNGGU'
+                direction = 'WAIT'
             
             # 2. Cari pengalaman (similar decisions)
             experience = self._get_experience(symbol, breakdown)
@@ -1313,12 +1313,12 @@ class Brain:
             # 3. Adjust arahan berdasarkan pengalaman
             if experience and experience.get('win_rate') is not None:
                 wr = experience['win_rate']
-                if wr > 65 and direction in ('BELI SEKARANG', 'BELI BERTAHAP'):
+                if wr > 65 and direction in ('BUY NOW', 'BUY GRADUALLY'):
                     confidence = min(95, confidence + 10)
                 elif wr < 40:
                     confidence = max(20, confidence - 15)
-                    if direction in ('BELI SEKARANG', 'BELI BERTAHAP'):
-                        direction = 'TUNGGU'
+                    if direction in ('BUY NOW', 'BUY GRADUALLY'):
+                        direction = 'WAIT'
             
             # 4. Reasoning
             reasoning = self._generate_direction_reasoning(direction, score, experience, breakdown)
@@ -1350,7 +1350,7 @@ class Brain:
             return {
                 'direction': direction,
                 'confidence': round(confidence, 1),
-                'actionable': direction not in ('TUNGGU',) and confidence >= 50,
+                'actionable': direction not in ('WAIT',) and confidence >= 50,
                 'reasoning': reasoning,
                 'entry_zone': [round(x, 2) for x in entry_zone if x > 0],
                 'target': round(target, 2) if target else None,
@@ -1368,7 +1368,7 @@ class Brain:
 
     def _get_experience(self, symbol: str, breakdown: dict) -> dict:
         """
-        Cari pengalaman dari decision serupa.
+        Cari pengalaman dari similar decisions.
         
         Returns:
             {
@@ -1420,7 +1420,7 @@ class Brain:
             if not rows:
                 return {}
             
-            # Filter decision serupa (breakdown mirip)
+            # Filter similar decisions (breakdown mirip)
             similar = 0
             wins = 0
             
@@ -1445,13 +1445,13 @@ class Brain:
             
             # Rekomendasi
             if win_rate > 65:
-                rec = 'AKTIF'
+                rec = 'ACTIVE'
             elif win_rate > 50:
                 rec = 'NORMAL'
             elif win_rate > 40:
-                rec = 'HATI-HATI'
+                rec = 'CAUTION'
             else:
-                rec = 'HINDARI'
+                rec = 'AVOID'
             
             return {
                 'similar_decisions': similar,
@@ -1481,7 +1481,7 @@ class Brain:
             if not isinstance(v1, (int, float)) or not isinstance(v2, (int, float)):
                 continue
             
-            # Skor sama tanda & mirip = mirip
+            # Same sign & similar = similar
             v1_norm = v1 / 100
             v2_norm = v2 / 100
             diff = abs(v1_norm - v2_norm)
@@ -1494,38 +1494,76 @@ class Brain:
         return sum(similarities) / len(similarities)
 
     def _generate_direction_reasoning(self, direction: str, score: float, experience: dict, breakdown: dict) -> str:
-        """Generate reasoning untuk direction."""
+        """Generate detailed reasoning untuk direction."""
         parts = []
         
-        # Score
+        # === 1. SCORE ANALYSIS ===
         if score > 50:
-            parts.append(f"Skor kuat ({score:+.1f})")
+            parts.append(f"Strong bullish score ({score:+.1f}) — multiple aspects aligned")
         elif score > 30:
-            parts.append(f"Skor positif ({score:+.1f})")
-        elif score < -50:
-            parts.append(f"Skor lemah ({score:+.1f})")
-        elif score < -30:
-            parts.append(f"Skor negatif ({score:+.1f})")
+            parts.append(f"Positive score ({score:+.1f}) — bullish bias")
+        elif score > 10:
+            parts.append(f"Slightly positive score ({score:+.1f}) — mild bullish bias")
+        elif score > -10:
+            parts.append(f"Neutral score ({score:+.1f}) — mixed signals")
+        elif score > -30:
+            parts.append(f"Slightly negative score ({score:+.1f}) — mild bearish bias")
+        elif score > -50:
+            parts.append(f"Negative score ({score:+.1f}) — bearish bias")
         else:
-            parts.append(f"Skor netral ({score:+.1f})")
+            parts.append(f"Strong bearish score ({score:+.1f}) — multiple aspects aligned")
         
-        # Dominant aspects
+        # === 2. DOMINANT ASPECTS ===
         if breakdown:
-            bullish = sorted([(k, v) for k, v in breakdown.items() if v > 30], key=lambda x: -x[1])[:2]
-            bearish = sorted([(k, v) for k, v in breakdown.items() if v < -30], key=lambda x: x[1])[:2]
+            bullish = sorted([(k, v) for k, v in breakdown.items() if v > 30], key=lambda x: -x[1])[:5]
+            bearish = sorted([(k, v) for k, v in breakdown.items() if v < -30], key=lambda x: x[1])[:5]
+            neutral = [k for k, v in breakdown.items() if -10 <= v <= 10][:3]
             
             if bullish:
-                parts.append(f"Bullish: {', '.join(k for k, _ in bullish)}")
+                bull_str = ', '.join(f"{k} ({v:+.0f})" for k, v in bullish)
+                parts.append(f"\nBullish drivers: {bull_str}")
+            
             if bearish:
-                parts.append(f"Bearish: {', '.join(k for k, _ in bearish)}")
+                bear_str = ', '.join(f"{k} ({v:+.0f})" for k, v in bearish)
+                parts.append(f"\nBearish drivers: {bear_str}")
+            
+            if neutral:
+                parts.append(f"\nNeutral aspects: {', '.join(neutral)}")
         
-        # Experience
+        # === 3. CONFLICT DETECTION ===
+        if breakdown:
+            bullish_count = sum(1 for v in breakdown.values() if v > 30)
+            bearish_count = sum(1 for v in breakdown.values() if v < -30)
+            
+            if bullish_count >= 3 and bearish_count >= 3:
+                parts.append(f"\n⚠️ CONFLICT: {bullish_count} bullish vs {bearish_count} bearish aspects — high uncertainty")
+            elif bullish_count >= 5:
+                parts.append(f"\n✅ Strong consensus: {bullish_count} bullish aspects")
+            elif bearish_count >= 5:
+                parts.append(f"\n⚠️ Strong consensus: {bearish_count} bearish aspects")
+        
+        # === 4. EXPERIENCE ===
         if experience:
             wr = experience.get('win_rate')
-            if wr is not None:
-                parts.append(f"Pengalaman: {experience['similar_decisions']} decision serupa, win rate {wr}%")
+            similar = experience.get('similar_decisions', 0)
+            rec = experience.get('recommendation', '')
+            
+            if wr is not None and similar > 0:
+                parts.append(f"\n📊 Historical pattern: {similar} similar setups, {wr}% win rate — {rec}")
         
-        return '. '.join(parts) + '.'
+        # === 5. RECOMMENDATION ===
+        if direction == 'BUY NOW':
+            parts.append("\n🎯 ACTION: Enter position now with stop loss. Strong bullish alignment.")
+        elif direction == 'BUY GRADUALLY':
+            parts.append("\n🎯 ACTION: Scale in gradually. Monitor for confirmation.")
+        elif direction == 'SELL NOW':
+            parts.append("\n🎯 ACTION: Exit position now. Strong bearish alignment.")
+        elif direction == 'SELL GRADUALLY':
+            parts.append("\n🎯 ACTION: Reduce position gradually. Monitor for reversal.")
+        else:  # WAIT
+            parts.append("\n🎯 ACTION: Stay on sidelines. Wait for clearer signal before entering.")
+        
+        return ' '.join(parts)
 
     def explain_direction(self, direction_result: dict) -> str:
         """Penjelasan lengkap direction dalam format teks."""
@@ -1553,7 +1591,7 @@ class Brain:
         exp = d.get('experience', {})
         if exp:
             lines.append('')
-            lines.append(f"📊 Pengalaman: {exp.get('similar_decisions', 0)} decision serupa")
+            lines.append(f"📊 Experience: {exp.get('similar_decisions', 0)} similar decisions")
             lines.append(f"   Win rate: {exp.get('win_rate', 0)}%")
             lines.append(f"   Rekomendasi: {exp.get('recommendation', 'N/A')}")
         
@@ -4442,3 +4480,37 @@ try:
         logger.info("Monkey patch: _feed_learning_engines already exists")
 except Exception as e:
     logger.warning(f"Monkey patch failed: {e}")
+
+# ============================================================
+# ALIAS FUNCTIONS (untuk kompatibilitas core/__init__.py)
+# ============================================================
+
+def brain_status():
+    """Alias untuk brain.status()."""
+    return brain.status() if hasattr(brain, 'status') else brain.snapshot()
+
+def brain_snapshot():
+    """Alias untuk brain.snapshot()."""
+    return brain.snapshot() if hasattr(brain, 'snapshot') else {}
+
+def brain_start():
+    """Alias untuk brain.start()."""
+    return brain.start()
+
+def brain_stop():
+    """Alias untuk brain.stop()."""
+    return brain.stop()
+
+def brain_reset():
+    """Alias untuk brain.reset()."""
+    return brain.reset()
+
+
+def get_state():
+    """Alias untuk brain.get_state()."""
+    return brain.get_state() if hasattr(brain, 'get_state') else {}
+
+def brain_self_test():
+    """Alias untuk brain.self_test()."""
+    return brain.self_test() if hasattr(brain, 'self_test') else {'status': 'ok'}
+

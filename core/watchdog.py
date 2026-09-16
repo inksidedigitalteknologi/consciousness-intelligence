@@ -504,3 +504,5 @@ watchdog.start()
 
 logger.info(f"🛡️ Watchdog started with {len(watchdog.components)} components, PID: {os.getpid()}")
 
+# Alias untuk kompatibilitas
+SystemWatchdog = RealSystemWatchdog

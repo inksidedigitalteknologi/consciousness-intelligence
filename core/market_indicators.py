@@ -73,7 +73,7 @@ def calculate_ema(closes: List[float], period: int) -> Optional[float]:
 
 
 def calculate_volatility(closes: List[float]) -> Optional[float]:
-    """Volatilitas — std dev returns × 100."""
+    """Volatility — std dev returns × 100."""
     if len(closes) < 2:
         return None
     try:
@@ -255,18 +255,18 @@ def score_indicators(indicators: Dict[str, Any]) -> Dict[str, Any]:
     if rsi is not None:
         if rsi < 30:
             score += 25
-            reasons.append(f"RSI {rsi} — oversold, potensi bounce")
+            reasons.append(f"RSI {rsi} — oversold, potential bounce")
         elif rsi < 45:
             score += 10
-            reasons.append(f"RSI {rsi} — weak, potensi reversal naik")
+            reasons.append(f"RSI {rsi} — weak, potential reversal up")
         elif rsi < 55:
-            reasons.append(f"RSI {rsi} — netral")
+            reasons.append(f"RSI {rsi} — neutral")
         elif rsi < 70:
             score -= 5
             reasons.append(f"RSI {rsi} — strong, hati-hati overbought")
         else:
             score -= 25
-            reasons.append(f"RSI {rsi} — overbought, potensi koreksi")
+            reasons.append(f"RSI {rsi} — overbought, potential correction")
     
     # 2. Trend SMA20 (weight 20)
     trend = indicators.get('trend_sma')
@@ -321,10 +321,10 @@ def score_indicators(indicators: Dict[str, Any]) -> Dict[str, Any]:
     risk = indicators.get('risk_level')
     if risk == 'LOW':
         score += 5
-        reasons.append("Volatilitas rendah — stabil")
+        reasons.append("Volatility rendah — stabil")
     elif risk == 'HIGH':
         score -= 10
-        reasons.append("Volatilitas tinggi — risk tinggi")
+        reasons.append("Volatility tinggi — risk tinggi")
     
     # Final action
     if score >= 40:
@@ -518,22 +518,22 @@ def analyze_multi_timeframe(historical_full: list) -> dict:
     # Multi-timeframe insight
     insights = []
     if bullish_count == len(trends):
-        insights.append(f"✅ Semua timeframe BULLISH ({bullish_count}/{len(trends)}) — trend kuat")
+        insights.append(f"✅ All timeframes BULLISH ({bullish_count}/{len(trends)}) — trend kuat")
     elif bearish_count == len(trends):
-        insights.append(f"🔴 Semua timeframe BEARISH ({bearish_count}/{len(trends)}) — trend turun")
+        insights.append(f"🔴 All timeframes BEARISH ({bearish_count}/{len(trends)}) — trend turun")
     elif bullish_count > bearish_count:
-        insights.append(f"📊 Mayoritas BULLISH ({bullish_count}/{len(trends)}) — trend naik")
+        insights.append(f"📊 Majority BULLISH ({bullish_count}/{len(trends)}) — trend naik")
     elif bearish_count > bullish_count:
-        insights.append(f"📊 Mayoritas BEARISH ({bearish_count}/{len(trends)}) — trend turun")
+        insights.append(f"📊 Majority BEARISH ({bearish_count}/{len(trends)}) — trend turun")
     else:
-        insights.append(f"⚠️ Konflik timeframe ({bullish_count} bullish / {bearish_count} bearish) — volatilitas")
+        insights.append(f"⚠️ Timeframe conflict ({bullish_count} bullish / {bearish_count} bearish) — volatilitas")
     
     if agreement >= 75:
-        insights.append(f"✅ Konsensus tinggi ({agreement}%) — sinyal jelas")
+        insights.append(f"✅ High consensus ({agreement}%) — sinyal jelas")
     elif agreement >= 50:
-        insights.append(f"📊 Konsensus moderat ({agreement}%)")
+        insights.append(f"📊 Moderate consensus ({agreement}%)")
     else:
-        insights.append(f"⚠️ Konsensus rendah ({agreement}%) — tidak ada sinyal jelas")
+        insights.append(f"⚠️ Low consensus ({agreement}%) — tidak ada sinyal jelas")
     
     return {
         'timeframes': results,
@@ -573,7 +573,7 @@ def analyze_unified(
     4. Volume Signal
     5. Volume Ratio
     6. Momentum 5d
-    7. Volatilitas
+    7. Volatility
     8. Support/Resistance
     9. Distance to S/R
     10. Low/High 20d
@@ -670,7 +670,7 @@ def analyze_unified(
     else:
         scores['momentum'] = 0
 
-    # === 7. Volatilitas ===
+    # === 7. Volatility ===
     risk = indicators.get('risk_level')
     if risk == 'LOW':
         scores['volatilitas'] = +30

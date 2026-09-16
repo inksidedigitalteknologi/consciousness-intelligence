@@ -777,3 +777,40 @@ __all__ = [
     "ConsciousnessState",
     "AICache",
 ]
+
+# Alias untuk kompatibilitas
+DeepSeek = DeepSeekAI
+
+# ============================================================
+# KNOWLEDGE ENHANCER — untuk kompatibilitas core/__init__.py
+# ============================================================
+
+class KnowledgeEnhancer:
+    """Enhance knowledge item dengan AI."""
+    
+    def __init__(self, ai_instance=None):
+        self.ai = ai_instance or deepseek_ai
+    
+    def enhance(self, item) -> dict:
+        """Enhance 1 item — return dict dengan tags, summary, insights."""
+        try:
+            content = item.content if hasattr(item, 'content') else str(item)
+            
+            summary = self.ai._summarize(content) if hasattr(self.ai, '_summarize') else ''
+            tags = self.ai._generate_tags(content) if hasattr(self.ai, '_generate_tags') else []
+            insights = self.ai._extract_insights(content) if hasattr(self.ai, '_extract_insights') else []
+            
+            return {
+                'summary': summary,
+                'tags': tags,
+                'insights': insights,
+            }
+        except Exception as e:
+            return {'error': str(e)}
+
+
+def auto_enhance_knowledge_item(item) -> dict:
+    """Auto-enhance knowledge item."""
+    enhancer = KnowledgeEnhancer()
+    return enhancer.enhance(item)
+

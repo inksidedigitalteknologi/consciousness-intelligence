@@ -291,23 +291,23 @@ def analyze_market_full(
         reasons = []
         if rsi is not None:
             if rsi < 30:
-                reasons.append(f"RSI {rsi} — oversold, potensi bounce")
+                reasons.append(f"RSI {rsi} — oversold, potential bounce")
             elif rsi > 70:
-                reasons.append(f"RSI {rsi} — overbought, potensi koreksi")
+                reasons.append(f"RSI {rsi} — overbought, potential correction")
             else:
-                reasons.append(f"RSI {rsi} — netral")
+                reasons.append(f"RSI {rsi} — neutral")
         
         if trend == 'BULLISH':
-            reasons.append("Tren jangka pendek bullish")
+            reasons.append("Short-term trend bullish")
         elif trend == 'BEARISH':
-            reasons.append("Tren jangka pendek bearish")
+            reasons.append("Short-term trend bearish")
         
         if current_price and support and resistance:
             range_pos = (current_price - support) / (resistance - support) if (resistance - support) > 0 else 0.5
             if range_pos < 0.2:
-                reasons.append(f"Dekat support ${support}")
+                reasons.append(f"Near support ${support}")
             elif range_pos > 0.8:
-                reasons.append(f"Dekat resistance ${resistance}")
+                reasons.append(f"Near resistance ${resistance}")
         
         entry = stop = target = None
         if current_price:

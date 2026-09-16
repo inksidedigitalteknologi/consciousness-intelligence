@@ -396,7 +396,7 @@ Top Reasons:
 
 1. APAKAH SINYAL INI VALID? Berikan alasan kuat (Ya/Tidak)
 2. SKOR VALIDASI: 1-100
-3. KEKUATAN: Skor 1-10
+3. STRENGTH: Score 1-10
 4. RISIKO UTAMA: Apa risiko terbesar?
 5. REKOMENDASI: Apakah Anda setuju? Mengapa?
 6. INSIGHT: Insight tambahan yang berharga

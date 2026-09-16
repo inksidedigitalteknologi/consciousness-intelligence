@@ -4,6 +4,23 @@
 import React from 'react';
 import { TrendingUp, TrendingDown, Minus, Target, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
+interface DirectionData {
+  direction?: string;
+  confidence?: number;
+  actionable?: boolean;
+  reasoning?: string;
+  entry_zone?: number[];
+  target?: number;
+  stop?: number;
+  expected_return?: number;
+  risk_reward?: number;
+  experience?: {
+    similar_decisions?: number;
+    win_rate?: number;
+    recommendation?: string;
+  };
+}
+
 interface UnifiedData {
   score?: number;
   action?: string;
@@ -22,6 +39,7 @@ interface MarketDecision {
   reasons?: string[];
   insights?: string[];
   unified?: UnifiedData;
+  direction?: DirectionData;
   levels?: {
     current?: number;
     support?: number;
@@ -46,6 +64,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({ decision, symbol }) 
   const unified = decision?.unified;
   const breakdown = unified?.breakdown || {};
   const aspekCount = unified?.aspek_count || 0;
+  const direction = decision?.direction;
 
   // Style per action
   const actionStyle = {
@@ -141,7 +160,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({ decision, symbol }) 
       {reasons.length > 0 && (
         <div className="space-y-2 mb-4">
           <div className="text-[10px] uppercase tracking-widest text-[#8D9AAA] font-bold mb-2">
-            Alasan Analisis
+            Analysis Reasons
           </div>
           {reasons.slice(0, 4).map((r, i) => {
             const isPositive = /oversold|bounce|support|bullish|naik|up/i.test(r);
@@ -191,7 +210,103 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({ decision, symbol }) 
         </div>
       )}
 
-      {/* UNIFIED — 37 Aspek */}
+      {/* BRAIN DIRECTION */}
+      {direction && direction.direction && (
+        <div className="mt-4 pt-4 border-t border-white/10">
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase tracking-widest text-[#8D9AAA] font-bold">
+                🎯 Brain Direction
+              </span>
+              <span className={`text-lg font-black tracking-wide ${
+                direction.direction?.includes('BUY') ? 'text-emerald-300' :
+                direction.direction?.includes('SELL') ? 'text-rose-300' :
+                'text-amber-300'
+              }`}>
+                {direction.direction}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-[#8D9AAA]">
+                Confidence: <span className="text-white font-bold">{direction.confidence?.toFixed(0)}%</span>
+              </span>
+              {direction.actionable && (
+                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-bold">
+                  ✅ Actionable
+                </span>
+              )}
+            </div>
+          </div>
+          
+          {direction.reasoning && (
+            <div className="text-[10px] text-[#8D9AAA] leading-relaxed p-2 rounded bg-black/20 border border-white/5 mb-3">
+              {direction.reasoning}
+            </div>
+          )}
+          
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+            {direction.entry_zone && direction.entry_zone.length >= 2 && (
+              <div className="p-2 rounded bg-black/30 border border-white/5 text-center">
+                <div className="text-[9px] uppercase text-[#8D9AAA]">Entry Zone</div>
+                <div className="text-xs font-bold text-blue-300 font-mono">
+                  ${direction.entry_zone[0]?.toFixed(2)}
+                  {direction.entry_zone.length >= 2 && ` - $${direction.entry_zone[direction.entry_zone.length-1]?.toFixed(2)}`}
+                </div>
+              </div>
+            )}
+            {direction.target && (
+              <div className="p-2 rounded bg-black/30 border border-white/5 text-center">
+                <div className="text-[9px] uppercase text-[#8D9AAA]">Target</div>
+                <div className="text-xs font-bold text-emerald-300 font-mono">
+                  ${direction.target.toFixed(2)}
+                  {direction.expected_return !== 0 && (
+                    <span className="text-[9px] ml-1">
+                      ({direction.expected_return > 0 ? '+' : ''}{direction.expected_return?.toFixed(2)}%)
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+            {direction.stop && (
+              <div className="p-2 rounded bg-black/30 border border-white/5 text-center">
+                <div className="text-[9px] uppercase text-[#8D9AAA]">Stop</div>
+                <div className="text-xs font-bold text-rose-300 font-mono">${direction.stop.toFixed(2)}</div>
+              </div>
+            )}
+            {direction.risk_reward !== undefined && direction.risk_reward > 0 && (
+              <div className="p-2 rounded bg-black/30 border border-white/5 text-center">
+                <div className="text-[9px] uppercase text-[#8D9AAA]">R:R</div>
+                <div className="text-xs font-bold text-white font-mono">1:{direction.risk_reward?.toFixed(1)}</div>
+              </div>
+            )}
+          </div>
+          
+          {direction.experience && direction.experience.similar_decisions && direction.experience.similar_decisions > 0 && (
+            <div className="p-2 rounded bg-purple-500/5 border border-purple-500/20 flex items-center justify-between flex-wrap gap-2">
+              <div className="text-[10px] text-[#8D9AAA]">
+                📊 <span className="text-purple-300 font-bold">{direction.experience.similar_decisions}</span> decision serupa
+              </div>
+              <div className="text-[10px] text-[#8D9AAA]">
+                Win rate: <span className={`font-bold ${
+                  (direction.experience.win_rate || 0) > 60 ? 'text-emerald-300' :
+                  (direction.experience.win_rate || 0) > 40 ? 'text-amber-300' :
+                  'text-rose-300'
+                }`}>{direction.experience.win_rate?.toFixed(1)}%</span>
+              </div>
+              <div className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                direction.experience.recommendation === 'AKTIF' ? 'bg-emerald-500/20 text-emerald-300' :
+                direction.experience.recommendation === 'NORMAL' ? 'bg-blue-500/20 text-blue-300' :
+                direction.experience.recommendation === 'HATI-HATI' ? 'bg-amber-500/20 text-amber-300' :
+                'bg-rose-500/20 text-rose-300'
+              }`}>
+                {direction.experience.recommendation}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* UNIFIED — 32 Aspek */}
       {unified && aspekCount > 0 && (
         <div className="mt-4 pt-4 border-t border-white/10">
           <div className="flex items-center justify-between mb-3">
