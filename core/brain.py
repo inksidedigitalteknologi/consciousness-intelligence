@@ -635,6 +635,193 @@ class Brain:
 
                 return self._generate_fallback_response(e)
 
+
+    def log_market_decision(self, symbol: str, unified_data: dict, price: float = None) -> bool:
+        """
+        Log market decision + 32 aspek breakdown ke SQLite.
+        
+        Args:
+            symbol: Simbol saham (MMM, AAPL, dll)
+            unified_data: Hasil analyze_unified (score, action, confidence, breakdown)
+            price: Harga saat decision
+            
+        Returns:
+            True kalau sukses
+        """
+        try:
+            import sqlite3
+            import json
+            from datetime import datetime as _dt
+            from pathlib import Path
+            
+            # Cari path memory.db
+            db_path = Path('database/memory.db')
+            if not db_path.exists():
+                logger.warning(f"DB tidak ditemukan: {db_path}")
+                return False
+            
+            # Ambil data
+            action = unified_data.get('action', 'HOLD')
+            score = unified_data.get('score', 0)
+            confidence = unified_data.get('confidence', 0)
+            breakdown = unified_data.get('breakdown', {})
+            aspek_count = unified_data.get('aspek_count', 0)
+            
+            # Kalau price None, coba ambil dari breakdown/indicators
+            if price is None:
+                price = 0
+            
+            # Breakdown ke JSON
+            breakdown_json = json.dumps(breakdown, ensure_ascii=False)
+            
+            # Reason — ringkasan
+            reason = f"aspek={aspek_count}, score={score}"
+            
+            # Insert
+            conn = sqlite3.connect(str(db_path), timeout=30.0)
+            cursor = conn.cursor()
+            
+            timestamp = _dt.now().isoformat()
+            
+            cursor.execute("""
+                INSERT INTO decisions 
+                (timestamp, decision, reason, confidence, symbol, score, price, breakdown)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                timestamp,
+                action,
+                reason,
+                confidence,
+                symbol,
+                score,
+                price,
+                breakdown_json,
+            ))
+            
+            conn.commit()
+            decision_id = cursor.lastrowid
+            conn.close()
+            
+            logger.info(f"📝 Decision logged: {symbol} {action} score={score} (id={decision_id})")
+            return True
+            
+        except Exception as e:
+            logger.error(f"log_market_decision error: {e}")
+            return False
+
+    def get_decisions(self, symbol: str = None, limit: int = 100) -> list:
+        """
+        Ambil riwayat decision dari SQLite.
+        
+        Args:
+            symbol: Filter by symbol (optional)
+            limit: Jumlah maksimal
+            
+        Returns:
+            List of dict
+        """
+        try:
+            import sqlite3
+            import json
+            from pathlib import Path
+            
+            db_path = Path('database/memory.db')
+            if not db_path.exists():
+                return []
+            
+            conn = sqlite3.connect(str(db_path), timeout=30.0)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            
+            if symbol:
+                cursor.execute("""
+                    SELECT * FROM decisions 
+                    WHERE symbol = ? 
+                    ORDER BY timestamp DESC 
+                    LIMIT ?
+                """, (symbol.upper(), limit))
+            else:
+                cursor.execute("""
+                    SELECT * FROM decisions 
+                    WHERE symbol IS NOT NULL
+                    ORDER BY timestamp DESC 
+                    LIMIT ?
+                """, (limit,))
+            
+            rows = cursor.fetchall()
+            conn.close()
+            
+            result = []
+            for row in rows:
+                d = dict(row)
+                # Parse breakdown JSON
+                if d.get('breakdown'):
+                    try:
+                        d['breakdown'] = json.loads(d['breakdown'])
+                    except Exception:
+                        d['breakdown'] = {}
+                result.append(d)
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"get_decisions error: {e}")
+            return []
+
+    def get_decision_stats(self, symbol: str = None) -> dict:
+        """
+        Statistik decision — win rate, avg score, dll.
+        """
+        try:
+            import sqlite3
+            from pathlib import Path
+            
+            db_path = Path('database/memory.db')
+            if not db_path.exists():
+                return {}
+            
+            conn = sqlite3.connect(str(db_path), timeout=30.0)
+            cursor = conn.cursor()
+            
+            where = "WHERE symbol = ?" if symbol else "WHERE symbol IS NOT NULL"
+            params = (symbol.upper(),) if symbol else ()
+            
+            cursor.execute(f"""
+                SELECT 
+                    COUNT(*) as total,
+                    AVG(score) as avg_score,
+                    AVG(confidence) as avg_confidence,
+                    SUM(CASE WHEN win_30d = 1 THEN 1 ELSE 0 END) as wins_30d,
+                    SUM(CASE WHEN win_30d = 0 THEN 1 ELSE 0 END) as losses_30d,
+                    COUNT(outcome_30d) as evaluated
+                FROM decisions
+                {where}
+            """, params)
+            
+            row = cursor.fetchone()
+            conn.close()
+            
+            if not row:
+                return {}
+            
+            total, avg_score, avg_confidence, wins, losses, evaluated = row
+            
+            win_rate = (wins / evaluated * 100) if evaluated and evaluated > 0 else None
+            
+            return {
+                'total': total,
+                'avg_score': round(avg_score, 2) if avg_score else 0,
+                'avg_confidence': round(avg_confidence, 2) if avg_confidence else 0,
+                'wins_30d': wins or 0,
+                'losses_30d': losses or 0,
+                'evaluated': evaluated or 0,
+                'win_rate': round(win_rate, 2) if win_rate is not None else None,
+            }
+            
+        except Exception as e:
+            logger.error(f"get_decision_stats error: {e}")
+            return {}
+
     def _generate_fallback_response(self, error: Exception) -> Dict[str, Any]:
         random_data = self._generate_random_market_data()
         return {

@@ -448,6 +448,18 @@ def analyze_market_full(
                     },
                 })
                 logger.debug(f"🧠 Brain fed: {symbol} {_unified.get('action')} score={_unified.get('score')}")
+
+                # === LOG DECISION KE SQLITE ===
+                try:
+                    _current_price = indicators.get('current_price') if 'indicators' in dir() else None
+                    _global_brain.log_market_decision(
+                        symbol=symbol,
+                        unified_data=_unified,
+                        price=_current_price,
+                    )
+                    logger.debug(f"📝 Decision logged: {symbol}")
+                except Exception as _le:
+                    logger.debug(f"Decision log error: {_le}")
     except Exception as _be:
         logger.debug(f"Brain observe error: {_be}")
 
