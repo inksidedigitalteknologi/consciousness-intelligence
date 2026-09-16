@@ -1030,6 +1030,233 @@ class Brain:
         except Exception:
             print(msg)
 
+
+    # ============================================================
+    # LEARNING ENGINE (Fase 3)
+    # ============================================================
+
+    def calculate_aspect_accuracy(self, min_samples: int = 5) -> dict:
+        """
+        Hitung akurasi setiap aspek berdasarkan outcome yang sudah ada.
+        
+        Returns:
+            {
+                'rsi': {'accuracy': 0.667, 'samples': 10, 'wins': 7},
+                'trend': {'accuracy': 0.800, 'samples': 5, 'wins': 4},
+                ...
+            }
+        """
+        try:
+            import sqlite3
+            import json
+            from pathlib import Path
+            
+            db_path = Path('database/memory.db')
+            if not db_path.exists():
+                return {}
+            
+            conn = sqlite3.connect(str(db_path), timeout=30.0)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            
+            # Ambil decision yang sudah ada outcome_30d
+            cursor.execute("""
+                SELECT breakdown, decision, win_30d
+                FROM decisions
+                WHERE breakdown IS NOT NULL
+                AND win_30d IS NOT NULL
+                AND symbol IS NOT NULL
+            """)
+            
+            rows = cursor.fetchall()
+            conn.close()
+            
+            if not rows:
+                return {}
+            
+            # Hitung akurasi per aspek
+            aspect_stats = {}
+            
+            for row in rows:
+                try:
+                    breakdown = json.loads(row['breakdown'])
+                except Exception:
+                    continue
+                
+                decision = row['decision']
+                win = row['win_30d'] == 1
+                
+                for aspect, value in breakdown.items():
+                    if value is None or not isinstance(value, (int, float)):
+                        continue
+                    
+                    # Skip netral
+                    if abs(value) < 20:
+                        continue
+                    
+                    if aspect not in aspect_stats:
+                        aspect_stats[aspect] = {'wins': 0, 'samples': 0, 'bullish_wins': 0, 'bearish_wins': 0, 'bullish_samples': 0, 'bearish_samples': 0}
+                    
+                    aspect_stats[aspect]['samples'] += 1
+                    if win:
+                        aspect_stats[aspect]['wins'] += 1
+                    
+                    # Bullish/bearish split
+                    if value > 20:
+                        aspect_stats[aspect]['bullish_samples'] += 1
+                        if win:
+                            aspect_stats[aspect]['bullish_wins'] += 1
+                    elif value < -20:
+                        aspect_stats[aspect]['bearish_samples'] += 1
+                        if win:
+                            aspect_stats[aspect]['bearish_wins'] += 1
+            
+            # Hitung accuracy
+            result = {}
+            for aspect, stats in aspect_stats.items():
+                if stats['samples'] >= min_samples:
+                    accuracy = stats['wins'] / stats['samples']
+                    result[aspect] = {
+                        'accuracy': round(accuracy, 3),
+                        'samples': stats['samples'],
+                        'wins': stats['wins'],
+                        'bullish_accuracy': round(stats['bullish_wins'] / stats['bullish_samples'], 3) if stats['bullish_samples'] > 0 else None,
+                        'bearish_accuracy': round(stats['bearish_wins'] / stats['bearish_samples'], 3) if stats['bearish_samples'] > 0 else None,
+                    }
+            
+            return result
+            
+        except Exception as e:
+            self._log(f"calculate_aspect_accuracy error: {e}")
+            return {}
+
+    def update_weights(self, min_samples: int = 5) -> dict:
+        """
+        Update bobot berdasarkan akurasi aspek.
+        
+        Bobot = akurasi aspek (dinormalisasi).
+        
+        Returns:
+            {'weights': {...}, 'updated': True/False}
+        """
+        try:
+            accuracy = self.calculate_aspect_accuracy(min_samples=min_samples)
+            
+            if not accuracy:
+                self._log("update_weights: belum ada data cukup")
+                return {'weights': {}, 'updated': False, 'reason': 'insufficient_data'}
+            
+            # Hitung bobot = akurasi
+            weights = {}
+            for aspect, stats in accuracy.items():
+                weights[aspect] = stats['accuracy']
+            
+            # Normalisasi supaya total = 1.0
+            total = sum(weights.values())
+            if total > 0:
+                weights = {k: v / total for k, v in weights.items()}
+            
+            # Simpan ke self.weights
+            self.weights = weights
+            self._log(f"✅ Weights updated: {len(weights)} aspek")
+            
+            # Simpan ke file
+            try:
+                import json
+                from pathlib import Path
+                weights_file = Path('database/learned_weights.json')
+                with open(weights_file, 'w', encoding='utf-8') as f:
+                    json.dump({
+                        'weights': weights,
+                        'accuracy': accuracy,
+                        'updated_at': __import__('datetime').datetime.now().isoformat(),
+                    }, f, indent=2)
+                self._log(f"✅ Weights saved: {weights_file}")
+            except Exception as e:
+                self._log(f"Save weights error: {e}")
+            
+            return {
+                'weights': weights,
+                'updated': True,
+                'aspek_count': len(weights),
+            }
+            
+        except Exception as e:
+            self._log(f"update_weights error: {e}")
+            return {'weights': {}, 'updated': False, 'error': str(e)}
+
+    def get_learned_weights(self) -> dict:
+        """
+        Ambil bobot yang sudah dipelajari.
+        
+        Returns:
+            {'rsi': 0.05, 'trend': 0.10, ...} atau {} kalau belum ada
+        """
+        try:
+            import json
+            from pathlib import Path
+            
+            weights_file = Path('database/learned_weights.json')
+            if not weights_file.exists():
+                return {}
+            
+            with open(weights_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            return data.get('weights', {})
+            
+        except Exception as e:
+            self._log(f"get_learned_weights error: {e}")
+            return {}
+
+    def learn_from_outcomes(self, min_samples: int = 5) -> dict:
+        """
+        Learning loop lengkap — analisa outcome + update bobot.
+        
+        Returns:
+            {
+                'accuracy': {...},
+                'weights': {...},
+                'updated': True/False,
+                'total_decisions': int,
+            }
+        """
+        try:
+            # 1. Hitung akurasi
+            accuracy = self.calculate_aspect_accuracy(min_samples=min_samples)
+            
+            # 2. Update bobot
+            result = self.update_weights(min_samples=min_samples)
+            
+            # 3. Stats
+            import sqlite3
+            from pathlib import Path
+            db_path = Path('database/memory.db')
+            
+            total = 0
+            evaluated = 0
+            if db_path.exists():
+                conn = sqlite3.connect(str(db_path), timeout=30.0)
+                cursor = conn.cursor()
+                cursor.execute("SELECT COUNT(*) FROM decisions WHERE symbol IS NOT NULL")
+                total = cursor.fetchone()[0]
+                cursor.execute("SELECT COUNT(*) FROM decisions WHERE win_30d IS NOT NULL AND symbol IS NOT NULL")
+                evaluated = cursor.fetchone()[0]
+                conn.close()
+            
+            return {
+                'accuracy': accuracy,
+                'weights': result.get('weights', {}),
+                'updated': result.get('updated', False),
+                'total_decisions': total,
+                'evaluated_decisions': evaluated,
+                'aspek_with_accuracy': len(accuracy),
+            }
+            
+        except Exception as e:
+            self._log(f"learn_from_outcomes error: {e}")
+            return {'error': str(e)}
+
     def _generate_fallback_response(self, error: Exception) -> Dict[str, Any]:
         random_data = self._generate_random_market_data()
         return {

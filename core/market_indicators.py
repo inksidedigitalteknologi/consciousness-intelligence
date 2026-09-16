@@ -989,7 +989,44 @@ def analyze_unified(
     else:
         scores['dividend_yield'] = 0
 
-    # === FINAL SCORE — Equal Weight ===
+    # === FINAL SCORE — Learned Weights (fallback ke Equal Weight) ===
+    # Coba load learned weights dari brain
+    learned_weights = {}
+    try:
+        import json
+        from pathlib import Path
+        weights_file = Path('database/learned_weights.json')
+        if weights_file.exists():
+            with open(weights_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            learned_weights = data.get('weights', {})
+    except Exception:
+        learned_weights = {}
+
+    if learned_weights:
+        # Pakai learned weights
+        weighted_sum = 0
+        total_weight = 0
+        for aspect, score in scores.items():
+            if aspect in learned_weights:
+                w = learned_weights[aspect]
+                weighted_sum += score * w
+                total_weight += w
+            else:
+                # Aspek baru — pakai weight rata-rata
+                weighted_sum += score * 0.01
+                total_weight += 0.01
+        final_score = weighted_sum / total_weight if total_weight > 0 else 0
+        weight_mode = 'learned'
+    else:
+        # Fallback: Equal Weight
+        valid_scores = [v for v in scores.values() if v is not None]
+        final_score = sum(valid_scores) / len(valid_scores) if valid_scores else 0
+        weight_mode = 'equal'
+
+    final_score = round(final_score, 1)
+
+
     valid_scores = [v for v in scores.values() if v is not None]
     aspek_count = len(valid_scores)
     final_score = sum(valid_scores) / aspek_count if aspek_count > 0 else 0
@@ -1014,9 +1051,10 @@ def analyze_unified(
         'breakdown': scores,
         'aspek_count': aspek_count,
         'aspek_aktif': list(scores.keys()),
-        'weights': 'equal',
+        'weights': weight_mode,
+        'weight_mode': weight_mode,
         'threshold': 50,
-        'fase': 1,
+        'fase': 3,
     }
 
 
