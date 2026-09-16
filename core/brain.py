@@ -822,6 +822,214 @@ class Brain:
             logger.error(f"get_decision_stats error: {e}")
             return {}
 
+
+    def track_outcome(self, decision_id: int, days: int, current_price: float) -> bool:
+        """
+        Track outcome untuk 1 decision.
+        
+        Args:
+            decision_id: ID decision
+            days: 1, 7, atau 30
+            current_price: Harga sekarang
+            
+        Returns:
+            True kalau sukses
+        """
+        try:
+            import sqlite3
+            from pathlib import Path
+            
+            if days not in (1, 7, 30):
+                self._log(f"track_outcome: days harus 1, 7, atau 30 (got {days})")
+                return False
+            
+            db_path = Path('database/memory.db')
+            if not db_path.exists():
+                return False
+            
+            conn = sqlite3.connect(str(db_path), timeout=30.0)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            
+            # Ambil decision
+            cursor.execute("SELECT * FROM decisions WHERE id = ?", (decision_id,))
+            row = cursor.fetchone()
+            
+            if not row:
+                conn.close()
+                self._log(f"track_outcome: decision {decision_id} tidak ditemukan")
+                return False
+            
+            entry_price = row['price']
+            action = row['decision']
+            
+            if not entry_price or entry_price == 0:
+                conn.close()
+                self._log(f"track_outcome: entry_price kosong untuk {decision_id}")
+                return False
+            
+            # Hitung perubahan
+            change_pct = (current_price - entry_price) / entry_price * 100
+            
+            # Tentukan WIN/LOSS
+            if action == 'BUY':
+                win = change_pct > 0
+            elif action == 'SELL':
+                win = change_pct < 0
+            else:  # HOLD
+                win = abs(change_pct) < 3  # HOLD benar kalau harga flat (< 3%)
+            
+            win_int = 1 if win else 0
+            
+            # Update
+            column_outcome = f'outcome_{days}d'
+            column_win = f'win_{days}d'
+            
+            cursor.execute(f"""
+                UPDATE decisions 
+                SET {column_outcome} = ?, {column_win} = ?
+                WHERE id = ?
+            """, (current_price, win_int, decision_id))
+            
+            conn.commit()
+            conn.close()
+            
+            self._log(f"📊 Outcome {days}d: {row['symbol']} {action} change={change_pct:+.2f}% win={win}")
+            return True
+            
+        except Exception as e:
+            self._log(f"track_outcome error: {e}")
+            return False
+
+    def evaluate_pending_decisions(self, days: int = 30) -> dict:
+        """
+        Evaluasi semua decision yang belum punya outcome.
+        
+        Args:
+            days: 1, 7, atau 30 — mana yang mau dievaluasi
+            
+        Returns:
+            Statistik evaluasi
+        """
+        try:
+            import sqlite3
+            from pathlib import Path
+            import requests
+            from datetime import datetime as _dt, timedelta as _td
+            
+            db_path = Path('database/memory.db')
+            if not db_path.exists():
+                return {'error': 'DB not found'}
+            
+            conn = sqlite3.connect(str(db_path), timeout=30.0)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            
+            column_outcome = f'outcome_{days}d'
+            
+            # Cari decision yang belum punya outcome + sudah cukup umur
+            cutoff = (_dt.now() - _td(days=days)).isoformat()
+            
+            cursor.execute(f"""
+                SELECT * FROM decisions 
+                WHERE symbol IS NOT NULL 
+                AND price > 0
+                AND {column_outcome} IS NULL
+                AND timestamp < ?
+                ORDER BY timestamp ASC
+                LIMIT 50
+            """, (cutoff,))
+            
+            pending = cursor.fetchall()
+            conn.close()
+            
+            if not pending:
+                return {'evaluated': 0, 'success': 0, 'failed': 0}
+            
+            self._log(f"📊 Evaluating {len(pending)} pending decisions...")
+            
+            headers = {'user-agent': 'Mozilla/5.0', 'accept': 'application/json'}
+            success = 0
+            failed = 0
+            
+            for row in pending:
+                symbol = row['symbol']
+                decision_id = row['id']
+                
+                try:
+                    # Fetch harga sekarang — fromdate 7 hari lalu
+                    fromdate = (_dt.now() - _td(days=7)).strftime("%Y-%m-%d")
+                    url = f'https://api.nasdaq.com/api/quote/{symbol}/historical?assetclass=stocks&fromdate={fromdate}&limit=10'
+                    r = requests.get(url, headers=headers, timeout=10)
+                    
+                    if r.status_code != 200:
+                        self._log(f"fetch {symbol}: HTTP {r.status_code}")
+                        failed += 1
+                        continue
+                    
+                    data = r.json()
+                    
+                    # Validasi data
+                    if not data or not isinstance(data, dict):
+                        self._log(f"fetch {symbol}: response bukan dict")
+                        failed += 1
+                        continue
+                    
+                    data_field = data.get('data')
+                    if not data_field or not isinstance(data_field, dict):
+                        self._log(f"fetch {symbol}: data kosong")
+                        failed += 1
+                        continue
+                    
+                    trades = data_field.get('tradesTable', {})
+                    if not trades or not isinstance(trades, dict):
+                        self._log(f"fetch {symbol}: tradesTable kosong")
+                        failed += 1
+                        continue
+                    
+                    rows = trades.get('rows', [])
+                    if not rows:
+                        self._log(f"fetch {symbol}: rows kosong")
+                        failed += 1
+                        continue
+                    
+                    # Ambil row terbaru (rows[0] karena descending)
+                    close_str = rows[0].get('close', '').replace('$', '').replace(',', '').strip()
+                    if not close_str or close_str == 'N/A':
+                        self._log(f"fetch {symbol}: close N/A")
+                        failed += 1
+                        continue
+                    
+                    current_price = float(close_str)
+                    
+                    # Track
+                    if self.track_outcome(decision_id, days, current_price):
+                        success += 1
+                    else:
+                        failed += 1
+                        
+                except Exception as e:
+                    self._log(f"evaluate error {symbol}: {e}")
+                    failed += 1
+            
+            return {
+                'evaluated': len(pending),
+                'success': success,
+                'failed': failed,
+            }
+            
+        except Exception as e:
+            self._log(f"evaluate_pending_decisions error: {e}")
+            return {'error': str(e)}
+
+    def _log(self, msg: str):
+        """Helper logging."""
+        try:
+            import logging
+            logging.getLogger("Brain").info(msg)
+        except Exception:
+            print(msg)
+
     def _generate_fallback_response(self, error: Exception) -> Dict[str, Any]:
         random_data = self._generate_random_market_data()
         return {
