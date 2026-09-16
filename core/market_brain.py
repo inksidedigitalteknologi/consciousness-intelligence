@@ -460,6 +460,15 @@ def analyze_market_full(
                     logger.debug(f"📝 Decision logged: {symbol}")
                 except Exception as _le:
                     logger.debug(f"Decision log error: {_le}")
+                
+                # === GET DIRECTION ===
+                try:
+                    _levels = market_decision.get('levels', {})
+                    _direction = _global_brain.get_direction(symbol, _unified, _levels)
+                    market_decision['direction'] = _direction
+                    logger.debug(f"🎯 Direction: {_direction.get('direction')} ({_direction.get('confidence')}%)")
+                except Exception as _de:
+                    logger.debug(f"Direction error: {_de}")
     except Exception as _be:
         logger.debug(f"Brain observe error: {_be}")
 

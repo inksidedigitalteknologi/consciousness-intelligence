@@ -1257,6 +1257,308 @@ class Brain:
             self._log(f"learn_from_outcomes error: {e}")
             return {'error': str(e)}
 
+
+    # ============================================================
+    # DIRECTION ENGINE (Fase 4)
+    # ============================================================
+
+    def get_direction(self, symbol: str, unified_data: dict, levels: dict = None) -> dict:
+        """
+        Kasih arahan berdasarkan:
+        - Skor unified
+        - Learned weights
+        - Pengalaman (similar decisions)
+        - Levels (entry, stop, target)
+        
+        Args:
+            symbol: Simbol saham
+            unified_data: Hasil analyze_unified
+            levels: Dict levels dari market_decision
+            
+        Returns:
+            {
+                'direction': 'BELI SEKARANG' / 'BELI BERTAHAP' / 'TUNGGU' / 'JUAL BERTAHAP' / 'JUAL SEKARANG',
+                'confidence': 0-100,
+                'actionable': bool,
+                'reasoning': str,
+                'entry_zone': [low, high],
+                'target': float,
+                'stop': float,
+                'expected_return': float,
+                'risk_reward': float,
+                'experience': {...},
+            }
+        """
+        try:
+            score = unified_data.get('score', 0)
+            confidence = unified_data.get('confidence', 50)
+            action = unified_data.get('action', 'HOLD')
+            breakdown = unified_data.get('breakdown', {})
+            
+            # 1. Arahan berdasarkan skor
+            if score >= 50:
+                direction = 'BELI SEKARANG'
+            elif score >= 30:
+                direction = 'BELI BERTAHAP'
+            elif score <= -50:
+                direction = 'JUAL SEKARANG'
+            elif score <= -30:
+                direction = 'JUAL BERTAHAP'
+            else:
+                direction = 'TUNGGU'
+            
+            # 2. Cari pengalaman (similar decisions)
+            experience = self._get_experience(symbol, breakdown)
+            
+            # 3. Adjust arahan berdasarkan pengalaman
+            if experience and experience.get('win_rate') is not None:
+                wr = experience['win_rate']
+                if wr > 65 and direction in ('BELI SEKARANG', 'BELI BERTAHAP'):
+                    confidence = min(95, confidence + 10)
+                elif wr < 40:
+                    confidence = max(20, confidence - 15)
+                    if direction in ('BELI SEKARANG', 'BELI BERTAHAP'):
+                        direction = 'TUNGGU'
+            
+            # 4. Reasoning
+            reasoning = self._generate_direction_reasoning(direction, score, experience, breakdown)
+            
+            # 5. Levels
+            levels = levels or {}
+            entry_zone = [
+                levels.get('entry', 0) * 0.99 if levels.get('entry') else 0,
+                levels.get('entry', 0) * 1.01 if levels.get('entry') else 0,
+            ]
+            target = levels.get('target', 0)
+            stop = levels.get('stop', 0)
+            
+            # Expected return
+            entry = levels.get('entry', 0) or 0
+            if entry > 0 and target > 0:
+                expected_return = round((target - entry) / entry * 100, 2)
+            else:
+                expected_return = 0
+            
+            # Risk/Reward
+            if entry > 0 and target > 0 and stop > 0:
+                risk = abs(entry - stop)
+                reward = abs(target - entry)
+                risk_reward = round(reward / risk, 2) if risk > 0 else 0
+            else:
+                risk_reward = 0
+            
+            return {
+                'direction': direction,
+                'confidence': round(confidence, 1),
+                'actionable': direction not in ('TUNGGU',) and confidence >= 50,
+                'reasoning': reasoning,
+                'entry_zone': [round(x, 2) for x in entry_zone if x > 0],
+                'target': round(target, 2) if target else None,
+                'stop': round(stop, 2) if stop else None,
+                'expected_return': expected_return,
+                'risk_reward': risk_reward,
+                'experience': experience,
+                'score': score,
+                'action': action,
+            }
+            
+        except Exception as e:
+            self._log(f"get_direction error: {e}")
+            return {'direction': 'UNKNOWN', 'error': str(e)}
+
+    def _get_experience(self, symbol: str, breakdown: dict) -> dict:
+        """
+        Cari pengalaman dari decision serupa.
+        
+        Returns:
+            {
+                'similar_decisions': int,
+                'win_rate': float,
+                'recommendation': str,
+            }
+        """
+        try:
+            import sqlite3
+            import json
+            from pathlib import Path
+            
+            db_path = Path('database/memory.db')
+            if not db_path.exists():
+                return {}
+            
+            conn = sqlite3.connect(str(db_path), timeout=30.0)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            
+            # Cari decision dengan outcome untuk symbol yang sama
+            cursor.execute("""
+                SELECT breakdown, decision, win_30d
+                FROM decisions
+                WHERE symbol = ?
+                AND win_30d IS NOT NULL
+                AND breakdown IS NOT NULL
+            """, (symbol.upper(),))
+            
+            rows = cursor.fetchall()
+            conn.close()
+            
+            # Kalau tidak ada untuk symbol ini, cari semua
+            if len(rows) < 5:
+                conn = sqlite3.connect(str(db_path), timeout=30.0)
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT breakdown, decision, win_30d
+                    FROM decisions
+                    WHERE win_30d IS NOT NULL
+                    AND breakdown IS NOT NULL
+                    LIMIT 200
+                """)
+                rows = cursor.fetchall()
+                conn.close()
+            
+            if not rows:
+                return {}
+            
+            # Filter decision serupa (breakdown mirip)
+            similar = 0
+            wins = 0
+            
+            for row in rows:
+                try:
+                    other_breakdown = json.loads(row['breakdown'])
+                except Exception:
+                    continue
+                
+                # Hitung kemiripan
+                similarity = self._calculate_similarity(breakdown, other_breakdown)
+                
+                if similarity > 0.6:  # 60% mirip
+                    similar += 1
+                    if row['win_30d'] == 1:
+                        wins += 1
+            
+            if similar == 0:
+                return {}
+            
+            win_rate = round(wins / similar * 100, 1)
+            
+            # Rekomendasi
+            if win_rate > 65:
+                rec = 'AKTIF'
+            elif win_rate > 50:
+                rec = 'NORMAL'
+            elif win_rate > 40:
+                rec = 'HATI-HATI'
+            else:
+                rec = 'HINDARI'
+            
+            return {
+                'similar_decisions': similar,
+                'win_rate': win_rate,
+                'recommendation': rec,
+            }
+            
+        except Exception as e:
+            self._log(f"_get_experience error: {e}")
+            return {}
+
+    def _calculate_similarity(self, breakdown1: dict, breakdown2: dict) -> float:
+        """Hitung kemiripan 2 breakdown (0-1)."""
+        if not breakdown1 or not breakdown2:
+            return 0
+        
+        common = set(breakdown1.keys()) & set(breakdown2.keys())
+        if not common:
+            return 0
+        
+        # Normalisasi skor ke -1..1
+        similarities = []
+        for aspect in common:
+            v1 = breakdown1[aspect]
+            v2 = breakdown2[aspect]
+            
+            if not isinstance(v1, (int, float)) or not isinstance(v2, (int, float)):
+                continue
+            
+            # Skor sama tanda & mirip = mirip
+            v1_norm = v1 / 100
+            v2_norm = v2 / 100
+            diff = abs(v1_norm - v2_norm)
+            sim = 1 - diff  # 0..1
+            similarities.append(sim)
+        
+        if not similarities:
+            return 0
+        
+        return sum(similarities) / len(similarities)
+
+    def _generate_direction_reasoning(self, direction: str, score: float, experience: dict, breakdown: dict) -> str:
+        """Generate reasoning untuk direction."""
+        parts = []
+        
+        # Score
+        if score > 50:
+            parts.append(f"Skor kuat ({score:+.1f})")
+        elif score > 30:
+            parts.append(f"Skor positif ({score:+.1f})")
+        elif score < -50:
+            parts.append(f"Skor lemah ({score:+.1f})")
+        elif score < -30:
+            parts.append(f"Skor negatif ({score:+.1f})")
+        else:
+            parts.append(f"Skor netral ({score:+.1f})")
+        
+        # Dominant aspects
+        if breakdown:
+            bullish = sorted([(k, v) for k, v in breakdown.items() if v > 30], key=lambda x: -x[1])[:2]
+            bearish = sorted([(k, v) for k, v in breakdown.items() if v < -30], key=lambda x: x[1])[:2]
+            
+            if bullish:
+                parts.append(f"Bullish: {', '.join(k for k, _ in bullish)}")
+            if bearish:
+                parts.append(f"Bearish: {', '.join(k for k, _ in bearish)}")
+        
+        # Experience
+        if experience:
+            wr = experience.get('win_rate')
+            if wr is not None:
+                parts.append(f"Pengalaman: {experience['similar_decisions']} decision serupa, win rate {wr}%")
+        
+        return '. '.join(parts) + '.'
+
+    def explain_direction(self, direction_result: dict) -> str:
+        """Penjelasan lengkap direction dalam format teks."""
+        if not direction_result or direction_result.get('direction') == 'UNKNOWN':
+            return "Arahan tidak tersedia."
+        
+        d = direction_result
+        lines = [
+            f"🎯 {d['direction']}",
+            f"Confidence: {d['confidence']}%",
+            f"Actionable: {'✅ Ya' if d['actionable'] else '❌ Tidak'}",
+            '',
+            f"Reasoning: {d['reasoning']}",
+        ]
+        
+        if d.get('entry_zone'):
+            lines.append(f"Entry zone: ${d['entry_zone'][0]:.2f} - ${d['entry_zone'][-1]:.2f}")
+        if d.get('target'):
+            lines.append(f"Target: ${d['target']:.2f} ({d['expected_return']:+.2f}%)")
+        if d.get('stop'):
+            lines.append(f"Stop: ${d['stop']:.2f}")
+        if d.get('risk_reward'):
+            lines.append(f"Risk/Reward: 1:{d['risk_reward']}")
+        
+        exp = d.get('experience', {})
+        if exp:
+            lines.append('')
+            lines.append(f"📊 Pengalaman: {exp.get('similar_decisions', 0)} decision serupa")
+            lines.append(f"   Win rate: {exp.get('win_rate', 0)}%")
+            lines.append(f"   Rekomendasi: {exp.get('recommendation', 'N/A')}")
+        
+        return '\n'.join(lines)
+
     def _generate_fallback_response(self, error: Exception) -> Dict[str, Any]:
         random_data = self._generate_random_market_data()
         return {
