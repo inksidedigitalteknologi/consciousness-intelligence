@@ -1,0 +1,15 @@
+{
+  "stats": {
+    "rss_fetched": 1272,
+    "rss_saved": 684,
+    "rss_errors": 140,
+    "historical_processed": 0,
+    "reanalysis_run": 0,
+    "insights_generated": 0,
+    "indonesia_items": 370,
+    "last_rss_fetch": "2026-09-16T17:27:43.284954",
+    "last_reanalysis": null,
+    "started_at": "2026-09-16T17:27:36.406594"
+  },
+  "updated_at": "2026-09-16T17:27:43.286530"
+}

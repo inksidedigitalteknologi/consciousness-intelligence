@@ -158,6 +158,10 @@ class AutonomousEngine:
             logger.warning("Autonomous Engine already running")
             return False
             
+        # Reset seen IDs setiap restart — supaya RSS fetch ulang
+        self._seen_ids.clear()
+        logger.info("🔄 Seen IDs reset at startup (will re-fetch RSS)")
+
         self.running = True
         self._stop_event.clear()
         self._stats["started_at"] = datetime.now().isoformat()
@@ -284,16 +288,24 @@ class AutonomousEngine:
         """Fetch semua RSS feed."""
         results = {"success": 0, "failed": 0, "items": 0, "indonesia": 0}
         
-        for feed_config in self.rss_feeds:
-            if not feed_config.get('enabled', True):
+        for feed_item in self.rss_feeds:
+            # Handle string (URL) atau dict
+            if isinstance(feed_item, str):
+                feed_config = {"url": feed_item, "enabled": True}
+            elif isinstance(feed_item, dict):
+                feed_config = feed_item
+            else:
                 continue
-                
+
+            if not feed_config.get("enabled", True):
+                continue
+
             try:
                 count = self._process_rss_feed(feed_config)
                 results["success"] += 1
                 results["items"] += count
             except Exception as e:
-                logger.error("Feed %s error: %s", feed_config['url'], e)
+                logger.error("Feed %s error: %s", feed_config.get("url", "?"), e)
                 results["failed"] += 1
                 self._stats["rss_errors"] += 1
         
@@ -319,7 +331,7 @@ class AutonomousEngine:
     def _process_rss_feed(self, feed_config: Dict) -> int:
         """Proses satu RSS feed dengan timeout dan user-agent."""
         url = feed_config["url"]
-        category = feed_config["category"]
+        category = feed_config.get("category", "market")
         source = feed_config.get("source", "unknown")
         max_items = feed_config.get("max_items", self.max_rss_items)
         confidence = feed_config.get("confidence_base", self.confidence_base)
@@ -521,8 +533,8 @@ class AutonomousEngine:
     # ============================================================
     
     def _load_cache(self):
-        cache_file = os.path.join(self.cache_dir, AUTONOMOUS_SEEN_IDS_FILE)
-        stats_file = os.path.join(self.cache_dir, AUTONOMOUS_STATS_FILE)
+        cache_file = os.path.join(self.cache_dir, os.path.basename(AUTONOMOUS_SEEN_IDS_FILE))
+        stats_file = os.path.join(self.cache_dir, os.path.basename(AUTONOMOUS_STATS_FILE))
         
         if os.path.exists(cache_file):
             try:
@@ -543,8 +555,8 @@ class AutonomousEngine:
     
     def _save_cache(self):
         try:
-            cache_file = os.path.join(self.cache_dir, AUTONOMOUS_SEEN_IDS_FILE)
-            stats_file = os.path.join(self.cache_dir, AUTONOMOUS_STATS_FILE)
+            cache_file = os.path.join(self.cache_dir, os.path.basename(AUTONOMOUS_SEEN_IDS_FILE))
+            stats_file = os.path.join(self.cache_dir, os.path.basename(AUTONOMOUS_STATS_FILE))
             
             with open(cache_file, 'w') as f:
                 json.dump({

@@ -652,7 +652,6 @@ AUTONOMOUS_RSS_FEEDS = [
     
     # Indonesia
     'https://www.cnbcindonesia.com/rss',
-    'https://www.kontan.co.id/rss',
 ]
 
 # ============================================================

@@ -4238,293 +4238,6 @@ def start_consciousness_scheduler():
 # ============================================================
 
 
-def brain_observe_scheduler():
-    """Observe input tiap 60 detik. Input bervariasi (trading + non-trading)."""
-    logger.info("🧠 Brain Observe Scheduler started (60s interval)")
-    time.sleep(30)  # tunggu backend stabil dulu
-
-    # ============================================================
-    # COMPREHENSIVE INPUT SAMPLES
-    # Mencakup: market, knowledge, learning, reflection, IoT,
-    # dividend, telegram, news, sentiment, risk, strategy, dll.
-    # ============================================================
-
-    # MARKET & TRADING
-    MARKET_SAMPLES = [
-        {
-            "symbol": "BTC/USD",
-            "signal": "bullish",
-            "confidence": 0.85,
-            "text": "BTC/USD bullish dengan volume tinggi. RSI 65, MACD cross up, tren naik kuat.",
-            "type": "market",
-            "sentiment": "bullish",
-            "timeframe": "1h",
-        },
-        {
-            "symbol": "ETH/USD",
-            "signal": "bearish",
-            "confidence": 0.72,
-            "text": "ETH/USD bearish. RSI 35, potensi turun ke support $2400.",
-            "type": "market",
-            "sentiment": "bearish",
-            "timeframe": "4h",
-        },
-        {
-            "symbol": "AAPL",
-            "signal": "neutral",
-            "confidence": 0.55,
-            "text": "AAPL sideways, volume rendah. Tidak ada sinyal jelas, tunggu breakout.",
-            "type": "market",
-            "sentiment": "neutral",
-            "timeframe": "1d",
-        },
-        {
-            "symbol": "SPY",
-            "signal": "bullish",
-            "confidence": 0.78,
-            "text": "SPY menguat, breadth positif. Sektor teknologi memimpin.",
-            "type": "market",
-            "sentiment": "bullish",
-            "timeframe": "1d",
-        },
-        {
-            "symbol": "GOLD",
-            "signal": "bearish",
-            "confidence": 0.62,
-            "text": "Gold melemah karena yield naik. Dolar menguat.",
-            "type": "market",
-            "sentiment": "bearish",
-            "timeframe": "1d",
-        },
-    ]
-
-    # KNOWLEDGE & LEARNING
-    KNOWLEDGE_SAMPLES = [
-        {
-            "text": "RSI di atas 70 menunjukkan overbought, potensi koreksi.",
-            "type": "knowledge",
-            "category": "technical_analysis",
-        },
-        {
-            "text": "Dividend King adalah saham yang menaikkan dividen 50+ tahun berturut-turut.",
-            "type": "knowledge",
-            "category": "dividend",
-        },
-        {
-            "text": "Pola head and shoulders menandakan reversal bearish.",
-            "type": "knowledge",
-            "category": "pattern",
-        },
-        {
-            "text": "Monte Carlo simulation menggunakan random sampling untuk prediksi.",
-            "type": "knowledge",
-            "category": "quant",
-        },
-        {
-            "text": "Payout ratio di atas 80% menandakan dividen berisiko dipotong.",
-            "type": "knowledge",
-            "category": "dividend",
-        },
-    ]
-
-    # REFLECTION & METACOGNITION
-    REFLECTION_SAMPLES = [
-        {
-            "text": "Refleksi: hari ini saya belajar bahwa RSI oversold tidak selalu berarti bounce.",
-            "type": "reflection",
-            "depth": "medium",
-        },
-        {
-            "text": "Refleksi: keputusan HOLD saya benar karena pasar sideways.",
-            "type": "reflection",
-            "outcome": "correct",
-        },
-        {
-            "text": "Refleksi: saya terlalu optimis pada sinyal BUY kemarin.",
-            "type": "reflection",
-            "emotion": "regret",
-        },
-        {
-            "text": "Refleksi: pola konflik sinyal sering terjadi di timeframe kecil.",
-            "type": "reflection",
-            "insight": "pattern_conflict",
-        },
-    ]
-
-    # DIVIDEND
-    DIVIDEND_SAMPLES = [
-        {
-            "text": "JNJ Dividend King 63 tahun, yield 2.48%, payout 60%. Aman.",
-            "type": "dividend",
-            "symbol": "JNJ",
-            "trap_score": 0,
-        },
-        {
-            "text": "T (AT&T) yield 5.33%, tapi cut 3x dan debt 129%. Risiko tinggi.",
-            "type": "dividend",
-            "symbol": "T",
-            "trap_score": 38,
-        },
-        {
-            "text": "KO Dividend Champion 23 tahun, yield 2.36%, FCF $5.22B.",
-            "type": "dividend",
-            "symbol": "KO",
-            "trap_score": 18,
-        },
-        {
-            "text": "Ex-date KO dalam 1 hari. Strategi: BUY_BEFORE_EX.",
-            "type": "dividend",
-            "symbol": "KO",
-            "strategy": "BUY_BEFORE_EX",
-        },
-    ]
-
-    # IoT & DEVICES
-    IOT_SAMPLES = [
-        {
-            "text": "Sensor suhu ruang server 45°C, di atas normal. Perlu pendinginan.",
-            "type": "iot",
-            "device": "temperature_sensor",
-            "value": 45,
-        },
-        {
-            "text": "Perangkat IoT mendeteksi getaran abnormal pada motor.",
-            "type": "iot",
-            "device": "vibration_sensor",
-            "status": "warning",
-        },
-        {
-            "text": "Kamera IoT mendeteksi gerakan di area terlarang.",
-            "type": "iot",
-            "device": "camera",
-            "status": "alert",
-        },
-    ]
-
-    # TELEGRAM & USER QUERY
-    TELEGRAM_SAMPLES = [
-        {
-            "question": "Apa itu machine learning dan bagaimana cara kerjanya?",
-            "type": "query",
-            "source": "telegram",
-        },
-        {
-            "question": "Bagaimana cara menghitung RSI?",
-            "type": "query",
-            "source": "telegram",
-        },
-        {
-            "command": "/health",
-            "type": "command",
-            "source": "telegram",
-        },
-        {
-            "command": "/signals",
-            "type": "command",
-            "source": "telegram",
-        },
-        {
-            "question": "Apakah saya harus beli BTC sekarang?",
-            "type": "query",
-            "source": "telegram",
-        },
-    ]
-
-    # NEWS & SENTIMENT
-    NEWS_SAMPLES = [
-        {
-            "text": "Fed menaikkan suku bunga 25bps. Pasar bereaksi negatif.",
-            "type": "news",
-            "sentiment": "bearish",
-            "impact": "high",
-        },
-        {
-            "text": "ETF Bitcoin disetujui SEC. Sentimen crypto positif.",
-            "type": "news",
-            "sentiment": "bullish",
-            "impact": "high",
-        },
-        {
-            "text": "Laporan inflasi lebih rendah dari perkiraan. Pasar rally.",
-            "type": "news",
-            "sentiment": "bullish",
-            "impact": "medium",
-        },
-    ]
-
-    # RISK & STRATEGY
-    RISK_SAMPLES = [
-        {
-            "text": "Risk level HIGH: drawdown 15%, perlu kurangi posisi.",
-            "type": "risk",
-            "level": "HIGH",
-            "drawdown": 0.15,
-        },
-        {
-            "text": "Circuit breaker aktif: volatilitas ekstrem terdeteksi.",
-            "type": "risk",
-            "level": "CRITICAL",
-            "action": "circuit_breaker",
-        },
-        {
-            "text": "Strategi scalping cocok untuk market sideways hari ini.",
-            "type": "strategy",
-            "name": "scalping",
-            "regime": "sideways",
-        },
-    ]
-
-    # ALL SAMPLES (gabungan)
-    ALL_SAMPLES = (
-        MARKET_SAMPLES
-        + KNOWLEDGE_SAMPLES
-        + REFLECTION_SAMPLES
-        + DIVIDEND_SAMPLES
-        + IOT_SAMPLES
-        + TELEGRAM_SAMPLES
-        + NEWS_SAMPLES
-        + RISK_SAMPLES
-    )
-
-    cycle_errors = 0
-
-    while not _shutdown_flag.is_set():
-        try:
-            if not (BRAIN_AVAILABLE and brain):
-                time.sleep(60)
-                continue
-
-            # Pilih input dari SEMUA kategori (komprehensif)
-            data = dict(random.choice(ALL_SAMPLES))
-            # Update confidence/signal untuk market samples
-            if "symbol" in data:
-                data["confidence"] = round(random.uniform(0.3, 0.95), 2)
-                data["signal"] = random.choice(["bullish", "bearish", "neutral"])
-
-            # Observe
-            result = brain.observe(data)
-            dec = (result or {}).get("decision", {}) or {}
-            action = dec.get("action", "?")
-            source = dec.get("reason_source", "?")
-            inp_type = data.get("type") or ("market" if "symbol" in data else "generic")
-
-            logger.info(
-                f"🧠 Brain cycle #{brain.cycles} | input={inp_type} | "
-                f"action={action} | reason={source} | errors={brain.errors}"
-            )
-            cycle_errors = 0
-
-        except Exception as e:
-            cycle_errors += 1
-            logger.error(f"❌ Brain observe error (#{cycle_errors}): {e}")
-
-        # Interval 60 detik
-        for _ in range(60):
-            if _shutdown_flag.is_set():
-                break
-            time.sleep(1)
-
-
 def main_headless():
     global engine_running
 
@@ -4560,13 +4273,23 @@ def main_headless():
 
     start_consciousness_scheduler()
 
-    # Brain Observe Scheduler — supaya pipeline hidup
+    # === DISABLED: Brain Observe Scheduler (dummy data) ===
+    # Diganti dengan Autonomous Engine (RSS real data)
+    # try:
+    #     brain_observe_thread = threading.Thread(target=brain_observe_scheduler, daemon=True)
+    #     brain_observe_thread.start()
+    #     logger.info("✅ Brain Observe Scheduler started")
+    # except Exception as e:
+    #     logger.warning(f"⚠️ Brain Observe Scheduler failed: {e}")
+
+    # === AUTONOMOUS ENGINE (RSS real data) ===
     try:
-        brain_observe_thread = threading.Thread(target=brain_observe_scheduler, daemon=True)
-        brain_observe_thread.start()
-        logger.info("✅ Brain Observe Scheduler started")
+        from core.autonomous import autonomous
+        if autonomous:
+            autonomous.start()
+            logger.info("✅ Autonomous Engine started (RSS real data)")
     except Exception as e:
-        logger.warning(f"⚠️ Brain Observe Scheduler failed: {e}")
+        logger.warning(f"⚠️ Autonomous Engine failed: {e}")
 
     logger.info("=" * 60)
     logger.info("  ✅ SYSTEM READY")
@@ -4590,6 +4313,16 @@ def main_headless():
         _graceful_shutdown = True
 
     logger.info("Shutting down...")
+    
+    # Stop autonomous engine
+    try:
+        from core.autonomous import autonomous
+        if autonomous and autonomous.running:
+            autonomous.stop()
+            logger.info("✅ Autonomous Engine stopped")
+    except Exception as e:
+        logger.warning(f"⚠️ Autonomous stop failed: {e}")
+    
     logger.info(f"✅ {APP_NAME} stopped.")
     return 0
 

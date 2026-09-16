@@ -1632,7 +1632,7 @@ class Consciousness:
         if self.experiences:
             similar = self._find_similar_experiences(perception)
             if similar:
-                success_rate = sum(1 for e in similar if e.get("outcome", False)) / len(similar)
+                success_rate = sum(1 for e in similar if getattr(e, "outcome", False)) / len(similar) if similar else 0
                 if success_rate > 0.6:
                     confidence = min(1.0, confidence + 0.2)
                     reasons.append(f"{len(similar)} similar experiences: {success_rate:.0%} success")
@@ -1795,7 +1795,7 @@ class Consciousness:
         if self.experiences:
             similar = self._find_similar_experiences(perception)
             if similar:
-                success_rate = sum(1 for e in similar if e.get("outcome", False)) / len(similar)
+                success_rate = sum(1 for e in similar if getattr(e, "outcome", False)) / len(similar) if similar else 0
                 if success_rate > 0.7 and action != "wait":
                     confidence = min(1.0, confidence + 0.1)
                     reasons.append(f"Similar experiences: {success_rate:.0%} success")
