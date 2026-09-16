@@ -359,13 +359,43 @@ def analyze_market_full(
                 if target >= entry:
                     target = round(entry * 0.95, 2)
         
-        # === ANALYZE_UNIFIED (Fase 3 — Fundamental) ===
+        # === ANALYZE_UNIFIED (Fase 3+4) ===
         try:
-            from core.market_indicators import analyze_unified, fetch_fundamental
+            from core.market_indicators import (
+                analyze_unified, fetch_fundamental,
+                calculate_correlation, score_correlation,
+                fetch_sentiment, score_sentiment,
+                fetch_analyst_rating,
+            )
+            # Fetch fundamental
             try:
                 fundamental = fetch_fundamental(symbol)
             except Exception:
                 fundamental = {}
+            
+            # Fetch correlation
+            try:
+                correlation = calculate_correlation(symbol, 'SPY', 90)
+            except Exception:
+                correlation = {}
+            
+            # Fetch sentiment
+            try:
+                sentiment = fetch_sentiment(symbol)
+            except Exception:
+                sentiment = {}
+            
+            # Fetch analyst
+            try:
+                analyst = fetch_analyst_rating(symbol)
+            except Exception:
+                analyst = {}
+            
+            # Simpan ke indicators supaya analyze_unified bisa baca
+            indicators['_correlation'] = correlation
+            indicators['_sentiment'] = sentiment
+            indicators['_analyst'] = analyst
+            
             unified = analyze_unified(
                 indicators=indicators,
                 multi_timeframe=mtf,

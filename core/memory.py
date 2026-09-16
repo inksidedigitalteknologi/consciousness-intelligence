@@ -1157,6 +1157,9 @@ class MemoryEngine:
 
             filename = "memory_backup_" + datetime.now().strftime("%Y%m%d_%H%M%S") + ".db"
 
+            # Pastikan folder backup ada
+            BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+            
             destination = BACKUP_DIR / filename
 
             # Check disk space before backup (need 2x db size)

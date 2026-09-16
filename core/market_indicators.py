@@ -208,6 +208,9 @@ def calculate_indicators(historical: List[Dict[str, Any]]) -> Dict[str, Any]:
         'trend_sma': trend_sma,
         'sma_cross': sma_cross,
         
+        # ATR (Average True Range)
+        'atr': calculate_atr(highs, lows, closes) if highs and lows and closes else None,
+
         # Volume
         'volume_today': volume_today,
         'volume_avg_20': int(volume_avg_20),
@@ -584,6 +587,15 @@ def analyze_unified(
     """
     scores = {}
 
+    # === AMBIL OHLCV DARI INDICATORS ===
+    closes = indicators.get('_closes', [])
+    highs = indicators.get('_highs', [])
+    lows = indicators.get('_lows', [])
+    opens = indicators.get('_opens', [])
+    volumes = indicators.get('_volumes', [])
+    current = indicators.get('current_price')
+
+
     # === 1. RSI ===
     rsi = indicators.get('rsi')
     if rsi is not None:
@@ -764,10 +776,19 @@ def analyze_unified(
     # === 16. BOLLINGER ===
     try:
         bb = calculate_bollinger(closes)
-        if bb.get('signal') == 'OVERSOLD':
-            scores['bollinger'] = +75
-        elif bb.get('signal') == 'OVERBOUGHT':
-            scores['bollinger'] = -75
+        pos = bb.get('position', 0.5)
+        if pos < 0.1:
+            scores['bollinger'] = +100
+        elif pos < 0.3:
+            scores['bollinger'] = +50
+        elif pos < 0.45:
+            scores['bollinger'] = +20
+        elif pos > 0.9:
+            scores['bollinger'] = -100
+        elif pos > 0.7:
+            scores['bollinger'] = -50
+        elif pos > 0.55:
+            scores['bollinger'] = -20
         else:
             scores['bollinger'] = 0
     except Exception:
@@ -778,12 +799,16 @@ def analyze_unified(
         atr = calculate_atr(highs, lows, closes)
         if atr and current:
             atr_pct = (atr / current) * 100
-            if atr_pct < 2:
+            if atr_pct < 1.5:
+                scores['atr'] = +50
+            elif atr_pct < 2.5:
                 scores['atr'] = +25
-            elif atr_pct > 5:
+            elif atr_pct < 4:
+                scores['atr'] = 0
+            elif atr_pct < 6:
                 scores['atr'] = -25
             else:
-                scores['atr'] = 0
+                scores['atr'] = -50
         else:
             scores['atr'] = 0
     except Exception:
@@ -792,10 +817,19 @@ def analyze_unified(
     # === 18. STOCHASTIC ===
     try:
         stoch = calculate_stochastic(highs, lows, closes)
-        if stoch.get('signal') == 'OVERSOLD':
+        k = stoch.get('k', 50)
+        if k < 10:
+            scores['stochastic'] = +100
+        elif k < 20:
             scores['stochastic'] = +75
-        elif stoch.get('signal') == 'OVERBOUGHT':
+        elif k < 35:
+            scores['stochastic'] = +25
+        elif k > 90:
+            scores['stochastic'] = -100
+        elif k > 80:
             scores['stochastic'] = -75
+        elif k > 65:
+            scores['stochastic'] = -25
         else:
             scores['stochastic'] = 0
     except Exception:
