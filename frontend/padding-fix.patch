@@ -1,0 +1,40 @@
+diff --git a/frontend/src/components/MarketQuotesView.tsx b/frontend/src/components/MarketQuotesView.tsx
+index ee5e160..00df879 100644
+--- a/frontend/src/components/MarketQuotesView.tsx
++++ b/frontend/src/components/MarketQuotesView.tsx
+@@ -220,7 +220,7 @@ export const MarketQuotesView: React.FC<MarketQuotesViewProps> = ({ wsConnected
+   return (
+     <div id="market-quotes-view" className="space-y-6 pb-12 p-6">
+       {/* HEADER */}
+-      <div className="glass-card rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
++      <div className="glass-card rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+         <div>
+           <h2 className="text-lg font-bold text-white flex items-center gap-2">
+             <TrendingUp className="w-5 h-5 text-amber-400" />
+@@ -319,7 +319,7 @@ export const MarketQuotesView: React.FC<MarketQuotesViewProps> = ({ wsConnected
+       )}
+ 
+       {/* TABLE */}
+-      <div className="glass-card rounded-2xl p-5">
++      <div className="glass-card rounded-2xl p-6">
+         <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
+           <h3 className="text-sm font-bold text-white tracking-wider uppercase">
+             Quotes ({filtered.length}) — Hal. {page + 1}/{totalPages}
+@@ -327,7 +327,7 @@ export const MarketQuotesView: React.FC<MarketQuotesViewProps> = ({ wsConnected
+           <span className="text-[10px] text-[#5F6B78]">Klik ticker untuk analisis Brain</span>
+         </div>
+ 
+-        <div className="space-y-2">
++        <div className="space-y-3">
+           {pageRecords.map((rec, index) => {
+             const symbol = rec.ticker?.[0] || '?';
+             const isExpanded = expandedSymbol === symbol;
+@@ -339,7 +339,7 @@ export const MarketQuotesView: React.FC<MarketQuotesViewProps> = ({ wsConnected
+                 {/* ROW */}
+                 <div
+                   onClick={() => toggleRow(symbol)}
+-                  className="p-4 glass-panel hover:bg-white/5 transition cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-3"
++                  className="p-5 glass-panel hover:bg-white/5 transition cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-3"
+                 >
+                   <div className="flex items-center gap-3 min-w-0 flex-1">
+                     {isExpanded ? (

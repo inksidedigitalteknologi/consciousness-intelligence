@@ -1,0 +1,52 @@
+# Data & database
+database/*.db
+database/*.db-*
+database/*.json
+database/*.bak*
+database/backup/
+database/knowledge_backups/
+database/shards/
+
+# Backups
+backups/
+*.bak
+*.bak_*
+*.bak.*
+*.tmp
+
+# Logs
+logs/*.log
+logs/*.log.*
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+env/
+
+# Node
+node_modules/
+dist/
+.vite/
+.vite-temp/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git LFS (kalau pakai)
+# *.db filter=lfs diff=lfs merge=lfs -text
