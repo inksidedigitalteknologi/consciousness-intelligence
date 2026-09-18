@@ -23,7 +23,21 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
 
+# ── Setup security logger terpisah ─────────────────────────
+SECURITY_LOG_PATH = Path("/root/consciousness-intelligence/logs/security.log")
+SECURITY_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+
 logger = logging.getLogger(__name__)
+security_logger = logging.getLogger("security")
+
+if not security_logger.handlers:
+    _sec_handler = logging.FileHandler(str(SECURITY_LOG_PATH), encoding="utf-8")
+    _sec_handler.setFormatter(logging.Formatter(
+        "%(asctime)s | %(levelname)s | %(message)s"
+    ))
+    security_logger.addHandler(_sec_handler)
+    security_logger.setLevel(logging.INFO)
+    security_logger.propagate = False  # jangan tulis ke main.log
 
 # ── Config ──────────────────────────────────────────────────
 DB_PATH = Path("/root/consciousness-intelligence/database/security.db")
@@ -31,14 +45,7 @@ AUTH_LOG_PATH = Path("/var/log/auth.log")
 NGINX_ACCESS_PATH = Path("/var/log/nginx/access.log")
 
 # ── Whitelist IP (tidak muncul di dashboard) ────────────────
-WHITELIST_IPS = {
-    "127.0.0.1",
-    "45.41.204.21",
-    "121.121.162.72",   # IP admin (Malaysia)
-    "14.192.246.97",    # IP admin (Malaysia)
-    "121.123.35.68",    # IP admin (Malaysia)
-    "121.122.63.33",    # IP admin (Malaysia)
-}
+WHITELIST_IPS = set()  # TEMPORARY DISABLED
 
 # ── Attack Patterns ────────────────────────────────────────
 ATTACK_PATTERNS = {
@@ -208,9 +215,11 @@ class SecurityMonitor:
                 self._update_offset("auth_log", current_size, len(events))
                 self._aggregate_events(events)
 
+            if events:
+                security_logger.info(f"🔒 auth.log: {len(events)} events")
             return len(events)
         except Exception as e:
-            logger.error(f"parse_auth_log error: {e}")
+            security_logger.error(f"parse_auth_log error: {e}")
             return 0
 
     # ── Parse nginx ─────────────────────────────────────────
@@ -276,9 +285,11 @@ class SecurityMonitor:
                 self._update_offset("nginx_log", current_size, len(events))
                 self._aggregate_events(events)
 
+            if events:
+                security_logger.info(f"🌐 nginx.log: {len(events)} events")
             return len(events)
         except Exception as e:
-            logger.error(f"parse_nginx_log error: {e}")
+            security_logger.error(f"parse_nginx_log error: {e}")
             return 0
 
     # ── Save & aggregate ────────────────────────────────────
@@ -298,7 +309,7 @@ class SecurityMonitor:
             """, events)
             conn.commit()
             conn.close()
-            logger.info(f"💾 Saved {len(events)} events")
+            security_logger.info(f"💾 Saved {len(events)} security events")
         except Exception as e:
             logger.error(f"_save_events error: {e}")
 

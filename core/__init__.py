@@ -1451,57 +1451,59 @@ def get_ai_status() -> dict:
 
 
 # ============================================================
-# 4. INITIALIZATION - TAMPILAN RAPI 3 KOLOM
+# 4. INITIALIZATION - BANNER FUNCTION (dipanggil manual)
 # ============================================================
 
-print()
-print("=" * 70)
-print("  INKSIDE INTELLIGENCE OS v5.0 - ULTIMATE CORE")
-print("  COGNITIVE MIRROR ENGINE")
-print("=" * 70)
-print()
+def print_startup_banner():
+    """Print startup banner — dipanggil manual dari main.py."""
+    print()
+    print("=" * 70)
+    print("  INKSIDE INTELLIGENCE OS v5.0 - ULTIMATE CORE")
+    print("  COGNITIVE MIRROR ENGINE")
+    print("=" * 70)
+    print()
 
-info = get_package_info()
-modules = info["modules"]
+    info = get_package_info()
+    modules = info["modules"]
 
-# Tampilan 3 kolom
-module_list = sorted(modules.items())
-cols = 3
-rows = (len(module_list) + cols - 1) // cols
+    # Tampilan 3 kolom
+    module_list = sorted(modules.items())
+    cols = 3
+    rows = (len(module_list) + cols - 1) // cols
 
-for row in range(rows):
-    line = ""
-    for col in range(cols):
-        idx = row + col * rows
-        if idx < len(module_list):
-            name, available = module_list[idx]
-            icon = "✓" if available else "✗"
-            display = name[:20] + ".." if len(name) > 20 else name
-            line += f"  [{icon}] {display:<22}"
-    print(line)
+    for row in range(rows):
+        line = ""
+        for col in range(cols):
+            idx = row + col * rows
+            if idx < len(module_list):
+                name, available = module_list[idx]
+                icon = "✓" if available else "✗"
+                display = name[:20] + ".." if len(name) > 20 else name
+                line += f"  [{icon}] {display:<22}"
+        print(line)
 
-print()
-print("=" * 70)
-health = health_summary()
-print(f"  HEALTH: {health['health_score']:.1f}%  ({health['online']}/{health['total']})")
-print("=" * 70)
+    print()
+    print("=" * 70)
+    health = health_summary()
+    print(f"  HEALTH: {health['health_score']:.1f}%  ({health['online']}/{health['total']})")
+    print("=" * 70)
 
-# AI Status
-ai_status = get_ai_status()
-if ai_status.get("available"):
-    print(f"  AI: {'ENABLED' if ai_status.get('enabled') else 'DISABLED'}  (Model: {ai_status.get('model', 'N/A')})")
-else:
-    print(f"  AI: NOT AVAILABLE")
-print("=" * 70)
+    # AI Status
+    ai_status = get_ai_status()
+    if ai_status.get("available"):
+        print(f"  AI: {'ENABLED' if ai_status.get('enabled') else 'DISABLED'}  (Model: {ai_status.get('model', 'N/A')})")
+    else:
+        print(f"  AI: NOT AVAILABLE")
+    print("=" * 70)
 
-# Exchange status
-exchange_status = get_exchange_status()
-if exchange_status.get("available"):
-    print(f"  EXCHANGE: {exchange_status.get('status', 'UNKNOWN')}  (Pairs: {exchange_status.get('pairs', 0)})")
-else:
-    print(f"  EXCHANGE: UNAVAILABLE")
-print("=" * 70)
-print()
+    # Exchange status
+    exchange_status = get_exchange_status()
+    if exchange_status.get("available"):
+        print(f"  EXCHANGE: {exchange_status.get('status', 'UNKNOWN')}  (Pairs: {exchange_status.get('pairs', 0)})")
+    else:
+        print(f"  EXCHANGE: UNAVAILABLE")
+    print("=" * 70)
+    print()
 
 
 # ============================================================

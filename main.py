@@ -4404,12 +4404,57 @@ def start_consciousness_scheduler():
 def main_headless():
     global engine_running
 
-    logger.info("=" * 60)
-    logger.info(f"  🧠 {APP_NAME} - COGNITIVE MIRROR ENGINE v{APP_VERSION}")
-    logger.info(f"  Mode: {MODE.upper()}")
-    logger.info(f"  AI: {'ENABLED' if DEEPSEEK_ENABLED else 'DISABLED'}")
-    logger.info(f"  Consciousness: {'ENABLED' if DEEPSEEK_ENABLED else 'DISABLED'}")
-    logger.info("=" * 60)
+    # ── Banner Modern ───────────────────────────────────────
+    import datetime as _dt
+    import os as _os
+
+    _health_bar_len = 24
+
+    def _print_banner():
+        line = "═" * 70
+        logger.info("╔" + line + "╗")
+        logger.info("║" + f"  🧠 {APP_NAME} v{APP_VERSION}".ljust(70) + "║")
+        logger.info("║" + f"  Cognitive Mirror Engine · Production Ready".ljust(70) + "║")
+        logger.info("╠" + line + "╣")
+
+        # ── System Health ──
+        logger.info("║" + "  📊 SYSTEM HEALTH".ljust(70) + "║")
+        try:
+            from core import health_summary
+            h = health_summary()
+            h_score = h.get("health_score", 0)
+            h_filled = int(h_score / 100 * _health_bar_len)
+            h_bar = "█" * h_filled + "░" * (_health_bar_len - h_filled)
+            logger.info("║" + f"  ├─ Health Score    {h_bar} {h_score:.1f}%".ljust(70) + "║")
+            logger.info("║" + f"  ├─ Modules        {h.get('online', 0)}/{h.get('total', 0)} loaded".ljust(70) + "║")
+        except Exception as e:
+            logger.info("║" + f"  ├─ Health Score    (error: {e})".ljust(70) + "║")
+
+        ai_icon = "✅" if DEEPSEEK_ENABLED else "❌"
+        logger.info("║" + f"  ├─ AI             {ai_icon} {'ENABLED' if DEEPSEEK_ENABLED else 'DISABLED'} (deepseek-chat)".ljust(70) + "║")
+        logger.info("║" + f"  ├─ Mode           {MODE.upper()}".ljust(70) + "║")
+
+        # Security stats
+        try:
+            from core.security_monitor import security_monitor
+            s_stats = security_monitor.get_stats(24)
+            s_events = s_stats.get("total_events", 0)
+            s_ips = s_stats.get("unique_ips", 0)
+            logger.info("║" + f"  └─ Security       ✅ {s_events:,} events · {s_ips} IPs (24h)".ljust(70) + "║")
+        except Exception:
+            logger.info("║" + "  └─ Security       (unavailable)".ljust(70) + "║")
+
+        logger.info("╠" + line + "╣")
+
+        # ── Uptime & PID ──
+        now_str = _dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
+        pid = _os.getpid()
+        logger.info("║" + f"  🚀 Status: RUNNING · PID: {pid}".ljust(70) + "║")
+        logger.info("║" + f"  📅 {now_str}".ljust(70) + "║")
+        logger.info("╚" + line + "╝")
+
+    # ── Tampilkan banner sebelum API server ────────────────
+    _print_banner()
 
     api_started = start_api_server()
 
@@ -4442,6 +4487,8 @@ def main_headless():
         logger.info("✅ Security Monitor Scheduler started (60s interval)")
     except Exception as e:
         logger.warning(f"⚠️ Security Monitor failed: {e}")
+
+    # Banner sudah di-print sebelum start_api_server()
 
     try:
         warm_thread = threading.Thread(target=warm_cache_scheduler, daemon=True)
