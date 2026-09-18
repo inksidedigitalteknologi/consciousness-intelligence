@@ -26,6 +26,24 @@ from functools import wraps
 # ============================================================
 
 
+# ── Filter: skip werkzeug bot requests dari error.log ─────────
+class _BotRequestFilter(logging.Filter):
+    """Filter log werkzeug dari bot request (400/505, bukan error aplikasi)."""
+    BOT_PATTERNS = (
+        "Bad request version",
+        "Bad HTTP/0.9 request type",
+        "Invalid HTTP version",
+        "BadRequest",
+        "code 400",
+        "code 505",
+    )
+    def filter(self, record):
+        msg = record.getMessage()
+        if record.name == "werkzeug" and any(p in msg for p in self.BOT_PATTERNS):
+            return False  # skip — jangan masuk error.log
+        return True
+
+
 def setup_logger():
     log_format = "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
     os.makedirs("logs", exist_ok=True)
@@ -34,8 +52,10 @@ def setup_logger():
         logging.StreamHandler(sys.stdout),
         logging.FileHandler("logs/system.log", encoding="utf-8"),
     ]
+
     error_handler = logging.FileHandler("logs/error.log", encoding="utf-8")
     error_handler.setLevel(logging.ERROR)
+    error_handler.addFilter(_BotRequestFilter())  # ← filter bot
     handlers.append(error_handler)
 
     logging.basicConfig(level=logging.INFO, format=log_format, handlers=handlers)
