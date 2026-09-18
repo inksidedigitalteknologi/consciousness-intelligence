@@ -388,7 +388,8 @@ class AutonomousEngine:
                     type="news",
                     tags=tags,
                     confidence=confidence + (5 if is_indonesia else 0),
-                    importance=0.4
+                    importance=0.4,
+                    enhance_with_ai=False,  # AI-SPAM-FIX
                 )
                 
                 self._process_with_consciousness({
@@ -488,7 +489,8 @@ class AutonomousEngine:
                                 type="auto",
                                 tags=["reanalysis", "consciousness"],
                                 confidence=conf,
-                                importance=0.5
+                                importance=0.5,
+                                enhance_with_ai=False,  # AI-SPAM-FIX
                             )
                             insights += 1
                             
@@ -624,7 +626,8 @@ class AutonomousEngine:
                         type="historical",
                         tags=[filepath, "historical", "auto"],
                         confidence=40.0,
-                        importance=0.3
+                        importance=0.3,
+                        enhance_with_ai=False,  # AI-SPAM-FIX
                     )
                     count += 1
                     self._stats["historical_processed"] += 1

@@ -332,7 +332,7 @@ class SignalEngine:
             }
             
             # AI Enhancement
-            if use_ai and self.ai_enabled:
+            if False and use_ai and self.ai_enabled:  # DISABLED-AI-SPAM-FIX
                 try:
                     ai_result = self._enhance_with_ai(result, data)
                     result = {**result, **ai_result}

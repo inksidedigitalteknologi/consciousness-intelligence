@@ -628,7 +628,7 @@ class KnowledgeEngine:
         parent_id: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
         expires_in_days: Optional[int] = None,
-        enhance_with_ai: bool = True
+        enhance_with_ai: bool = False
     ) -> Optional[str]:
         """
         Add new knowledge item with optional AI enhancement.

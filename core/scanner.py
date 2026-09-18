@@ -1022,6 +1022,7 @@ Berikan analisis yang actionable dan berbasis data.
                 tags=["ai", "market_analysis", pair.replace('/', '_')],
                 confidence=signal.get('confidence', 70),
                 importance=0.8,
+                enhance_with_ai=False,  # AI-SPAM-FIX
                 metadata={
                     'pair': pair,
                     'price': price,
