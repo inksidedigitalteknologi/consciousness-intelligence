@@ -4318,6 +4318,52 @@ def start_api_server():
                 return jsonify({"error": str(e)}), 500
 
         # ============================================================
+        # LOG READER ENDPOINTS
+        # ============================================================
+
+        @app.route("/api/logs/list", methods=["GET"])
+        @require_api_key
+        def api_logs_list():
+            try:
+                from core.log_reader import log_reader
+                return jsonify({"logs": log_reader.list_logs()})
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+        @app.route("/api/logs/stats", methods=["GET"])
+        @require_api_key
+        def api_logs_stats():
+            try:
+                from core.log_reader import log_reader
+                return jsonify({"stats": log_reader.get_stats()})
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+        @app.route("/api/logs/tail", methods=["GET"])
+        @require_api_key
+        def api_logs_tail():
+            try:
+                from core.log_reader import log_reader
+                filename = request.args.get("file", "main.log")
+                lines = int(request.args.get("lines", 100))
+                level = request.args.get("level")
+                return jsonify(log_reader.read_tail(filename, lines, level))
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+        @app.route("/api/logs/search", methods=["GET"])
+        @require_api_key
+        def api_logs_search():
+            try:
+                from core.log_reader import log_reader
+                q = request.args.get("q", "")
+                filename = request.args.get("file")
+                limit = int(request.args.get("limit", 200))
+                return jsonify(log_reader.search(q, filename, limit))
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+        # ============================================================
 
         logger.info(f"🌐 Starting API Server on {API_HOST}:{API_PORT}")
 

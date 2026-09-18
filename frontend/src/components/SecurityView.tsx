@@ -141,6 +141,17 @@ export const SecurityView: React.FC<SecurityViewProps> = ({ wsConnected }) => {
   const [lastUpdate, setLastUpdate] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
+  // ── Tab state ──
+  const [activeTab, setActiveTab] = useState<'security' | 'logs'>('security');
+
+  // ── Logs state ──
+  const [logsList, setLogsList] = useState<any[]>([]);
+  const [logsStats, setLogsStats] = useState<any>({});
+  const [selectedLog, setSelectedLog] = useState<string>('main.log');
+  const [logLines, setLogLines] = useState<string[]>([]);
+  const [logLevel, setLogLevel] = useState<string>('');
+  const [logLoading, setLogLoading] = useState(false);
+
   // ── Fetch functions ───────────────────────────────────────
   const fetchAll = useCallback(async () => {
     try {
@@ -199,12 +210,49 @@ export const SecurityView: React.FC<SecurityViewProps> = ({ wsConnected }) => {
     }
   }, [fetchAll]);
 
+  // ── Fetch logs ────────────────────────────────────────────
+  const fetchLogsList = useCallback(async () => {
+    try {
+      const res = await fetch('/api/logs/list', { headers: { 'X-API-Key': API_KEY() } });
+      const data = await res.json();
+      setLogsList(data.logs || []);
+    } catch (e) { console.error(e); }
+  }, []);
+
+  const fetchLogsStats = useCallback(async () => {
+    try {
+      const res = await fetch('/api/logs/stats', { headers: { 'X-API-Key': API_KEY() } });
+      const data = await res.json();
+      setLogsStats(data.stats || {});
+    } catch (e) { console.error(e); }
+  }, []);
+
+  const fetchLogTail = useCallback(async (file: string, level: string = '') => {
+    setLogLoading(true);
+    try {
+      const url = `/api/logs/tail?file=${file}&lines=100${level ? `&level=${level}` : ''}`;
+      const res = await fetch(url, { headers: { 'X-API-Key': API_KEY() } });
+      const data = await res.json();
+      setLogLines(data.lines || []);
+    } catch (e) { console.error(e); }
+    finally { setLogLoading(false); }
+  }, []);
+
   // ── Initial + interval ────────────────────────────────────
   useEffect(() => {
     fetchAll();
-    const interval = setInterval(fetchAll, 60000); // refresh tiap 60 detik
+    fetchLogsList();
+    fetchLogsStats();
+    const interval = setInterval(fetchAll, 60000);
     return () => clearInterval(interval);
-  }, [fetchAll]);
+  }, [fetchAll, fetchLogsList, fetchLogsStats]);
+
+  // Fetch tail saat tab logs aktif / file berubah
+  useEffect(() => {
+    if (activeTab === 'logs') {
+      fetchLogTail(selectedLog, logLevel);
+    }
+  }, [activeTab, selectedLog, logLevel, fetchLogTail]);
 
   // ── Render ────────────────────────────────────────────────
   return (
@@ -234,8 +282,31 @@ export const SecurityView: React.FC<SecurityViewProps> = ({ wsConnected }) => {
             {scanning ? 'Scanning...' : 'Scan Now'}
           </button>
         </div>
+
+        {/* TAB SELECTOR */}
+        <div className="flex items-center gap-1 bg-gray-900/50 border border-gray-800 rounded p-1">
+          <button
+            onClick={() => setActiveTab('security')}
+            className={`px-3 py-1 rounded text-xs transition ${
+              activeTab === 'security' ? 'bg-cyan-500/20 text-cyan-400' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            🛡️ Security
+          </button>
+          <button
+            onClick={() => setActiveTab('logs')}
+            className={`px-3 py-1 rounded text-xs transition ${
+              activeTab === 'logs' ? 'bg-cyan-500/20 text-cyan-400' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            📄 Logs
+          </button>
+        </div>
       </div>
 
+      {/* SECURITY TAB */}
+      {activeTab === 'security' && (
+        <>
       {/* ERROR */}
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-2 rounded text-sm">
@@ -421,6 +492,85 @@ export const SecurityView: React.FC<SecurityViewProps> = ({ wsConnected }) => {
           )}
         </div>
       </div>
+        </>
+      )}
+
+      {/* LOGS TAB */}
+      {activeTab === 'logs' && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              value={selectedLog}
+              onChange={(e) => setSelectedLog(e.target.value)}
+              className="bg-gray-900/50 border border-gray-800 text-white text-xs rounded px-3 py-1.5"
+            >
+              {logsList.map((log: any) => (
+                <option key={log.name} value={log.name}>
+                  {log.name} ({log.size_kb} KB)
+                </option>
+              ))}
+            </select>
+            <select
+              value={logLevel}
+              onChange={(e) => setLogLevel(e.target.value)}
+              className="bg-gray-900/50 border border-gray-800 text-white text-xs rounded px-3 py-1.5"
+            >
+              <option value="">All Levels</option>
+              <option value="INFO">INFO</option>
+              <option value="WARNING">WARNING</option>
+              <option value="ERROR">ERROR</option>
+              <option value="CRITICAL">CRITICAL</option>
+            </select>
+            <button
+              onClick={() => fetchLogTail(selectedLog, logLevel)}
+              disabled={logLoading}
+              className="flex items-center gap-1 px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 rounded text-xs transition disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3 h-3 ${logLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+            <span className="text-xs text-gray-500">{logLines.length} lines</span>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {logsList.slice(0, 4).map((log: any) => {
+              const s = logsStats[log.name] || {};
+              return (
+                <div key={log.name} className="bg-gray-900/50 border border-gray-800 rounded-lg p-2 text-xs">
+                  <div className="text-gray-400 truncate">{log.name}</div>
+                  <div className="flex gap-2 mt-1">
+                    <span className="text-blue-400">I:{s.INFO || 0}</span>
+                    <span className="text-yellow-400">W:{s.WARNING || 0}</span>
+                    <span className="text-red-400">E:{s.ERROR || 0}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-3">
+            <div className="font-mono text-xs max-h-[600px] overflow-y-auto space-y-0.5">
+              {logLines.length === 0 && (
+                <div className="text-center text-gray-500 py-4">
+                  {logLoading ? 'Loading...' : 'No log lines'}
+                </div>
+              )}
+              {logLines.map((line, i) => {
+                let color = 'text-gray-300';
+                if (line.includes('| ERROR |')) color = 'text-red-400';
+                else if (line.includes('| WARNING |')) color = 'text-yellow-400';
+                else if (line.includes('| CRITICAL |')) color = 'text-red-500 font-bold';
+                else if (line.includes('| DEBUG |')) color = 'text-gray-500';
+                return (
+                  <div key={i} className={`${color} whitespace-pre-wrap break-all`}>
+                    {line}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

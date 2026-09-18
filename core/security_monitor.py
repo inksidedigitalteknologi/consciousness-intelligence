@@ -45,7 +45,14 @@ AUTH_LOG_PATH = Path("/var/log/auth.log")
 NGINX_ACCESS_PATH = Path("/var/log/nginx/access.log")
 
 # ── Whitelist IP (tidak muncul di dashboard) ────────────────
-WHITELIST_IPS = set()  # TEMPORARY DISABLED
+WHITELIST_IPS = {
+    "127.0.0.1",
+    "45.41.204.21",
+    "121.121.162.72",   # IP admin (Malaysia)
+    "14.192.246.97",    # IP admin (Malaysia)
+    "121.123.35.68",    # IP admin (Malaysia)
+    "121.122.63.33",    # IP admin (Malaysia)
+}
 
 # ── Attack Patterns ────────────────────────────────────────
 ATTACK_PATTERNS = {
