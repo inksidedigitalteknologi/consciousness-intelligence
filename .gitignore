@@ -53,3 +53,10 @@ Thumbs.db
 
 # Autonomous cache (runtime, auto-generated)
 data/autonomous_cache/
+
+# Security database (runtime)
+database/security.db
+database/security.db.*
+
+# Autonomous cache (runtime)
+data/autonomous_cache/

@@ -182,6 +182,7 @@ export type NavigationPage =
   | 'Trading'
   | 'Telegram'
   | 'Diagnostics'
+  | 'Security'
   | 'Settings';
 
 // ============================================================

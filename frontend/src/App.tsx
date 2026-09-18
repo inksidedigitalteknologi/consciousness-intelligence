@@ -24,6 +24,7 @@ import { PatternView } from './components/PatternView';
 import { PredictionView } from './components/PredictionView';
 import { DecisionView } from './components/DecisionView';
 import { DiagnosticsView } from './components/DiagnosticsView';
+import { SecurityView } from './components/SecurityView';
 import { MarketQuotesView } from './components/MarketQuotesView';
 import { IoTView } from './components/IoTView';
 
@@ -767,6 +768,7 @@ function AppContent() {
             )}
 
             {currentPage === 'Diagnostics' && <DiagnosticsView wsConnected={isConnected} />}
+            {currentPage === 'Security' && <SecurityView wsConnected={isConnected} />}
             {currentPage === 'Settings' && <SettingsView wsConnected={isConnected} />}
           </main>
         </div>

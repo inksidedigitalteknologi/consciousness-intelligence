@@ -18,6 +18,7 @@ import {
   Send,
   Sliders,
   ShieldCheck,
+  ShieldAlert,
   Zap,
   Star,
   X,
@@ -180,6 +181,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'Knowledge' as NavigationPage, label: 'Knowledge Base', icon: BookOpen },
         { id: 'Health' as NavigationPage, label: 'System Health', icon: Activity },
         { id: 'Diagnostics' as NavigationPage, label: 'Diagnostics', icon: ShieldCheck },
+        { id: 'Security' as NavigationPage, label: 'Security Monitor', icon: ShieldAlert, isNew: true },
       ],
     },
     {

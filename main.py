@@ -201,6 +201,17 @@ except ImportError as e:
     brain = None
 
 
+# Security Monitor (rekomendasi: setelah Brain module)
+try:
+    from core.security_monitor import security_monitor
+    SECURITY_AVAILABLE = True
+    logger.info("✅ Security Monitor loaded")
+except ImportError as e:
+    logger.warning(f"⚠️ Security Monitor not available: {e}")
+    SECURITY_AVAILABLE = False
+    security_monitor = None
+
+
 # Optional modules
 def safe_import(module_path, attr_name=None):
     try:
@@ -412,6 +423,50 @@ def auto_cleanup_scheduler():
 # ============================================================
 # API SERVER
 # ============================================================
+
+
+# ============================================================
+# SECURITY MONITOR SCHEDULER
+# ============================================================
+
+
+def security_monitor_scheduler():
+    """Scan security logs every 60 seconds."""
+    logger.info("🛡️ Security Monitor Scheduler started (60s interval)")
+
+    # Initial scan
+    try:
+        if SECURITY_AVAILABLE and security_monitor:
+            result = security_monitor.scan_all()
+            logger.info(f"🛡️ Initial security scan: {result}")
+    except Exception as e:
+        logger.error(f"Security initial scan error: {e}")
+
+    while not _shutdown_flag.is_set():
+        try:
+            if SECURITY_AVAILABLE and security_monitor:
+                result = security_monitor.scan_all()
+                total = result.get("auth_log", 0) + result.get("nginx_log", 0)
+                if total > 0:
+                    logger.info(f"🛡️ Security scan: {result}")
+        except Exception as e:
+            logger.error(f"Security scan error: {e}")
+
+        # Sleep 60 detik, cek shutdown tiap detik
+        for _ in range(60):
+            if _shutdown_flag.is_set():
+                break
+            time.sleep(1)
+
+
+def warm_cache_scheduler():
+    """Warm trap screener cache setelah 2 menit (cegah start lambat)."""
+    logger.info("🔥 Warm cache scheduler started (delay 120s)")
+    time.sleep(120)
+    try:
+        warm_trap_screener_cache()
+    except Exception as e:
+        logger.warning(f"Warm cache error: {e}")
 
 
 def start_api_server():
@@ -4155,6 +4210,94 @@ def start_api_server():
                 return jsonify({"error": str(e)}), 500
 
         # ============================================================
+        # SECURITY MONITOR ENDPOINTS
+        # ============================================================
+
+        @app.route("/api/security/stats", methods=["GET"])
+        @require_api_key
+        def api_security_stats():
+            try:
+                hours = int(request.args.get("hours", 24))
+                stats = security_monitor.get_stats(hours) if SECURITY_AVAILABLE else {"error": "Security module not available"}
+                return jsonify(stats)
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+        @app.route("/api/security/events", methods=["GET"])
+        @require_api_key
+        def api_security_events():
+            try:
+                limit = int(request.args.get("limit", 50))
+                event_type = request.args.get("type")
+                severity = request.args.get("severity")
+                events = security_monitor.get_events(limit, event_type, severity) if SECURITY_AVAILABLE else []
+                return jsonify({"events": events, "count": len(events)})
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+        @app.route("/api/security/top-attackers", methods=["GET"])
+        @require_api_key
+        def api_security_top_attackers():
+            try:
+                limit = int(request.args.get("limit", 10))
+                hours = int(request.args.get("hours", 24))
+                attackers = security_monitor.get_top_attackers(limit, hours) if SECURITY_AVAILABLE else []
+                return jsonify({"attackers": attackers})
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+        @app.route("/api/security/top-usernames", methods=["GET"])
+        @require_api_key
+        def api_security_top_usernames():
+            try:
+                limit = int(request.args.get("limit", 15))
+                usernames = security_monitor.get_top_usernames(limit) if SECURITY_AVAILABLE else []
+                return jsonify({"usernames": usernames})
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+        @app.route("/api/security/top-patterns", methods=["GET"])
+        @require_api_key
+        def api_security_top_patterns():
+            try:
+                limit = int(request.args.get("limit", 15))
+                patterns = security_monitor.get_top_patterns(limit) if SECURITY_AVAILABLE else []
+                return jsonify({"patterns": patterns})
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+        @app.route("/api/security/timeline", methods=["GET"])
+        @require_api_key
+        def api_security_timeline():
+            try:
+                hours = int(request.args.get("hours", 24))
+                timeline = security_monitor.get_timeline(hours) if SECURITY_AVAILABLE else []
+                return jsonify({"timeline": timeline})
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+        @app.route("/api/security/user-agents", methods=["GET"])
+        @require_api_key
+        def api_security_user_agents():
+            try:
+                limit = int(request.args.get("limit", 15))
+                agents = security_monitor.get_top_user_agents(limit) if SECURITY_AVAILABLE else []
+                return jsonify({"user_agents": agents})
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+        @app.route("/api/security/scan", methods=["POST"])
+        @require_api_key
+        def api_security_scan():
+            try:
+                if not SECURITY_AVAILABLE:
+                    return jsonify({"error": "Security module not available"}), 503
+                result = security_monitor.scan_all()
+                return jsonify({"status": "ok", "result": result})
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+        # ============================================================
 
         logger.info(f"🌐 Starting API Server on {API_HOST}:{API_PORT}")
 
@@ -4273,6 +4416,20 @@ def main_headless():
 
     start_consciousness_scheduler()
 
+    try:
+        security_thread = threading.Thread(target=security_monitor_scheduler, daemon=True)
+        security_thread.start()
+        logger.info("✅ Security Monitor Scheduler started (60s interval)")
+    except Exception as e:
+        logger.warning(f"⚠️ Security Monitor failed: {e}")
+
+    try:
+        warm_thread = threading.Thread(target=warm_cache_scheduler, daemon=True)
+        warm_thread.start()
+        logger.info("✅ Warm Cache Scheduler started (120s delay)")
+    except Exception as e:
+        logger.warning(f"⚠️ Warm Cache Scheduler failed: {e}")
+
     # === DISABLED: Brain Observe Scheduler (dummy data) ===
     # Diganti dengan Autonomous Engine (RSS real data)
     # try:
@@ -4362,8 +4519,10 @@ def warm_trap_screener_cache():
 try:
     import threading as _threading
 
-    _warm_thread = _threading.Thread(target=warm_trap_screener_cache, daemon=True)
-    _warm_thread.start()
+    # DISABLED: pindah ke scheduler dengan delay (cegah start lambat)
+    # _warm_thread = _threading.Thread(target=warm_trap_screener_cache, daemon=True)
+    # _warm_thread.start()
+    logger.info("⏭️ Warm trap screener cache skipped (will run in background)")
     logger.info("🔥 Warm trap screener thread started")
 except Exception as e:
     logger.warning(f"Warm cache thread failed: {e}")
